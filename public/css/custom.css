@@ -1,0 +1,30 @@
+/* Filter button */
+.btn-filter {
+    background-color: #002752;
+    border-color: #002752;
+    color: #fff;
+}
+
+.btn-filter:hover {
+    background-color: #001a3d;
+    border-color: #001a3d;
+    color: #fff;
+}
+
+/* Pagination buttons */
+.pagination .page-link {
+    color: #002752;
+    border-color: #002752;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #002752;
+    border-color: #002752;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background-color: #001a3d;
+    color: #fff;
+    border-color: #001a3d;
+}
