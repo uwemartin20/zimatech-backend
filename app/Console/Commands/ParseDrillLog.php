@@ -7,6 +7,7 @@ use App\Models\Procedure;
 use App\Models\Process;
 use App\Models\Bauteil;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class ParseDrillLog extends Command
 {
@@ -59,6 +60,7 @@ class ParseDrillLog extends Command
                 if (count($parts) >= 2) {
                     $projectName = $parts[count($parts) - 2];
                     $auftragsnummer =  explode('_', $projectName)[0];
+                    $projectName = Str::after($projectName, '_');
                 } else {
                     $projectName = null;
                     $auftragsnummer =  null;
@@ -123,6 +125,7 @@ class ParseDrillLog extends Command
                             // First folder that starts with number + underscore → project
                             $projectName = $part;
                             $auftragsnummer =  explode('_', $projectName)[0];
+                            $projectName = Str::after($projectName, '_');
                         } elseif ($projectName) {
                             // Everything after project **except last element** (the .fid file) → bauteile
                             if ($index < count($parts) - 1) {
@@ -156,7 +159,7 @@ class ParseDrillLog extends Command
                 // combine time from log line
                 $timeMatch = preg_match('/\b(\d{2}:\d{2}:\d{2})\b/', $ln, $t);
                 $procStartTime = $timeMatch
-                    ? Carbon::createFromFormat('d-M-Y H:i:s', "$logDate {$t[1]}")->toDateTimeString()
+                    ? Carbon::createFromFormat('d-M-Y H:i:s', "$logDate {$t[1]}")
                     : null;
 
                 // inside procedure
@@ -177,20 +180,19 @@ class ParseDrillLog extends Command
             }
 
             // --- STEP 4: Execution time ---
-            if (preg_match('/FILE EXECUTION TIME\s+(\d{2}:\d{2}:\d{2})/i', $ln, $m)) {
-                [$h, $m1, $s] = explode(':', $m[1]);
-                $seconds = $h * 3600 + $m1 * 60 + $s;
+            if (preg_match('/\s(\d{2}:\d{2}:\d{2})\s+IEX_\d+\s+FILE EXECUTION TIME/', $ln, $m)) {
+                $endTime = Carbon::createFromFormat('d-M-Y H:i:s', "$logDate {$m[1]}");
 
                 if ($currentProcName && $currentProcedure) {
                     // add to process inside procedure
+                    $seconds = $procStartTime->diffInSeconds($endTime);
                     $processMap[$counter]['total_seconds'] = $seconds;
-                    $processMap[$counter]['end_time'] = Carbon::parse($procStartTime)->addSeconds($seconds)->toDateTimeString();
+                    $processMap[$counter]['end_time'] = $endTime;
                     $counter++;
                 } elseif ($standaloneName && $standaloneStart) {
-                    // store as standalone program run
-                    $endTime = Carbon::parse($standaloneStart)->addSeconds($seconds)->toDateTimeString();
 
                     // Try to detect project from path name if possible (optional future logic)
+                    $seconds = $standaloneStart->diffInSeconds($endTime);
                     $project = $currentProject; // may be null if no active procedure
                     $standaloneName = preg_replace('/[^\x20-\x7E_\-\.]/', '', $standaloneName);
 

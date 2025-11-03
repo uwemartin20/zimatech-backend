@@ -22,4 +22,20 @@ class Project extends Model
     {
         return $this->hasMany(Process::class);
     }
+
+    public function getBauteileCountAttribute()
+    {
+        return $this->bauteile()->count();
+    }
+
+    // 🔹 Sum of all process durations
+    public function getGesamtzeitAttribute()
+    {
+        $time = 0;
+
+        // Add process seconds
+        $time += $this->processes()->sum('total_seconds');
+
+        return $time;
+    }
 }

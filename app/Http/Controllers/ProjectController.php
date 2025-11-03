@@ -4,24 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ProjectController extends Controller
 {
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        // 
+    }
+
     public function index()
     {
-        $projects = Project::with(['procedures.processes'])
-            ->orderBy('id','desc')
-            ->paginate(20);
-        return response()->json($projects);
+        $projects = Project::all();
+
+        return view("user.projects.index", compact("projects"));
+
     }
 
-    public function show($id)
-    {
-        $project = Project::with(['procedures.processes', 'programRuns'])->findOrFail($id);
-        return response()->json($project);
-    }
-
-    public function showTable(Request $request)
+    public function projectLogs(Request $request)
     {
         $query = Project::with(['procedures.processes', 'processes', 'bauteile.processes']);
 
@@ -29,35 +37,82 @@ class ProjectController extends Controller
             $query->where('id', $request->project_id);
         }
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $start = $request->start_date;
-            $end = $request->end_date;
+        // ✅ Filter by calendar week
+        if ($request->filled('week')) {
+            // week format = "2025-W04"
+            [$year, $week] = explode('-W', $request->week);
 
-            $query->where(function($q) use ($start, $end) {
-                // Filter direct processes
-                $q->whereHas('processes', function($q2) use ($start, $end) {
-                    $q2->whereBetween('start_time', [$start, $end]);
+            $startOfWeek = Carbon::now()->setISODate($year, $week)->startOfWeek();
+            $endOfWeek = Carbon::now()->setISODate($year, $week)->endOfWeek();
+
+            $query->where(function($q) use ($startOfWeek, $endOfWeek) {
+                $q->whereHas('processes', function($q2) use ($startOfWeek, $endOfWeek) {
+                    $q2->whereBetween('start_time', [$startOfWeek, $endOfWeek])
+                    ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
                 })
-                // Filter processes inside procedures
-                ->orWhereHas('procedures.processes', function($q3) use ($start, $end) {
-                    $q3->whereBetween('start_time', [$start, $end]);
+                ->orWhereHas('procedures.processes', function($q3) use ($startOfWeek, $endOfWeek) {
+                    $q3->whereBetween('start_time', [$startOfWeek, $endOfWeek])
+                    ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
                 })
-                // Filter processes inside bauteile
-                ->orWhereHas('bauteile.processes', function($q4) use ($start, $end) {
-                    $q4->whereBetween('start_time', [$start, $end]);
+                ->orWhereHas('bauteile.processes', function($q4) use ($startOfWeek, $endOfWeek) {
+                    $q4->whereBetween('start_time', [$startOfWeek, $endOfWeek])
+                    ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
                 });
             });
         }
 
-        $projects = $query->paginate(2)->withQueryString();
+        // ✅ Filter by single day
+        elseif ($request->filled('day')) {
+            $day = Carbon::parse($request->day)->toDateString();
+
+            $query = Project::with([
+                'processes' => function($q) use ($day) {
+                    $q->whereDate('start_time', $day)
+                    ->orWhereDate('end_time', $day);
+                },
+                'procedures.processes' => function($q) use ($day) {
+                    $q->whereDate('start_time', $day)
+                    ->orWhereDate('end_time', $day);
+                },
+                'bauteile.processes' => function($q) use ($day) {
+                    $q->whereDate('start_time', $day)
+                    ->orWhereDate('end_time', $day);
+                }
+            ])
+            ->where(function($q) use ($day) {
+                $q->whereHas('processes', function($q2) use ($day) {
+                    $q2->whereDate('start_time', $day)
+                    ->orWhereDate('end_time', $day);
+                })
+                ->orWhereHas('procedures.processes', function($q3) use ($day) {
+                    $q3->whereDate('start_time', $day)
+                    ->orWhereDate('end_time', $day);
+                })
+                ->orWhereHas('bauteile.processes', function($q4) use ($day) {
+                    $q4->whereDate('start_time', $day)
+                    ->orWhereDate('end_time', $day);
+                });
+            });
+        }
+
+        $projects = $query->paginate(5)->withQueryString();
+        $projects->each(function ($project) {
+            $project->bauteile = $project->bauteile->filter(fn($b) => $b->processes->isNotEmpty());
+            $project->procedures = $project->procedures->filter(fn($p) => $p->processes->isNotEmpty());
+        });
         $allProjects = Project::orderBy('project_name')->get();
 
-        return view('projects.table', compact('projects', 'allProjects'));
+        return view('user.projects.index', compact('projects', 'allProjects'));
     }
 
     public function parseLog()
     {
         $logFile = storage_path('app/public/logs/LOGFILE.OLD');
+
+        if (!file_exists($logFile)) {
+            $sourceFile = "Y:/LOGFILE.OLD";
+            copy($sourceFile, $logFile);
+        }
 
         $cmd = "php artisan parse:drilllog \"$logFile\"";
 
@@ -87,4 +142,5 @@ class ProjectController extends Controller
             'message' => 'Log parsed successfully!',
         ]);
     }
+
 }
