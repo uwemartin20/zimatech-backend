@@ -14,40 +14,108 @@
 <body class="bg-light">
 
     {{-- ========== NAVBAR ========== --}}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-light border">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('home') }}">
-                <img src="{{ asset('images/logo-team-zimmermann.png') }}" alt="Company Logo" height="50">
-                Zimatec
+            {{-- Brand / Logo --}}
+            <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}">
+                <img src="{{ asset('images/logo-team-zimmermann.png') }}" alt="Company Logo" height="40" class="me-2">
             </a>
 
-            <div class="ms-auto d-flex align-items-center">
+            {{-- Navbar Toggler (for mobile) --}}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                {{-- When user is logged in --}}
-                @auth
-                    <a href="{{ route('projects') }}" class="text-decoration-none text-dark p-2">Projects</a>
-                    <button class="btn btn-outline-dark me-2" id="runLogBtn" data-url="{{ route('parse.log') }}">
-                        Parse Log
-                    </button>
+            {{-- Navbar Links --}}
+            <div class="collapse navbar-collapse" id="navbarMenu">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {{-- Home --}}
+                    <li class="nav-item mx-2">
+                        <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active fw-bold text-navitem' : '' }}">
+                            <i class="bi bi-house-door-fill me-1"></i> Home
+                        </a>
+                    </li>
 
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-danger">Logout</button>
-                    </form>
-                @endauth
+                    {{-- Mann Zeiten --}}
+                    <li class="nav-item mx-2">
+                        <a href="{{ route('time-records.list') }}" class="nav-link {{ request()->routeIs('time-records.*') ? 'active fw-bold text-navitem' : '' }}">
+                            <i class="bi bi-clock-history me-1"></i> Mann Zeiten
+                        </a>
+                    </li>
 
-                {{-- When user is NOT logged in --}}
-                @guest
-                    <a href="{{ route('login') }}" class="btn btn-outline-dark me-2">Login</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
-                @endguest
+                    {{-- Machine Logs --}}
+                    <li class="nav-item mx-2">
+                        <a href="{{ route('projects.logs') }}" class="nav-link {{ request()->routeIs('projects.*') ? 'active fw-bold text-navitem' : '' }}">
+                            <i class="bi bi-cpu-fill me-1"></i> Machine Logs
+                        </a>
+                    </li>
+
+                    {{-- Divider --}}
+                    <li class="nav-item mx-2 text-muted">|</li>
+
+                    {{-- Auth --}}
+                    @auth
+                        <li class="nav-item mx-2">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-login btn-sm d-flex align-items-center">
+                                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    @endauth
+
+                    @guest
+                        <li class="nav-item mx-2">
+                            <a href="{{ route('login') }}" class="btn btn-outline-login btn-sm d-flex align-items-center">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                            </a>
+                        </li>
+                    @endguest
+
+                    {{-- Language Dropdown (Far Right) --}}
+                    <li class="nav-item dropdown mx-2">
+                        <button class="btn btn-sm dropdown-toggle" type="button" id="languageDropdown"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-translate me-1"></i> {{ strtoupper(app()->getLocale()) }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                            <li><a class="dropdown-item" href="{{ route('language.switch', 'en') }}">English</a></li>
+                            <li><a class="dropdown-item" href="{{ route('language.switch', 'de') }}">Deutsch</a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
     {{-- Alert placeholder --}}
     <div class="container mt-3">
-        <div id="logAlert"></div>
+        {{-- ✅ Success message --}}
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert" id="logAlert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        {{-- ⚠️ General error message --}}
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" id="logAlert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" id="logAlert">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
     </div>
 
     {{-- ========== MAIN CONTENT ========== --}}
@@ -57,11 +125,11 @@
 
     {{-- ========== FOOTER ========== --}}
     <footer class="bg-dark text-white text-center py-3 mt-4">
-        &copy; {{ date('Y') }} Zimatec. Alle Rechte vorbehalten.
+        &copy; {{ date('Y') }} ZiMaTec. Alle Rechte vorbehalten.
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-     <script src="{{ asset('js/custom.js') }}"></script> 
+    <script src="{{ asset('js/custom.js') }}"></script> 
     @stack('scripts')
 </body>
 </html>

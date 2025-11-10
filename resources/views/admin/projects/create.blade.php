@@ -4,7 +4,7 @@
     <div class="container mt-4">
         <div class="card">
             <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">Create New Project</h5>
+                <h5 class="mb-0">Neue Projekte Erstellen</h5>
             </div>
             <div class="card-body">
                 <form action="{{ route('admin.projects.store') }}" method="POST">
@@ -28,15 +28,89 @@
                     <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" id="save_to_db" name="save_to_db" value="1">
                         <label class="form-check-label" for="save_to_db">
-                            Save project details to database
+                            Projekt im Datenbank speichern
                         </label>
                     </div>
 
                     <div class="text-end">
-                        <button type="submit" class="btn btn-success">Create Project</button>
+                        <button type="submit" class="btn btn-success">Projekt Erstellen</button>
                     </div>
                 </form>
             </div>
         </div>
-</div>
+        {{-- Folder Structure Preview --}}
+        <div class="card mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Vorschau der Verzeichnisstruktur</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Hier wird gezeigt, wie Ihre Projektordner erstellt werden unter <code>storage/app/</code>.</p>
+                
+                <div class="bg-light p-3 rounded border" style="font-family: monospace;">
+                    <div id="base-path" class="fw-bold text-dark">storage/app/[Kunde]/[Auftragsnummer]_[Projekt]</div>
+                    <ul class="list-unstyled ms-4" id="dir-structure">
+                        <li>001_Historie</li>
+                        <li>01_Eingangsdaten/
+                            <ul>
+                                <li>Schriftliche_Freigabe</li>
+                            </ul>
+                        </li>
+                        <li>02_Arbeitsverzeichnis_In Arbeit/
+                            <ul>
+                                <li>Teile_Bezeichnung</li>
+                            </ul>
+                        </li>
+                        <li>03_Ausgangsdaten</li>
+                        <li>04_Fraesdaten/
+                            <ul id="fraesdaten">
+                                <li>Bauteil 1/
+                                    <ul>
+                                        <li>Bearbeitungsplan</li>
+                                        <li>Iges</li>
+                                        <li>NC-Prg</li>
+                                    </ul>
+                                </li>
+                                <li>Bauteil 2/ ... (up to 10)</li>
+                            </ul>
+                        </li>
+                        <li>05_CAD-Daten zum Messen</li>
+                        <li>06_Messberichte</li>
+                        <li>07_Dokumentation</li>
+                        <li>08_Temp/
+                            <ul>
+                                <li>Bauteil 1/
+                                    <ul>
+                                        <li>Bearbeitungsplan</li>
+                                        <li>Iges</li>
+                                        <li>NC-Prg</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {{-- Live JavaScript Preview --}}
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const kundeInput = document.getElementById("kunde");
+        const auftragInput = document.getElementById("auftragsnummer");
+        const projektInput = document.getElementById("project_name");
+        const basePath = document.getElementById("base-path");
+    
+        function updatePath() {
+            const kunde = kundeInput.value.trim() || "[Kunde]";
+            const auftrag = auftragInput.value.trim() || "[Auftragsnummer]";
+            const projekt = projektInput.value.trim() || "[Projekt]";
+            basePath.textContent = `storage/app/${kunde}/${auftrag}_${projekt}`;
+        }
+    
+        kundeInput.addEventListener("input", updatePath);
+        auftragInput.addEventListener("input", updatePath);
+        projektInput.addEventListener("input", updatePath);
+    });
+    </script>
 @endsection

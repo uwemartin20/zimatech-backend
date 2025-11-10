@@ -1,8 +1,5 @@
 <nav class="navbar navbar-expand-lg navbar-light border-bottom shadow-sm px-3">
     <div class="container-fluid">
-        @php
-            $notifications = collect([]);
-        @endphp
         {{-- Left Side --}}
 
         {{-- 🔍 Search Bar --}}
@@ -23,17 +20,33 @@
             <div class="dropdown">
                 <button class="btn btn-light position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-bell fs-5"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {{ $notifications->count() ?? 0 }}
-                    </span>
+                    @php
+                        $unreadCount = $notifications->where('is_read', false)->count();
+                    @endphp
+                    @if($unreadCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ $unreadCount }}
+                        </span>
+                    @endif
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end p-2" style="width: 300px; max-height: 300px; overflow-y: auto;">
-                    @forelse($notifications ?? [] as $note)
-                        <li class="mb-2">
-                            <small class="text-muted">{{ $note->created_at->format('d M Y, H:i') }}</small><br>
-                            {{ $note->message }}
+            
+                <ul class="dropdown-menu dropdown-menu-end p-2 notification-dropdown" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                    @forelse($notifications as $index => $note)
+                        <li>
+                            <a href="#" class="dropdown-item notification-item {{ $note->is_read ? '' : 'fw-semibold' }}" data-id="{{ $note->id }}" data-url="{{ $note->url }}">
+                                <div class="d-flex justify-content-between flex-wrap">
+                                    <span class="badge bg-{{ $note->type == 'request' ? 'primary' : ($note->type == 'warning' ? 'warning' : 'secondary') }} text-dark mb-1">{{ ucfirst($note->type) }}</span>
+                                    <small class="text-muted mb-1">{{ $note->created_at->diffForHumans() }}</small>
+                                </div>
+                                <div style="white-space: normal;">
+                                    {{ $note->message }}
+                                </div>
+                                <div class="text-small">{{ $note->user->name }}</div>
+                            </a>
+                            @if($index < $notifications->count() - 1)
+                                <hr class="dropdown-divider my-1">
+                            @endif
                         </li>
-                        <li><hr class="dropdown-divider"></li>
                     @empty
                         <li class="text-center text-muted">No notifications</li>
                     @endforelse

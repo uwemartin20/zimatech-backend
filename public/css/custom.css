@@ -1,11 +1,11 @@
 /* Filter button */
-.btn-filter {
+.btn-filter, .btn-logout, .btn-register, .btn-wechsel {
     background-color: #002752;
     border-color: #002752;
     color: #fff;
 }
 
-.btn-filter:hover {
+.btn-filter:hover, .btn-logout:hover, .btn-register:hover, .btn-wechsel:hover {
     background-color: #001a3d;
     border-color: #001a3d;
     color: #fff;
@@ -27,4 +27,24 @@
     background-color: #001a3d;
     color: #fff;
     border-color: #001a3d;
+}
+
+.btn-outline-ansehen, .btn-outline-login {
+    background-color: #fff;
+    border: 1px solid #002752;
+    color: #002752;
+}
+
+.btn-outline-ansehen:hover, .btn-outline-login:hover {
+    background-color: #002752 !important;
+    border: 1px solid #fff;
+    color: #fff !important;
+}
+
+.text-navitem, .text-title {
+    color: #002752 !important;
+}
+
+.text-navitem:hover, .text-title:hover {
+    color: #001a3d !important;
 }

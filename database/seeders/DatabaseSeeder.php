@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -20,7 +21,15 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'Test123'
+            'password' => 'Test123',
+            'role'=> 'admin',
+        ]);
+
+        DB::table('machine_statuses')->insert([
+            ['name' => 'Rustzeit'],
+            ['name' => 'Mit Aufsicht'],
+            ['name' => 'Ohne Aufsicht'],
+            ['name' => 'Nacht Zeit'],
         ]);
     }
 }

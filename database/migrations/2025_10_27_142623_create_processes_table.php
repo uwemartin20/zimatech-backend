@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('name');
             $table->dateTime('start_time')->nullable();
             $table->dateTime('end_time')->nullable();
-            $table->integer('count')->default(0);
             $table->string('source_file')->nullable();
             $table->integer('total_seconds')->default(0); 
             $table->timestamps();

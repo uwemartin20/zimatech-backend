@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
-    protected $fillable = ['auftragsnummer', 'project_name'];
+    protected $fillable = ['auftragsnummer', 'project_name', 'from_machine_logs'];
 
     public function procedures(): HasMany
     {

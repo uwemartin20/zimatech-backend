@@ -57,7 +57,57 @@ body {
     color: #002752 !important;
 }
 
-.btn-top-search {
+.btn-top-search, .btn-add-project {
     background-color: #002752;
+    border-color: #001a3d;
+    color: #fff;
+}
+
+.btn-top-search:hover, .btn-add-project:hover {
+    background-color: #001a3d;
+    border-color: #001a3d;
+    color: #fff;
+}
+
+/* Pagination buttons */
+.pagination .page-link {
+    color: #002752;
+    border-color: #002752;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #002752;
+    border-color: #002752;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background-color: #001a3d;
+    color: #fff;
+    border-color: #001a3d;
+}
+
+.btn-outline-ansehen, .btn-outline-login {
+    background-color: #fff;
+    border: 1px solid #002752;
+    color: #002752;
+}
+
+.btn-outline-ansehen:hover, .btn-outline-login:hover {
+    background-color: #002752 !important;
+    border: 1px solid #fff;
+    color: #fff !important;
+}
+
+/* Filter button */
+.btn-filter, .btn-logout, .btn-register, .btn-wechsel {
+    background-color: #002752;
+    border-color: #002752;
+    color: #fff;
+}
+
+.btn-filter:hover, .btn-logout:hover, .btn-register:hover, .btn-wechsel:hover {
+    background-color: #001a3d;
+    border-color: #001a3d;
     color: #fff;
 }

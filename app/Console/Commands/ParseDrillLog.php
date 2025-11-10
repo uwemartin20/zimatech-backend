@@ -75,7 +75,7 @@ class ParseDrillLog extends Command
 
                 // find or create project
                 $currentProject = Project::firstOrCreate(
-                    ['auftragsnummer' => $auftragsnummer, 'project_name' => $projectName]
+                    ['auftragsnummer' => $auftragsnummer, 'project_name' => $projectName, 'from_machine_logs' => 1]
                 );
 
                 // store previous procedure if any
@@ -135,7 +135,7 @@ class ParseDrillLog extends Command
                     }
                     // find or create project
                     $currentProject = Project::firstOrCreate(
-                        ['auftragsnummer' => $auftragsnummer, 'project_name' => $projectName]
+                        ['auftragsnummer' => $auftragsnummer, 'project_name' => $projectName, 'from_machine_logs' => 1]
                     );
 
                     $parentId = null; // No parent initially
@@ -180,7 +180,12 @@ class ParseDrillLog extends Command
             }
 
             // --- STEP 4: Execution time ---
-            if (preg_match('/\s(\d{2}:\d{2}:\d{2})\s+IEX_\d+\s+FILE EXECUTION TIME/', $ln, $m)) {
+            if (
+                preg_match('/\s(\d{2}:\d{2}:\d{2})\s+IEX_\d+\s+FILE EXECUTION TIME/', $ln, $m)
+                ||
+                // CNC turned OFF because of an error
+                preg_match('/\b(\d{1,2}:\d{2}:\d{2})\s+ICN_\d+\s+CNC OFF\b/i', $ln, $m)
+            ) {
                 $endTime = Carbon::createFromFormat('d-M-Y H:i:s', "$logDate {$m[1]}");
 
                 if ($currentProcName && $currentProcedure) {
