@@ -8,7 +8,9 @@
   <div class="card">
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Maschine Logs</h5>
-        <button id="runLogBtn" data-url="{{ route('admin.parse.log') }}" class="btn btn-secondary btn-sm">+ Machine Logs Importieren</button>
+        <button id="runLogBtn" data-url="{{ route('admin.parse.log') }}" class="btn btn-secondary btn-sm">
+          <i class="bi bi-plus-circle"></i> Machine Logs Importieren
+        </button>
     </div>
 
     <div class="card-body">

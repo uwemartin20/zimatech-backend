@@ -3,8 +3,11 @@
 @section('content')
     <div class="container mt-4">
         <div class="card">
-            <div class="card-header bg-dark text-white">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Neue Projekte Erstellen</h5>
+                <a href="{{ route('admin.projects') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left-circle"></i> Zurück
+                </a>
             </div>
             <div class="card-body">
                 <form action="{{ route('admin.projects.store') }}" method="POST">
@@ -25,6 +28,29 @@
                         <input type="text" name="project_name" id="project_name" class="form-control" placeholder="Enter project name" required>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="project_status_id" class="form-label">Project Status</label>
+                        <select name="project_status_id" id="project_status_id" class="form-select" required>
+                            @foreach($statuses as $status)
+                                <option value="{{ $status->id }}" {{ (old('project_status_id', $project->project_status_id ?? '') == $status->id) ? 'selected' : '' }}>
+                                    {{ ucfirst($status->name) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="start_time" class="form-label">Start Time</label>
+                        <input type="datetime-local" name="start_time" id="start_time" class="form-control"
+                               value="{{ old('start_time', isset($project) ? $project->start_time->format('Y-m-d\TH:i') : '') }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="end_time" class="form-label">End Time</label>
+                        <input type="datetime-local" name="end_time" id="end_time" class="form-control"
+                               value="{{ old('end_time', isset($project) && $project->end_time ? $project->end_time->format('Y-m-d\TH:i') : '') }}">
+                    </div>
+
                     <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" id="save_to_db" name="save_to_db" value="1">
                         <label class="form-check-label" for="save_to_db">
@@ -33,7 +59,7 @@
                     </div>
 
                     <div class="text-end">
-                        <button type="submit" class="btn btn-success">Projekt Erstellen</button>
+                        <button type="submit" class="btn btn-wechsel">Projekt Erstellen</button>
                     </div>
                 </form>
             </div>

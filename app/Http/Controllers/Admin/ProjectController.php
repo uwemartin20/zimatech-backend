@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectStatus;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Traits\HandleFiles;
@@ -24,7 +25,7 @@ class ProjectController extends Controller
 
     public function index()
     {
-        $projects = Project::all();
+        $projects = Project::with('status')->get();
 
         return view("admin.projects.index", compact("projects"));
 
@@ -32,7 +33,8 @@ class ProjectController extends Controller
 
     public function create()
     {
-        return view('admin.projects.create');
+        $statuses = ProjectStatus::all();
+        return view('admin.projects.create', compact('statuses'));
     }
 
     public function store(Request $request)
@@ -41,15 +43,24 @@ class ProjectController extends Controller
             'kunde' => 'required|string|max:255',
             'auftragsnummer' => 'required|string|max:255|unique:projects,auftragsnummer',
             'project_name' => 'required|string|max:255',
+            'project_status_id' => 'required|exists:project_statuses,id',
+            'start_time' => 'nullable|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
         ]);
 
-        // Save project to DB
+        $projectData = $request->only([
+            'kunde',
+            'auftragsnummer',
+            'project_name',
+            'project_status_id',
+            'start_time',
+            'end_time',
+        ]);
+    
+        $projectData['from_machine_logs'] = 0;
+
         if ($request->has('save_to_db')) {
-            $project = Project::createOrFirst([
-                'auftragsnummer' => $request->auftragsnummer,
-                'project_name' => $request->project_name,
-                'from_machine_logs'=> 0,
-            ]);
+            Project::createOrFirst($projectData);
         }
 
         // Create folder structure
@@ -128,4 +139,47 @@ class ProjectController extends Controller
 
         return $basePath;
     }
+
+    public function edit(Project $project)
+    {
+        $statuses = ProjectStatus::all();
+        return view('admin.projects.edit', compact('project', 'statuses'));
+    }
+
+    public function update(Request $request, Project $project)
+    {
+        $request->validate([
+            'kunde' => 'required|string|max:255',
+            'auftragsnummer' => 'required|string|max:255|unique:projects,auftragsnummer,' . $project->id,
+            'project_name' => 'required|string|max:255',
+            'project_status_id' => 'nullable|exists:project_statuses,id',
+            'start_time' => 'nullable|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
+        ]);
+
+        $project->update($request->only([
+            'kunde',
+            'auftragsnummer',
+            'project_name',
+            'project_status_id',
+            'start_time',
+            'end_time',
+        ]));
+
+        return redirect()->route('admin.projects')->with('success', 'Project updated successfully!');
+    }
+
+    public function show(Project $project)
+    {
+        $project->load(['status', 'bauteile']);
+
+        return view('admin.projects.show', compact('project'));
+    }
+
+    public function destroy(Project $project)
+    {
+        $project->delete();
+        return redirect()->route('admin.projects')->with('success','Project deleted successfully!');
+    }
+
 }

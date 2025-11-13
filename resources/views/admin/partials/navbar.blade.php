@@ -60,7 +60,7 @@
                     <span class="fw-semibold username-text">{{ Auth::user()->name ?? 'Admin' }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-                    <li><a class="dropdown-item" href="{{ route('admin.users.profile') }}">Manage Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.users.profile', Auth()->id()) }}">Manage Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form action="{{ route('logout') }}" method="POST" class="m-0">

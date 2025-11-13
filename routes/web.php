@@ -10,6 +10,12 @@ use App\Http\Controllers\TimeRecordController;
 use App\Http\Controllers\Admin\TimeController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Admin\Settings\MachineSettingsController;
+use App\Http\Controllers\Admin\Settings\ProjectSettingsController;
+use App\Http\Controllers\Admin\Settings\ProjectServicesController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\SupplierOfferController;
+use App\Http\Controllers\Admin\SupplierProjectController;
+use App\Http\Controllers\Admin\BauteilController;
 
 Auth::routes();
 
@@ -49,12 +55,41 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/projects', [AdminProject::class, 'index'])->name('projects');
         Route::get('/projects/create', [AdminProject::class, 'create'])->name('projects.create');
         Route::post('/projects/store', [AdminProject::class, 'store'])->name('projects.store');
+        Route::get('/projects/show/{project}', [AdminProject::class, 'show'])->name('projects.show');
+        Route::get('/projects/edit/{project}', [AdminProject::class, 'edit'])->name('projects.edit');
+        Route::put('/projects/{project}', [AdminProject::class, 'update'])->name('projects.update');
+        Route::delete('/projects/{project}', [AdminProject::class, 'destroy'])->name('projects.destroy');
+        Route::get('/bauteile/filter/{type}', [BauteilController::class, 'filter'])->name('bauteile.filter');
+        Route::resource('bauteile', BauteilController::class);
+        Route::prefix('projects')->name('projects.')->group(function () {
+            
+            // Supplier offers routes
+            Route::get('/offers', [SupplierOfferController::class, 'index'])->name('offers');
+            Route::get('/offers/create', [SupplierOfferController::class, 'create'])->name('offers.create');
+            Route::post('/offers', [SupplierOfferController::class, 'store'])->name('offers.store');
+            Route::get('/offers/{offer}', [SupplierOfferController::class, 'show'])->name('offers.show');
+            Route::get('/offers/edit/{offer}', [SupplierOfferController::class, 'edit'])->name('offers.edit');
+            Route::put('/offers/{offer}', [SupplierOfferController::class, 'update'])->name('offers.update');
+            Route::delete('/offers/{offer}', [SupplierOfferController::class, 'destroy'])->name('offers.destroy');
+
+            // Supplier Projects Routes
+            Route::get('/projects', [SupplierProjectController::class, 'index'])->name('projects.index');
+            Route::get('/projects/create', [SupplierProjectController::class, 'create'])->name('projects.create');
+            Route::post('/projects', [SupplierProjectController::class, 'store'])->name('projects.store');
+            Route::get('/projects/{project}', [SupplierProjectController::class, 'show'])->name('projects.show');
+            Route::get('/projects/edit/{project}', [SupplierProjectController::class, 'edit'])->name('projects.edit');
+            Route::put('/projects/{project}', [SupplierProjectController::class, 'update'])->name('projects.update');
+            Route::delete('/projects/{project}', [SupplierProjectController::class, 'destroy'])->name('projects.destroy');
+        });
 
         // Users Routes
         Route::get('/users', [UserController::class, 'index'])->name('users');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::get('/users/profile', [UserController::class, 'profile'])->name('users.profile');
+        Route::get('/users/profile/{user}', [UserController::class, 'profile'])->name('users.profile');
+        Route::get('/users/edit/{user}', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/update/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/profile/destroy/{user}', [UserController::class, 'profile'])->name('users.destroy');
 
         // Time Recording Routes
         Route::get('/time/logs', [TimeController::class, 'machineLogs'])->name('time.logs');
@@ -73,12 +108,38 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/time/change/accept/{id}', [TimeController::class, 'acceptChange'])->name('time.change.accept');
         Route::post('/time/change/reject/{id}', [TimeController::class, 'rejectChange'])->name('time.change.reject');
 
+        // Supplier Routes
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+        Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
+        Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::get('suppliers/edit/{supplier}', [SupplierController::class, 'edit'])->name('suppliers.edit');
+        Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+        Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+        Route::get('suppliers/show/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+        Route::get('suppliers/projects', [SupplierController::class, 'projects'])->name('suppliers.projects');
+
 
         // Settings routes
-        Route::get('/settings/machine-status', [MachineSettingsController::class, 'machineStatus'])->name('settings.machine-status');
-        // Route::get('/settings/machine-status/new', [MachineSettingsController::class, 'machineStatusCreate'])->name('settings.machine-status.new');
-        Route::get('/settings/machine-status/show/{id?}', [MachineSettingsController::class, 'machineStatusShow'])->name('settings.machine-status.show');
-        Route::post('/settings/machine-status/update/{id?}', [MachineSettingsController::class, 'machineStatusUpdate'])->name('settings.machine-status.update');
-        Route::patch('/settings/machine-status/toggle/{id}', [MachineSettingsController::class, 'toggleMachineStatus'])->name('settings.machine-status.toggle');
-        Route::delete('/settings/machine-status/{id}', [MachineSettingsController::class, 'deleteMachineStatus'])->name('settings.machine-status.delete');
+        Route::prefix('settings')->name('settings.')->group(function() {
+            // Machine status
+            Route::get('/machine-status', [MachineSettingsController::class, 'machineStatus'])->name('machine-status');
+            Route::get('/machine-status/show/{id?}', [MachineSettingsController::class, 'machineStatusShow'])->name('machine-status.show');
+            Route::post('/machine-status/update/{id?}', [MachineSettingsController::class, 'machineStatusUpdate'])->name('machine-status.update');
+            Route::patch('/machine-status/toggle/{id}', [MachineSettingsController::class, 'toggleMachineStatus'])->name('machine-status.toggle');
+            Route::delete('/machine-status/{id}', [MachineSettingsController::class, 'deleteMachineStatus'])->name('machine-status.delete');
+
+            // Project status
+            Route::get('/project-status', [ProjectSettingsController::class, 'projectStatus'])->name('project-status');
+            Route::get('/project-status/show/{id?}', [ProjectSettingsController::class, 'projectStatusShow'])->name('project-status.show');
+            Route::post('/project-status/update/{id?}', [ProjectSettingsController::class, 'projectStatusUpdate'])->name('project-status.update');
+            Route::patch('/project-status/toggle/{id}', [ProjectSettingsController::class, 'toggleProjectStatus'])->name('project-status.toggle');
+            Route::delete('/project-status/{id}', [ProjectSettingsController::class, 'deleteProjectStatus'])->name('project-status.delete');
+
+            // Project Leistungen
+            Route::get('/project-service', [ProjectServicesController::class, 'projectService'])->name('project-service');
+            Route::get('/project-service/show/{id?}', [ProjectServicesController::class, 'projectServiceShow'])->name('project-service.show');
+            Route::post('/project-service/update/{id?}', [ProjectServicesController::class, 'projectServiceUpdate'])->name('project-service.update');
+            Route::patch('/project-service/toggle/{id}', [ProjectServicesController::class, 'toggleProjectService'])->name('project-service.toggle');
+            Route::delete('/project-service/{id}', [ProjectServicesController::class, 'deleteProjectService'])->name('project-service.delete');
+        });
 });

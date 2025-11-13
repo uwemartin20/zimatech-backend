@@ -16,7 +16,6 @@ return new class extends Migration
             $table->boolean('is_baugruppe')->default(false);
             $table->string('image')->nullable();
             $table->boolean('in_house_production')->default(false);
-            $table->foreignId('bauteil_measurement_id')->nullable()->constrained('bauteil_measurements')->nullOnDelete();
         });
     }
 
