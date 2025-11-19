@@ -19,69 +19,47 @@
 
                 {{-- Name --}}
                 <div class="mb-3">
-                    <label for="name" class="form-label fw-semibold">Leistung Name</label>
-                    <input type="text" name="name" id="name" class="form-control" 
+                    <label class="form-label fw-semibold">Leistung Name</label>
+                    <input type="text" name="name" class="form-control"
                            value="{{ old('name', $service->name) }}" required>
-                    @error('name')
-                        <small class="text-danger">{{ $message }}</small>
-                    @enderror
+                    @error('name') <small class="text-danger">{{ $message }}</small> @enderror
+                </div>
+
+                {{-- Parent --}}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Übergeordnete Leistung (optional)</label>
+                    <select name="parent_id" class="form-select">
+                        <option value="">— Kein Parent —</option>
+                        @foreach($parentServices as $ps)
+                            <option value="{{ $ps->id }}"
+                                {{ old('parent_id', $service->parent_id) == $ps->id ? 'selected' : '' }}>
+                                {{ $ps->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('parent_id') <small class="text-danger">{{ $message }}</small> @enderror
                 </div>
 
                 {{-- Color --}}
                 <div class="mb-3">
-                    <label for="color" class="form-label fw-semibold">Color</label>
-                    <input type="color" name="color" id="color" class="form-control form-control-color"
+                    <label class="form-label fw-semibold">Color</label>
+                    <input type="color" name="color" class="form-control form-control-color"
                            value="{{ old('color', $service->color ?? '#000000') }}">
-                    @error('color')
-                        <small class="text-danger">{{ $message }}</small>
-                    @enderror
+                    @error('color') <small class="text-danger">{{ $message }}</small> @enderror
                 </div>
 
-                {{-- Active Checkbox --}}
+                {{-- Active --}}
                 <div class="form-check form-switch mb-4">
-                    <input class="form-check-input" type="checkbox" id="active" name="active" 
+                    <input class="form-check-input" type="checkbox" name="active" 
                            {{ old('active', $service->active) ? 'checked' : '' }}>
-                    <label class="form-check-label fw-semibold" for="active">Active</label>
+                    <label class="form-check-label fw-semibold">Active</label>
                 </div>
 
-                {{-- Buttons --}}
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-wechsel">
-                        <i class="bi bi-save me-1"></i> Save Changes
-                    </button>
-                </div>
+                <button type="submit" class="btn btn-wechsel">
+                    <i class="bi bi-save me-1"></i> Save Changes
+                </button>
             </form>
         </div>
     </div>
 </div>
-
-{{-- === AJAX Script for toggle === --}}
-<script>
-document.querySelectorAll('.toggle-active').forEach((checkbox) => {
-    checkbox.addEventListener('change', function() {
-        const id = this.dataset.id;
-        fetch(`/admin/settings/project-service/toggle/${id}`, {
-            method: 'PATCH',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                const status = data.active ? 'activated' : 'deactivated';
-                console.log(`Status ${id} ${status}`);
-                showAlert(`Machine status ${status} successfully.`, 'success');
-            } else {
-                showAlert('Something went wrong.', 'danger');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showAlert('Server error, please try again.', 'danger');
-        });
-    });
-});
-</script>
 @endsection

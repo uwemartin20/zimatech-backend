@@ -13,14 +13,17 @@ class ProjectServicesController extends Controller
      */
     public function projectService()
     {
-        $services = ProjectService::all();
+        $services = ProjectService::orderBy('parent_id')->orderBy('name')->get();
         return view('admin.settings.project-service', compact('services'));
     }
 
     public function projectServiceShow($id = null)
     {
         $service = $id ? ProjectService::findOrFail($id) : new ProjectService();
-        return view('admin.settings.project-service-show', compact('service'));
+        $parentServices = ProjectService::where('id', '!=', $id)
+            ->orderBy('name')
+            ->get();
+        return view('admin.settings.project-service-show', compact('service', 'parentServices'));
     }
 
     /**
@@ -32,7 +35,13 @@ class ProjectServicesController extends Controller
         $validated = $request->validate([
             'name'   => 'required|string|max:255',
             'color'  => 'nullable|string|max:20',
+            'parent_id' => 'nullable|integer|exists:project_services,id',
+            'active' => 'nullable',
         ]);
+
+        if ($id && $request->parent_id == $id) {
+            return back()->withErrors(['parent_id' => 'A service cannot be its own parent.']);
+        }
 
         if ($id) {
             // Update existing
@@ -41,6 +50,7 @@ class ProjectServicesController extends Controller
                 'name'   => $validated['name'],
                 'color'  => $validated['color'] ?? null,
                 'active' => $request->has('active'),
+                'parent_id' => $validated['parent_id'] ?? null,
             ]);
             $message = 'Project service updated successfully!';
         } else {
@@ -49,11 +59,12 @@ class ProjectServicesController extends Controller
                 'name'   => $validated['name'],
                 'color'  => $validated['color'] ?? null,
                 'active' => $request->has('active'),
+                'parent_id' => $validated['parent_id'] ?? null,
             ]);
             $message = 'New project service created successfully!';
         }
 
-        return redirect()->route('admin.settings.project-service.show', $service->id)
+        return redirect()->route('admin.settings.project-service')
                          ->with('success', $message);
     }
 

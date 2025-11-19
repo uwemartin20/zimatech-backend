@@ -16,6 +16,9 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplierOfferController;
 use App\Http\Controllers\Admin\SupplierProjectController;
 use App\Http\Controllers\Admin\BauteilController;
+use App\Http\Controllers\Admin\ProjectOfferController;
+use App\Http\Controllers\Admin\Settings\EmailTemplateController;
+use App\Http\Controllers\Admin\EmailController;
 
 Auth::routes();
 
@@ -47,9 +50,19 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('admin') 
     ->name('admin.') 
     ->group(function () {
+        // Admin Home Views
+        Route::get('/emails', [AdminHome::class, 'emails'])->name('emails');
         Route::get('/dashboard', [AdminHome::class, 'index'])->name('dashboard');
         Route::get('/search', [AdminHome::class, 'search'])->name('search');
         Route::post('/notifications/read/{id}', [AdminHome::class, 'markRead'])->name('notifications.read');
+
+        // Emails managemnt Views
+        Route::get('/emails', [EmailController::class, 'emails'])->name('emails');
+        Route::get('/emails/sent', [EmailController::class, 'emailsSent'])->name('emails.sent');
+        Route::get('/emails/show/{id}', [EmailController::class, 'show'])->name('emails.show');
+        Route::get('/emails/new', [EmailController::class, 'compose'])->name('emails.new');
+        Route::post('/emails/send', [EmailController::class, 'send'])->name('emails.send');
+
         
         // Projects Routes
         Route::get('/projects', [AdminProject::class, 'index'])->name('projects');
@@ -80,6 +93,37 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/projects/edit/{project}', [SupplierProjectController::class, 'edit'])->name('projects.edit');
             Route::put('/projects/{project}', [SupplierProjectController::class, 'update'])->name('projects.update');
             Route::delete('/projects/{project}', [SupplierProjectController::class, 'destroy'])->name('projects.destroy');
+        });
+
+        // Project offers
+        Route::prefix('project_offers')->name('project_offers.')->group(function() {
+            Route::resource('', ProjectOfferController::class)->parameters(['' => 'project_offer']);
+            // Accept Offer
+            Route::get('/{offer}/accept', [ProjectOfferController::class, 'acceptOffer'])->name('accept');
+            // Send emails
+            Route::get('/{offer}/email-templates', [ProjectOfferController::class, 'emailTemplates'])->name('email-templates');
+            Route::get('/{offer}/email-preview/{template?}', [ProjectOfferController::class, 'emailPreview'])->name('email_preview');
+            Route::post('/{offer}/send-email', [ProjectOfferController::class, 'sendEmail'])->name('send_email');
+
+
+            Route::post('/{offer}/add-calculation', [ProjectOfferController::class, 'addCalculation'])->name('add_calculation');
+            Route::delete('/{offer}/file/{file}/destroy', [ProjectOfferController::class, 'destroyFile'])->name('files.destroy');
+            Route::delete('/{offer}/email/{email}/destroy', [ProjectOfferController::class, 'destroyEmail'])->name('emails.destroy');
+            Route::post('/{offer}/add-email', [ProjectOfferController::class, 'addEmail'])->name('add_email');
+            Route::get('/email/{email}/edit', [ProjectOfferController::class, 'editEmail'])->name('edit_email');
+            Route::put('/email/{email}', [ProjectOfferController::class, 'updateEmail'])->name('update_email');
+            Route::post('/{offer}/add-file', [ProjectOfferController::class, 'addFile'])->name('add_file');
+            Route::get('/{offer}/calculations', [ProjectOfferController::class, 'calculations'])->name('calculations');
+            Route::get('/{offer}/calculation/complete', [ProjectOfferController::class, 'calculationComplete'])->name('calculation.complete');
+            Route::get('/{offer}/calculation/pdf', [ProjectOfferController::class, 'calculationPdf'])->name('calculation.pdf');
+            Route::get('/{offer}/calculation/show/{calculation}', [ProjectOfferController::class, 'showCalculation'])->name('calculation.show');
+            Route::get('/{offer}/items/create', [ProjectOfferController::class, 'createItems'])->name('items.create');
+            Route::post('/{offer}/items/store', [ProjectOfferController::class, 'storeItems'])->name('items.store');
+            Route::get('/{offer}/items/edit/{calculation}', [ProjectOfferController::class, 'editItems'])->name('items.edit');
+            Route::put('/{offer}/items/update{calculation}', [ProjectOfferController::class, 'updateItems'])->name('items.update');
+            Route::post('/{offer}/calculations/{calculation}/duplicate', [ProjectOfferController::class, 'duplicateItems'])->name('calculation.duplicate');
+            Route::delete('/{offer}/calculation/{calculation}', [ProjectOfferController::class, 'destroyItems'])->name('calculation.destroy');
+            Route::get('/children/{parentId}', [ProjectOfferController::class, 'loadChildServices'])->name('children');
         });
 
         // Users Routes
@@ -141,5 +185,8 @@ Route::middleware(['auth', 'role:admin'])
             Route::post('/project-service/update/{id?}', [ProjectServicesController::class, 'projectServiceUpdate'])->name('project-service.update');
             Route::patch('/project-service/toggle/{id}', [ProjectServicesController::class, 'toggleProjectService'])->name('project-service.toggle');
             Route::delete('/project-service/{id}', [ProjectServicesController::class, 'deleteProjectService'])->name('project-service.delete');
+
+            // Email Templates
+            Route::resource('email_templates', EmailTemplateController::class);
         });
 });

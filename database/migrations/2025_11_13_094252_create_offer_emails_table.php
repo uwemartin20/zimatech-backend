@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('subject')->nullable();
             $table->longText('body')->nullable();
             $table->enum('direction', ['inbound', 'outbound']);
-            $table->json('attachments')->nullable();
             $table->timestamps();
         });
     }

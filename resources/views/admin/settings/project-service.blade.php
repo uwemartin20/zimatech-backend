@@ -18,50 +18,66 @@
                     <tr>
                         <th>#</th>
                         <th>Leistung Name</th>
+                        <th>Parent</th>
                         <th>Active</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    @forelse($services as $service)
-                        <tr id="row-{{ $service->id }}">
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $service->name }}</td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input type="checkbox" class="form-check-input toggle-active"
-                                        data-id="{{ $service->id }}" {{ $service->active ? 'checked' : '' }}>
-                                </div>
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.settings.project-service.show', $service->id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-                                <form action="{{ route('admin.settings.project-service.delete', $service->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this status?')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
+                    @php
+                        function renderServiceTree($services, $parentId = 0, $level = 0) {
+                            foreach ($services->where('parent_id', $parentId) as $service) {
+                                echo '<tr id="row-'.$service->id.'">';
+                                echo '<td>'.$service->id.'</td>';
+                                echo '<td>'.str_repeat('&nbsp;&nbsp;&nbsp;— ', $level).$service->name.'</td>';
+                                echo '<td>'.($service->parent? $service->parent->name : '—').'</td>';
+
+                                echo '<td>
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" class="form-check-input toggle-active"
+                                                data-id="'.$service->id.'" '.($service->active ? 'checked' : '').'>
+                                        </div>
+                                      </td>';
+
+                                echo '<td>
+                                        <a href="'.route('admin.settings.project-service.show', $service->id).'" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form action="'.route('admin.settings.project-service.delete', $service->id).'" 
+                                              method="POST" class="d-inline">
+                                            '.csrf_field().method_field('DELETE').'
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm(\'Delete this service?\')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                      </td>';
+
+                                echo '</tr>';
+
+                                renderServiceTree($services, $service->id, $level + 1);
+                            }
+                        }
+                    @endphp
+
+                    @if($services->count())
+                        {!! renderServiceTree($services) !!}
+                    @else
                         <tr>
-                           <td colspan="4" class="text-center py-4 text-muted">No Records Yet.</td> 
+                            <td colspan="5" class="text-center py-4 text-muted">No Records Yet.</td>
                         </tr>
-                    @endforelse
+                    @endif
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-{{-- === AJAX Script for toggle === --}}
 <script>
 document.querySelectorAll('.toggle-active').forEach((checkbox) => {
     checkbox.addEventListener('change', function() {
         const id = this.dataset.id;
+
         fetch(`/admin/settings/project-service/toggle/${id}`, {
             method: 'PATCH',
             headers: {
@@ -71,13 +87,7 @@ document.querySelectorAll('.toggle-active').forEach((checkbox) => {
         })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                const status = data.active ? 'activated' : 'deactivated';
-                console.log(`Status ${id} ${status}`);
-                showAlert(`Project status ${status} successfully.`, 'success');
-            } else {
-                showAlert('Something went wrong.', 'danger');
-            }
+            showAlert(`Service ${data.active ? 'activated' : 'deactivated'} successfully.`, 'success');
         })
         .catch(err => {
             console.error(err);
