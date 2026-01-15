@@ -46,7 +46,7 @@
 
                 {{-- Buttons --}}
                 <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-wechsel">
                         <i class="bi bi-save me-1"></i> Save Changes
                     </button>
                 </div>

@@ -15,6 +15,10 @@ class Bauteil extends Model
         'name',
         'project_id',
         'parent_id',
+        'is_werkzeug',
+        'is_baugruppe',
+        'image',
+        'in_house_production',
     ];
 
     /**
@@ -55,5 +59,27 @@ class Bauteil extends Model
     public function processes()
     {
         return $this->hasMany(Process::class, 'bauteil_id');
+    }
+
+    public function measurement()
+    {
+        return $this->hasOne(BauteilMeasurement::class, 'bauteil_id');
+    }
+
+    public function offers()
+    {
+        return $this->hasMany(SupplierOffer::class);
+    }
+
+    public function supplierProjects()
+    {
+        return $this->hasManyThrough(
+            SupplierProject::class,
+            SupplierOffer::class,
+            'bauteil_id',          
+            'supplier_offer_id',   
+            'id',                  
+            'id',
+        );
     }
 }

@@ -6,11 +6,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
-    protected $fillable = ['auftragsnummer', 'project_name', 'from_machine_logs'];
+    protected $fillable = ['auftragsnummer', 'project_name', 'from_machine_logs', 'project_status_id', 'start_time', 'end_time'];
+
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time'   => 'datetime',
+    ];
 
     public function procedures(): HasMany
     {
         return $this->hasMany(Procedure::class);
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(ProjectStatus::class, 'project_status_id');
     }
 
     public function bauteile()
@@ -28,7 +38,6 @@ class Project extends Model
         return $this->bauteile()->count();
     }
 
-    // 🔹 Sum of all process durations
     public function getGesamtzeitAttribute()
     {
         $time = 0;

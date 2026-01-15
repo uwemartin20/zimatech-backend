@@ -20,25 +20,41 @@
     </a>
     <div class="collapse submenu {{ $usersActive ? 'show' : '' }}" id="usersSubmenu">
         <a href="{{ route('admin.users') }}" class="{{ request()->is('admin/users') ? 'active' : '' }}">Alle Benutzer</a>
-        <a href="{{ route('admin.users.create') }}" class="{{ request()->is('admin/users/create') ? 'active' : '' }}">Benutzer Erstellen</a>
+    </div>
+
+    {{-- Projects with submenu --}}
+    @php
+        $projectOffersActive = request()->is('admin/project_offers*');
+    @endphp
+    <a data-bs-toggle="collapse" href="#projectOffersSubmenu" role="button"
+       aria-expanded="{{ $projectOffersActive ? 'true' : 'false' }}"
+       aria-controls="projectsSubmenu"
+       class="{{ $projectOffersActive ? 'active' : '' }}">
+        <i class="bi bi-folder2-open me-2"></i> AngebotManagement
+    </a>
+    <div class="collapse submenu {{ $projectOffersActive ? 'show' : '' }}" id="projectOffersSubmenu">
+        <a href="{{ route('admin.project_offers.index') }}" class="{{ request()->is('admin/project_offers*') ? 'active' : '' }}">Alle ProjektAngebote</a>
     </div>
 
     {{-- Projects with submenu --}}
     @php
         $projectsActive = request()->is('admin/projects*');
+        $bauteileActive = request()->is('admin/bauteile*');
     @endphp
     <a data-bs-toggle="collapse" href="#projectsSubmenu" role="button"
-       aria-expanded="{{ $projectsActive ? 'true' : 'false' }}"
+       aria-expanded="{{ $projectsActive || $bauteileActive ? 'true' : 'false' }}"
        aria-controls="projectsSubmenu"
-       class="{{ $projectsActive ? 'active' : '' }}">
-        <i class="bi bi-folder2-open me-2"></i> Projekte
+       class="{{ $projectsActive || $bauteileActive ? 'active' : '' }}">
+        <i class="bi bi-folder2-open me-2"></i> Projektmanagement
     </a>
-    <div class="collapse submenu {{ $projectsActive ? 'show' : '' }}" id="projectsSubmenu">
+    <div class="collapse submenu {{ $projectsActive || $bauteileActive ? 'show' : '' }}" id="projectsSubmenu">
         <a href="{{ route('admin.projects') }}" class="{{ request()->is('admin/projects') ? 'active' : '' }}">Alle Projekten</a>
-        <a href="{{ route('admin.projects.create') }}" class="{{ request()->is('admin/projects/create') ? 'active' : '' }}">Projekt Erstellen</a>
+        <a href="{{ route('admin.bauteile.index') }}" class="{{ request()->is('admin/bauteile*') ? 'active' : '' }}">Alle Bauteilen</a>
+        <a href="{{ route('admin.projects.projects.index') }}" class="{{ request()->is('admin/projects/projects*') ? 'active' : '' }}">Alle Fertigungsprozesse</a>
+        <a href="{{ route('admin.projects.offers') }}" class="{{ request()->is('admin/projects/offer*') ? 'active' : '' }}">Alle Lieferantenangebote</a>
     </div>
 
-    {{-- Projects with submenu --}}
+    {{-- Time Records with submenu --}}
     @php
         $timeActive = request()->is('admin/time*');
     @endphp
@@ -55,6 +71,35 @@
         <a href="{{ route('admin.time.change') }}" class="{{ request()->is('admin/time/change') ? 'active' : '' }}">Nachtrag Requests</a>
     </div>
 
+    {{-- Suppliers with submenu --}}
+    @php
+        $supplierActive = request()->is('admin/suppliers*');
+    @endphp
+    <a data-bs-toggle="collapse" href="#supplierSubmenu" role="button"
+       aria-expanded="{{ $supplierActive ? 'true' : 'false' }}"
+       aria-controls="supplierSubmenu"
+       class="{{ $supplierActive ? 'active' : '' }}">
+        <i class="bi bi-folder2-open me-2"></i> Lieferant Management
+    </a>
+    <div class="collapse submenu {{ $supplierActive ? 'show' : '' }}" id="supplierSubmenu">
+        <a href="{{ route('admin.suppliers.index') }}" class="{{ request()->is('admin/suppliers') ? 'active' : '' }}">Alle Lieferanten</a>
+    </div>
+
+    {{-- Emails with submenu --}}
+    @php
+        $emailActive = request()->is('admin/emails*');
+    @endphp
+    <a data-bs-toggle="collapse" href="#emailSubmenu" role="button"
+       aria-expanded="{{ $emailActive ? 'true' : 'false' }}"
+       aria-controls="emailSubmenu"
+       class="{{ $emailActive ? 'active' : '' }}">
+        <i class="bi bi-folder2-open me-2"></i> Email Management
+    </a>
+    <div class="collapse submenu {{ $emailActive ? 'show' : '' }}" id="emailSubmenu">
+        <a href="{{ route('admin.emails') }}" class="{{ request()->is('admin/emails') ? 'active' : '' }}">Inbox</a>
+        <a href="{{ route('admin.emails.sent') }}" class="{{ request()->is('admin/emails/sent') ? 'active' : '' }}">Sent</a>
+    </div>
+
     {{-- Settings --}}
     @php
         $settingsActive = request()->is('admin/settings*');
@@ -67,8 +112,10 @@
     </a>
     <div class="collapse submenu {{ $settingsActive ? 'show' : '' }}" id="settingsSubmenu">
         <a href="{{ route('admin.settings.machines') }}" class="{{ request()->is('admin/settings/machines') ? 'active' : '' }}">Machinen</a>
-        <a href="{{ route('admin.settings.machine-status') }}" class="{{ request()->is('admin/settings/machine-status') ? 'active' : '' }}">Machine Status</a>
-        <a href="#" class="">Permissions</a>
+        <a href="{{ route('admin.settings.machine-status') }}" class="{{ request()->is('admin/settings/machine-status*') ? 'active' : '' }}">Machine Status</a>
+        <a href="{{ route('admin.settings.project-status') }}" class="{{ request()->is('admin/settings/project-status*') ? 'active' : '' }}">Projekt Status</a>
+        <a href="{{ route('admin.settings.project-service') }}" class="{{ request()->is('admin/settings/project-service*') ? 'active' : '' }}">Projekt Leistung</a>
+        <a href="{{ route('admin.settings.email_templates.index') }}" class="{{ request()->is('admin/settings/email_templates*') ? 'active' : '' }}">Email Template</a>
         <a href="#" class="">Logs</a>
     </div>
 

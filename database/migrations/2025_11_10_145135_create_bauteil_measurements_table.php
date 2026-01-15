@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('depth', 8, 2)->nullable();
             $table->decimal('thickness', 8, 2)->nullable();
             $table->decimal('radius', 8, 2)->nullable();
-            $table->string('unit', 10)->default('mm');
+            $table->string('unit', 10)->nullable()->default('mm');
             $table->timestamps();
         });
     }
