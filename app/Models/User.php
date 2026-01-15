@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'company',
     ];
 
     /**
@@ -61,5 +62,24 @@ class User extends Authenticatable
     public function timeRecords()
     {
         return $this->hasMany(TimeRecord::class);
+    }
+
+    public function getCompanyName(): ?string
+    {
+        return match ($this->company) {
+            'ZF' => 'Zimmermann Formtechnik',
+            'ZT' => 'ZimaTec',
+            default => null,
+        };
+    }
+
+    public function isZF(): bool
+    {
+        return $this->company === 'ZF';
+    }
+
+    public function isZT(): bool
+    {
+        return $this->company === 'ZT';
     }
 }

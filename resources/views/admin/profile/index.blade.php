@@ -55,6 +55,16 @@
             >
         </div>
 
+        {{-- Company --}}
+        <div class="mb-3">
+            <label class="form-label">Company</label>
+            <select name="company" id="company" class="form-control">
+                <option value="">Select Company</option>
+                <option value="ZF" {{ $user->company == 'ZF' ? 'selected' : '' }}>ZF</option>
+                <option value="ZT" {{ $user->company == 'ZT' ? 'selected' : '' }}>ZT</option>
+            </select>
+        </div>
+
         <hr>
 
         {{-- Password --}}

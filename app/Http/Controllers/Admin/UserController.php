@@ -24,7 +24,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create');
+        return view('admin.users.form');
     }
 
     /**
@@ -37,6 +37,7 @@ class UserController extends Controller
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role'     => 'required|string|in:admin,user',
+            'company'  => 'required|string|in:ZF,ZT',
         ]);
 
         User::create([
@@ -44,9 +45,61 @@ class UserController extends Controller
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'role'     => $request->role,
+            'company'  => $request->company,
         ]);
 
         return redirect()->route('admin.users')->with('success', 'User created successfully!');
+    }
+
+    /**
+     * Show edit user form.
+     */
+    public function edit(User $user)
+    {
+        return view('admin.users.form', compact('user'));
+    }
+
+    /**
+     * Update user.
+     */
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6|confirmed',
+            'role'     => 'required|string|in:admin,user',
+            'company'  => 'required|string|in:ZF,ZT',
+        ]);
+
+        $data = [
+            'name'    => $request->name,
+            'email'   => $request->email,
+            'role'    => $request->role,
+            'company' => $request->company,
+        ];
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
+
+        return redirect()
+            ->route('admin.users')
+            ->with('success', 'User updated successfully!');
+    }
+
+    /**
+     * Delete user.
+     */
+    public function destroy(User $user)
+    {
+        $user->delete();
+
+        return redirect()
+            ->route('admin.users')
+            ->with('success', 'User deleted successfully!');
     }
 
     /**
@@ -69,11 +122,11 @@ class UserController extends Controller
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'company'  => 'nullable|string|in:ZF,ZT',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 
-        $data = $request->only('name', 'email');
-
+        $data = $request->only('name', 'email', 'company');
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
