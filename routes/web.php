@@ -10,6 +10,7 @@ use App\Http\Controllers\TimeRecordController;
 use App\Http\Controllers\Admin\TimeController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Admin\Settings\MachineSettingsController;
+use App\Http\Controllers\Admin\Settings\MachineController;
 
 Auth::routes();
 
@@ -54,7 +55,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/users', [UserController::class, 'index'])->name('users');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::get('/users/profile', [UserController::class, 'profile'])->name('users.profile');
+        Route::get('/profile', [UserController::class, 'profile'])->name('profile');
+        Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
 
         // Time Recording Routes
         Route::get('/time/logs', [TimeController::class, 'machineLogs'])->name('time.logs');
@@ -74,11 +76,38 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/time/change/reject/{id}', [TimeController::class, 'rejectChange'])->name('time.change.reject');
 
 
-        // Settings routes
-        Route::get('/settings/machine-status', [MachineSettingsController::class, 'machineStatus'])->name('settings.machine-status');
-        // Route::get('/settings/machine-status/new', [MachineSettingsController::class, 'machineStatusCreate'])->name('settings.machine-status.new');
-        Route::get('/settings/machine-status/show/{id?}', [MachineSettingsController::class, 'machineStatusShow'])->name('settings.machine-status.show');
-        Route::post('/settings/machine-status/update/{id?}', [MachineSettingsController::class, 'machineStatusUpdate'])->name('settings.machine-status.update');
-        Route::patch('/settings/machine-status/toggle/{id}', [MachineSettingsController::class, 'toggleMachineStatus'])->name('settings.machine-status.toggle');
-        Route::delete('/settings/machine-status/{id}', [MachineSettingsController::class, 'deleteMachineStatus'])->name('settings.machine-status.delete');
+        Route::prefix('settings')->name('settings.')->group(function () {
+
+            // Machine Status
+            Route::get('/machine-status', [MachineSettingsController::class, 'machineStatus'])
+                ->name('machine-status');
+
+            Route::get('/machine-status/show/{id?}', [MachineSettingsController::class, 'machineStatusShow'])
+                ->name('machine-status.show');
+
+            Route::post('/machine-status/update/{id?}', [MachineSettingsController::class, 'machineStatusUpdate'])
+                ->name('machine-status.update');
+
+            Route::patch('/machine-status/toggle/{id}', [MachineSettingsController::class, 'toggleMachineStatus'])
+                ->name('machine-status.toggle');
+
+            Route::delete('/machine-status/{id}', [MachineSettingsController::class, 'deleteMachineStatus'])
+                ->name('machine-status.delete');
+
+            // Machines
+            Route::get('/machines', [MachineController::class, 'index'])
+                ->name('machines');
+
+            Route::get('/machines/show/{id?}', [MachineController::class, 'show'])
+                ->name('machines.show');
+
+            Route::post('/machines/update/{id?}', [MachineController::class, 'update'])
+                ->name('machines.update');
+
+            Route::patch('/machines/toggle/{id}', [MachineController::class, 'toggle'])
+                ->name('machines.toggle');
+
+            Route::delete('/machines/{id}', [MachineController::class, 'delete'])
+                ->name('machines.delete');
+        });
 });

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Models\TimeChangeRequest;
 use App\Models\Notification;
 use Carbon\Carbon;
+use Laravel\Pail\ValueObjects\Origin\Console;
 
 class TimeRecordController extends Controller
 {
@@ -150,7 +151,7 @@ class TimeRecordController extends Controller
             'status_id' => 'required|exists:machine_statuses,id',
         ]);
 
-        $this->changeAllOtherLogs($request->time_record_id);
+        $this->changeAllOtherLogs($log->time_record_id);
 
         // Close current log
         if (is_null($log->end_time)) {
@@ -170,9 +171,9 @@ class TimeRecordController extends Controller
                          ->with('success', 'Status switched successfully.');
     }
 
-    public function changeAllOtherLogs($time_recored_id)
+    public function changeAllOtherLogs($time_record_id)
     {
-        $currentRecord = TimeRecord::find($time_recored_id);
+        $currentRecord = TimeRecord::find($time_record_id);
         $userId = $currentRecord->user_id;
 
         // get the 'ohne_aufsicht' status id (adjust as needed)
