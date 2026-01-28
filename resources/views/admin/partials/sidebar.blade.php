@@ -111,7 +111,7 @@
         <i class="bi bi-gear me-2"></i> Einstellungen
     </a>
     <div class="collapse submenu {{ $settingsActive ? 'show' : '' }}" id="settingsSubmenu">
-        <a href="{{ route('admin.settings.machines') }}" class="{{ request()->is('admin/settings/machines') ? 'active' : '' }}">Machinen</a>
+        <a href="{{ route('admin.settings.machines') }}" class="{{ request()->is('admin/settings/machines*') ? 'active' : '' }}">Machinen</a>
         <a href="{{ route('admin.settings.machine-status') }}" class="{{ request()->is('admin/settings/machine-status*') ? 'active' : '' }}">Machine Status</a>
         <a href="{{ route('admin.settings.project-status') }}" class="{{ request()->is('admin/settings/project-status*') ? 'active' : '' }}">Projekt Status</a>
         <a href="{{ route('admin.settings.project-service') }}" class="{{ request()->is('admin/settings/project-service*') ? 'active' : '' }}">Projekt Leistung</a>

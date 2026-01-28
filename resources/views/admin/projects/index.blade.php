@@ -18,7 +18,8 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>Auftragsnummer</th>
+                                <th>Auftragsnummer (ZimaTech)</th>
+                                <th>Auftragsnummer (Zimmermann Formtechnik)</th>
                                 <th>Projekt Name</th>
                                 <th>Erstellt Am</th>
                                 <th>Endet Am</th>
@@ -31,7 +32,8 @@
                             @foreach($projects as $index => $project)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td>{{ $project->auftragsnummer }}</td>
+                                    <td>{{ $project->auftragsnummer_zt }}</td>
+                                    <td>{{ $project->auftragsnummer_zf }}</td>
                                     <td>{{ $project->project_name }}</td>
                                     <td>{{ $project->created_at->format('d M Y') }}</td>
                                     <td>{{ $project->end_time ? $project->end_time->format('d M Y') : 'NA' }}</td>
@@ -46,6 +48,10 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
+                                        <a href="{{ route('admin.projects.positions.index', $project) }}"class="btn btn-outline-success btn-sm"
+                                            title="Positions">
+                                                <i class="bi bi-list-ul"></i>
+                                        </a>
                                         <a href="{{ route('admin.projects.show', $project) }}" class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-eye"></i>
                                         </a>

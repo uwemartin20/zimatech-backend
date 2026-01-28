@@ -41,7 +41,8 @@ class ProjectController extends Controller
     {
         $request->validate([
             'kunde' => 'required|string|max:255',
-            'auftragsnummer' => 'required|string|max:255|unique:projects,auftragsnummer',
+            'auftragsnummer_zt' => 'required|string|max:255|unique:projects,auftragsnummer_zt',
+            'auftragsnummer_zf' => 'required|string|max:255|unique:projects,auftragsnummer_zf',
             'project_name' => 'required|string|max:255',
             'project_status_id' => 'required|exists:project_statuses,id',
             'start_time' => 'nullable|date',
@@ -50,7 +51,8 @@ class ProjectController extends Controller
 
         $projectData = $request->only([
             'kunde',
-            'auftragsnummer',
+            'auftragsnummer_zt',
+            'auftragsnummer_zf',
             'project_name',
             'project_status_id',
             'start_time',
@@ -64,8 +66,7 @@ class ProjectController extends Controller
         }
 
         // Create folder structure
-        $this->createProject($request->kunde, $request->auftragsnummer, $request->project_name);
-
+        $this->createProject($request->kunde, $request->auftragsnummer_zt, $request->project_name);
         return redirect()->route('admin.projects')->with('success', 'Project created successfully!');
     }
 
@@ -150,7 +151,8 @@ class ProjectController extends Controller
     {
         $request->validate([
             'kunde' => 'required|string|max:255',
-            'auftragsnummer' => 'required|string|max:255|unique:projects,auftragsnummer,' . $project->id,
+            'auftragsnummer_zt' => 'nullable|string|max:255|unique:projects,auftragsnummer_zt,' . $project->id,
+            'auftragsnummer_zf' => 'nullable|string|max:255|unique:projects,auftragsnummer_zf,' . $project->id,
             'project_name' => 'required|string|max:255',
             'project_status_id' => 'nullable|exists:project_statuses,id',
             'start_time' => 'nullable|date',
@@ -159,7 +161,8 @@ class ProjectController extends Controller
 
         $project->update($request->only([
             'kunde',
-            'auftragsnummer',
+            'auftragsnummer_zt',
+            'auftragsnummer_zf',
             'project_name',
             'project_status_id',
             'start_time',

@@ -1,244 +1,156 @@
 @extends('admin.layouts.index')
 
-@section('title', 'Fräsmaschine Logs')
+@php
+    function secondsToIndustryMinutes($seconds) {
+      // Real time
+      $totalMinutes = $seconds / 60;
+      $hours = floor($totalMinutes / 60);
+      $minutes = round($totalMinutes % 60);
+
+      $realTime = sprintf("%02d:%02d", $hours, $minutes);
+
+      // Industrial time: 3 real minutes = 5 industrial minutes
+      $industryTotalMinutes = ($totalMinutes / 3) * 5;
+      $industryHours = floor($industryTotalMinutes / 60);
+      $industryMinutes = round($industryTotalMinutes % 60);
+
+      $industryTime = sprintf("%02d:%02d", $industryHours, $industryMinutes);
+
+        return "{$realTime} ({$industryTime})";
+    }
+@endphp
 
 @section('content')
 
 <div class="container mt-4">
-  <div class="card">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Maschine Logs</h5>
-        <button id="runLogBtn" data-url="{{ route('admin.parse.log') }}" class="btn btn-secondary btn-sm">
-          <i class="bi bi-plus-circle"></i> Machine Logs Importieren
-        </button>
-    </div>
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Maschinenprotokolle</h5>
+            <a href="{{ route('admin.time.logs_old') }}" class="btn btn-secondary btn-sm">
+              <i class="bi bi-plus-circle me-1"></i> Alte Seite
+            </a>
+        </div>
 
-    <div class="card-body">
+        <div class="card-body">
+          <div class="mb-3" style="overflow-x:auto; white-space: nowrap;" id="weekSlider">
+              @foreach($weeks as $week)
+                  <button 
+                      onclick="window.location.href='?week={{ $week['value'] }}'" 
+                      style="display:inline-block; width:120px; height:60px; margin-right:4px;"
+                      class="week-button {{ $selectedWeek == $week['value'] ? 'bg-secondary bg-opacity-50 text-white shadow' : 'bg-white text-gray text-opacity-80 hover:bg-gray hover:bg-opacity-10' }} border rounded-lg font-medium text-center align-middle"
+                      data-week="{{ $week['value'] }}">
+                      {{ $week['label'] }}
+                  </button>
+              @endforeach
 
-      <form method="GET" class="mb-4">
-          <div class="row g-2 align-items-center">
-              <div class="col-auto">
-                  <select name="project_id" id="projectFilter" class="form-select">
-                      <option value="">Alle Projekte</option>
-                      @foreach($allProjects as $proj)
-                          <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
-                              {{ $proj->project_name }} ({{ $proj->auftragsnummer }})
-                          </option>
-                      @endforeach
-                  </select>
-              </div>
-
-              <div class="col-auto">
-                <input type="week" name="week" id="weekFilter" class="form-control" placeholder="Jahr-W[Woche]" value="{{ request('week') }}">
-              </div>
-
-              <div class="col-auto">
-                <input type="date" name="day" id="dayFilter" class="form-control" value="{{ request('day') }}">
-              </div>
-
-              <div class="col-auto">
-                  <button class="btn btn-filter btn-top-search">Filtern</button>
-              </div>
-              <div class="col-auto">
-                <a href="{{ route('admin.time.logs') }}" class="btn btn-secondary">Zurücksetzen</a>
-              </div>
+              <!-- +1 button -->
+              <button id="addWeekBtn" style="display:inline-block; width:120px; height:60px; margin-right:4px;"
+                  class="bg-white text-gray text-opacity-80 hover:bg-gray hover:bg-opacity-10 border rounded-lg font-medium text-center align-middle">
+                  +1
+              </button>
           </div>
-      </form>
-
-      @foreach ($projects as $project)
-        <div class="card mb-2 shadow-sm">
-          <div class="card-header bg-dark text-white p-4" data-bs-toggle="collapse" data-bs-target="#project-{{ $project->id }}" style="cursor: pointer;">
-            <strong>Auftragsnummer:</strong> {{ $project->auftragsnummer ?? 'N/A' }} |
-            <strong>Projekt:</strong> {{ $project->project_name ?? 'N/A' }} |
-            <strong>Anzahl der bauteilen:</strong> {{ $project->bauteile_count ?? 'N/A' }} |
-            <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', $project->gesamtzeit) ?? '00:00' }}
-          </div>
-
-          <div id="project-{{ $project->id }}" class="collapse">
-            <div class="card-body">
-
-              {{-- ===================== CASE 1: BAUTEILE EXIST ===================== --}}
-              @if ($project->bauteile->count())
-                <h5 class="text-secondary mb-2">Bauteile</h5>
-                @foreach ($project->bauteile as $bauteil)
-                  <div class="border rounded p-3 mb-3 bg-light">
-                    <p class="mb-2" data-bs-toggle="collapse" data-bs-target="#bauteilTable{{ $bauteil->id }}" aria-expanded="false" aria-controls="bauteilTable{{ $bauteil->id }}" style="cursor: pointer;">
-                      <strong>Bauteil:</strong> {{ $bauteil->name }} |
-                      <strong>Anzahl Prozesse:</strong> {{ $bauteil->processes->count() }} |
-                      <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', $bauteil->processes->sum('total_seconds')) ?? '00:00' }}
-                    </p>
-
-                    <div class="collapse mt-2" id="bauteilTable{{ $bauteil->id }}">
-                      @if ($bauteil->procedures->count())
-                        <h5 class="text-secondary mb-2">Prozeduren</h5>
-                        @foreach ($bauteil->procedures as $procedure)
-                          <div class="border rounded p-3 mb-3 bg-light">
-                            <p class="mb-1" data-bs-toggle="collapse" data-bs-target="#bauProcedureTable{{ $procedure->id }}" aria-expanded="false" aria-controls="bauProcedureTable{{ $procedure->id }}" style="cursor: pointer;">
-                              <strong>Start:</strong> {{ $procedure->start_time ?? '-' }} |
-                              <strong>Ende:</strong> {{ $procedure->end_time ?? '-' }} |
-                              <strong>Anzahl Prozesse:</strong> {{ $procedure->processes->count() }} |
-                              <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', strtotime($procedure->end_time) - strtotime($procedure->start_time)) }} |
-                              <strong>Gesamtzeit der prozesse:</strong> {{ gmdate('H:i:s', $procedure->processes->sum('total_seconds')) ?? '00:00' }}
-                            </p>
-
-                            @if ($procedure->processes->count())
-                              <div class="collapse mt-2" id="procedureTable{{ $procedure->id }}">
-                                <table class="table table-sm table-bordered">
-                                  <thead class="table-secondary">
-                                    <tr>
-                                      <th>Prozess Name</th>
-                                      <th>Start zeit</th>
-                                      <th>End zeit</th>
-                                      <th>Zeit</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    @foreach ($procedure->processes as $process)
-                                      <tr>
-                                        <td>{{ $process->name }}</td>
-                                        <td>{{ $process->start_time }}</td>
-                                        <td>{{ $process->end_time }}</td>
-                                        <td>{{ gmdate('H:i:s', $process->total_seconds) }}</td>
-                                      </tr>
-                                    @endforeach
-                                  </tbody>
-                                </table>
-                              </div>
-                            @endif
-                          </div>
-                        @endforeach
-                      @endif
-                    </div>
-
-                    @if ($bauteil->processes->whereNull('procedure_id')->count())
-                      <div class="border rounded p-3 mb-3 bg-light">
-                        <p class="mb-1" data-bs-toggle="collapse" data-bs-target="#bauProcessTable{{ $bauteil->id }}" aria-expanded="false" aria-controls="bauProcessTable{{ $bauteil->id }}" style="cursor: pointer;">
-                          <strong>Gesamtzeit der prozesse:</strong> {{ gmdate('H:i:s', $bauteil->processes->whereNull('procedure_id')->sum('total_seconds')) ?? '00:00' }}
-                        </p>
-
-                        <div class="collapse mt-2" id="bauProcessTable{{ $bauteil->id }}">
-                          <table class="table table-sm table-bordered">
-                            <thead class="table-info">
-                              <tr>
-                                <th>Prozess Name</th>
-                                <th>Start zeit</th>
-                                <th>End zeit</th>
-                                <th>Zeit</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              @foreach ($bauteil->processes->whereNull('procedure_id') as $process)
-                                <tr>
-                                  <td>{{ $process->name }}</td>
-                                  <td>{{ $process->start_time }}</td>
-                                  <td>{{ $process->end_time }}</td>
-                                  <td>{{ gmdate('H:i:s', $process->total_seconds) }}</td>
-                                </tr>
-                              @endforeach
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    @endif
-                  </div>
-                @endforeach
-              @endif
-
-              {{-- ===================== CASE 2: No Bauteile but PROCEDURES EXIST ===================== --}}
-              @if ($project->procedures->count())
-                <h5 class="text-secondary mb-2">Prozeduren</h5>
-                @foreach ($project->procedures as $procedure)
-                  <div class="border rounded p-3 mb-3 bg-light">
-                    <p class="mb-1" data-bs-toggle="collapse" data-bs-target="#procedureTable{{ $procedure->id }}" aria-expanded="false" aria-controls="procedureTable{{ $procedure->id }}" style="cursor: pointer;">
-                      <strong>Start:</strong> {{ $procedure->start_time ?? '-' }} |
-                      <strong>Ende:</strong> {{ $procedure->end_time ?? '-' }} |
-                      <strong>Anzahl Prozesse:</strong> {{ $procedure->processes->count() }} |
-                      <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', strtotime($procedure->end_time) - strtotime($procedure->start_time)) }} |
-                      <strong>Gesamtzeit der prozesse:</strong> {{ gmdate('H:i:s', $procedure->processes->sum('total_seconds')) ?? '00:00' }}
-                    </p>
-
-                    <div class="collapse mt-2" id="procedureTable{{ $procedure->id }}">   
-                      @if ($procedure->processes->count())
-                        <table class="table table-sm table-bordered">
-                          <thead class="table-secondary">
-                            <tr>
-                              <th>Prozess Name</th>
-                              <th>Start zeit</th>
-                              <th>End zeit</th>
-                              <th>Zeit</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @foreach ($procedure->processes as $process)
-                              <tr>
-                                <td>{{ $process->name }}</td>
-                                <td>{{ $process->start_time }}</td>
-                                <td>{{ $process->end_time }}</td>
-                                <td>{{ gmdate('H:i:s', $process->total_seconds) }}</td>
-                              </tr>
-                            @endforeach
-                          </tbody>
-                        </table>
-                      @else
-                        <p class="text-muted fst-italic">Keine Prozesse für dieses Prozedur.</p>
-                      @endif
-                    </div>
-                  </div>
-                @endforeach
-              @endif
-
-              {{-- ===================== CASE 3: NO PROCEDURES/BAUTEILE BUT DIRECT PROCESSES EXIST ===================== --}}
-              @if ($project->processes->whereNull('procedure_id')->whereNull('bauteil_id')->count())
-                <h5 class="text-secondary mb-2">Direkte Prozesse</h5>
-                <div class="border rounded p-3 mb-3 bg-light">
-                  <p class="mb-1" data-bs-toggle="collapse" data-bs-target="#processTable{{ $project->id }}" aria-expanded="false" aria-controls="processTable{{ $project->id }}" style="cursor: pointer;">
-                    <strong>Gesamtzeit der prozesse:</strong> {{ gmdate('H:i:s', $project->processes->whereNull('procedure_id')->whereNull('bauteil_id')->sum('total_seconds')) ?? '00:00' }}
-                  </p>
-
-                  <div class="collapse mt-2" id="processTable{{ $project->id }}">
-                    <table class="table table-sm table-bordered">
-                      <thead class="table-warning">
-                        <tr>
-                          <th>Prozess Name</th>
-                          <th>Start Zeit</th>
-                          <th>End Zeit</th>
-                          <th>Zeit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @foreach ($project->processes->whereNull('procedure_id')->whereNull('bauteil_id') as $process)
+          <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                      <tr>
+                          <th>#</th>
+                          <th>KW</th>
+                          <th>Firma</th>
+                          <th>Auftragsnr.</th>
+                          <th>Position</th>
+                          <th>Maschine</th>
+                          <th>Gesamtzeit (Minuten)</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      @forelse($weeklyRecords as $index => $row)
+                          @php
+                              $totalSeconds = $row->process_seconds - $row->pause_seconds;
+                          @endphp
                           <tr>
-                            <td>{{ $process->name }}</td>
-                            <td>{{ $process->start_time }}</td>
-                            <td>{{ $process->end_time }}</td>
-                            <td>{{ gmdate('H:i:s', $process->total_seconds) }}</td>
+                              <td>{{ $index + 1 }}</td>
+                              <td>
+                                      KW {{ substr($row->calendar_week, 4) }}
+                              </td>
+                              <td>
+                                  <span class="badge {{ $row->company === 'ZF' ? 'bg-primary' : 'bg-success' }}">
+                                      {{ $row->company }}
+                                  </span>
+                              </td>
+                              <td>{{ $row->auftragsnummer }}</td>
+                              <td>{{ $row->position_name }}</td>
+                              <td>{{ $row->machine_name }}</td>
+                              <td>
+                                  <strong>{{ secondsToIndustryMinutes($totalSeconds) }}</strong>
+                              </td>
                           </tr>
-                        @endforeach
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              @endif
-
-              {{-- ===================== CASE 4: NOTHING EXISTS ===================== --}}
-              @if (!$project->processes->count())
-                <p class="text-muted fst-italic">Keine Daten vorhanden.</p>
-              @endif
-
-            </div>
+                      @empty
+                          <tr>
+                              <td colspan="9" class="text-center text-muted py-4">
+                                Keine Daten für diese Kalenderwochen vorhanden.
+                              </td>
+                          </tr>
+                      @endforelse
+                  </tbody>
+              </table>
           </div>
         </div>
-      @endforeach
     </div>
-
-    @if ($projects->hasPages())
-      <div class="card-footer">
-        <div class="d-flex justify-content-center mt-3">
-          {{ $projects->withQueryString()->links('pagination::bootstrap-5') }}
-        </div>
-      </div>
-    @endif
-  </div>
 </div>
 
+<style>
+    /* Hide horizontal scrollbar */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+<script>
+    const slider = document.getElementById('weekSlider');
+
+    function scrollLeft() {
+        slider.scrollBy({ left: -200, behavior: 'smooth' });
+    }
+
+    function scrollRight() {
+        slider.scrollBy({ left: 200, behavior: 'smooth' });
+    }
+
+    document.getElementById('addWeekBtn').addEventListener('click', function() {
+        const slider = document.getElementById('weekSlider');
+        const buttons = slider.querySelectorAll('.week-button');
+        const lastButton = buttons[buttons.length - 1];
+
+        // Get last week value, format oW (e.g., 202603)
+        let lastWeekValue = lastButton.getAttribute('data-week');
+        let year = parseInt(lastWeekValue.slice(0, 4));
+        let week = parseInt(lastWeekValue.slice(4, 6));
+
+        // Calculate previous week
+        week -= 1;
+        if (week < 1) {
+            week = 52; // handle previous year
+            year -= 1;
+        }
+
+        // Pad week to two digits
+        let weekStr = week.toString().padStart(2, '0');
+        let newWeekValue = year.toString() + weekStr;
+        let newWeekLabel = 'KW ' + weekStr + ' / ' + year;
+
+        // Create new button
+        const newButton = document.createElement('button');
+        newButton.setAttribute('onclick', `window.location.href='?week=${newWeekValue}'`);
+        newButton.setAttribute('data-week', newWeekValue);
+        newButton.className = "week-button border rounded-lg font-medium bg-white text-gray text-opacity-80 hover:bg-gray hover:bg-opacity-10";
+        newButton.style.cssText = "display:inline-block; width:120px; height:60px; margin-right:4px;";
+        newButton.innerText = newWeekLabel;
+
+        // Insert before +1 button
+        slider.insertBefore(newButton, this);
+    });
+</script>
 @endsection

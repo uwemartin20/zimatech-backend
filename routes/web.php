@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Admin\ProjectController as AdminProject;
 use App\Http\Controllers\HomeController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Admin\BauteilController;
 use App\Http\Controllers\Admin\ProjectOfferController;
 use App\Http\Controllers\Admin\Settings\EmailTemplateController;
 use App\Http\Controllers\Admin\EmailController;
+use App\Http\Controllers\Admin\PositionController;
 
 Auth::routes();
 
@@ -76,6 +78,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/bauteile/filter/{type}', [BauteilController::class, 'filter'])->name('bauteile.filter');
         Route::resource('bauteile', BauteilController::class);
         Route::prefix('projects')->name('projects.')->group(function () {
+
+            Route::get('{project}/positions', [PositionController::class, 'index'])->name('positions.index');
+            Route::get('{project}/positions/create', [PositionController::class, 'create'])->name('positions.create');
+            Route::post('{project}/positions', [PositionController::class, 'store'])->name('positions.store');
+            Route::get('{project}/positions/{position}/edit', [PositionController::class, 'edit'])->name('positions.edit');
+            Route::put('{project}/positions/{position}', [PositionController::class, 'update'])->name('positions.update');
+            Route::delete('{project}/positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
             
             // Supplier offers routes
             Route::get('/offers', [SupplierOfferController::class, 'index'])->name('offers');
@@ -139,12 +148,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/users/profile/{user}', [UserController::class, 'profile'])->name('users.profile');
         Route::get('/users/edit/{user}', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/update/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::patch('/users/machine-user/toggle/{id}', [UserController::class, 'toggleMachineUser'])->name('machine-user.toggle');
         Route::delete('/users/profile/destroy/{user}', [UserController::class, 'profile'])->name('users.destroy');
 
         // Time Recording Routes
         Route::get('/time/logs', [TimeController::class, 'machineLogs'])->name('time.logs');
+        Route::get('/time/logs_old', [TimeController::class, 'machineLogsOld'])->name('time.logs_old');
         Route::get('/parse-log', [TimeController::class, 'parseLog'])->name('parse.log');
         Route::get('/time/records', [TimeController::class, 'records'])->name('time.records');
+        Route::get('/time/daily-records', [TimeController::class, 'dailyRecords'])->name('time.daily-records');
+        Route::get('/time/daily-records/details', [TimeController::class, 'dayDetails']);
         Route::get('/time/records/show/{id}', [TimeController::class, 'show'])->name('time.show');
         Route::get('/time/records/edit/{id}', [TimeController::class, 'editrecord'])->name('time.edit');
         Route::put('/time/records/update/{id?}', [TimeController::class, 'updateRecord'])->name('time.update');
@@ -196,6 +209,8 @@ Route::middleware(['auth', 'role:admin'])
 
             Route::post('/machines/update/{id?}', [MachineController::class, 'update'])
                 ->name('machines.update');
+            
+            Route::put('/machines/update/{id}', [MachineController::class, 'update']);
 
             Route::patch('/machines/toggle/{id}', [MachineController::class, 'toggle'])
                 ->name('machines.toggle');

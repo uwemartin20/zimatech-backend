@@ -19,8 +19,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="auftragsnummer" class="form-label">Auftragsnummer</label>
-                        <input type="text" name="auftragsnummer" id="auftragsnummer" class="form-control" placeholder="Enter order number" required>
+                        <label for="auftragsnummer_zt" class="form-label">Auftragsnummer (ZimaTech)</label>
+                        <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control" placeholder="Enter order number (ZimaTech)" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="auftragsnummer_zf" class="form-label">Auftragsnummer (Zimmermann Formtechnik)</label>
+                        <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control" placeholder="Enter order number (ZimaF)" required>
                     </div>
 
                     <div class="mb-3">
@@ -123,7 +128,7 @@
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const kundeInput = document.getElementById("kunde");
-        const auftragInput = document.getElementById("auftragsnummer");
+        const auftragInput = document.getElementById("auftragsnummer_zt");
         const projektInput = document.getElementById("project_name");
         const basePath = document.getElementById("base-path");
     

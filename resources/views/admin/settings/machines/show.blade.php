@@ -11,8 +11,13 @@
 
         <div class="card-body">
             <form method="POST"
-                  action="{{ route('admin.settings.machines.update', $machine->id) }}">
+                action="{{ $machine->id 
+                            ? route('admin.settings.machines.update', $machine->id)
+                            : route('admin.settings.machines.update') }}">
                 @csrf
+                @if($machine->id)
+                    @method('PUT') {{-- Needed for update --}}
+                @endif
 
                 <div class="mb-3">
                     <label class="form-label">Name</label>
@@ -36,6 +41,14 @@
                            name="active"
                            {{ old('active', $machine->active) ? 'checked' : '' }}>
                     <label class="form-check-label">Active</label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Company</label>
+                    <select name="company" class="form-select" required>
+                        <option value="ZF" @selected(old('company', $machine->company) === 'ZF')>Zimmermann Formtechnik (ZF)</option>
+                        <option value="ZT" @selected(old('company', $machine->company) === 'ZT')>ZimaTech (ZT)</option>
+                    </select>
                 </div>
 
                 <button class="btn btn-primary">

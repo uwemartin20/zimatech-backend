@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
-    protected $fillable = ['auftragsnummer', 'project_name', 'from_machine_logs', 'project_status_id', 'start_time', 'end_time'];
+    protected $fillable = ['auftragsnummer_zf', 'auftragsnummer_zt', 'project_name', 'from_machine_logs', 'project_status_id', 'start_time', 'end_time'];
 
     protected $casts = [
         'start_time' => 'datetime',
@@ -46,5 +46,10 @@ class Project extends Model
         $time += $this->processes()->sum('total_seconds');
 
         return $time;
+    }
+
+    public function positions()
+    {
+        return $this->hasMany(Position::class);
     }
 }

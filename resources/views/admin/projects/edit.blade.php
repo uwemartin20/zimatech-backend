@@ -20,8 +20,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="auftragsnummer" class="form-label">Auftragsnummer</label>
-                        <input type="text" name="auftragsnummer" id="auftragsnummer" class="form-control" value="{{ old('auftragsnummer', $project->auftragsnummer) }}" placeholder="Enter order number" required>
+                        <label for="auftragsnummer_zt" class="form-label">Auftragsnummer (ZimaTech)</label>
+                        <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control" value="{{ old('auftragsnummer_zt', $project->auftragsnummer_zt) }}" placeholder="Enter order number (ZimaTech)" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="auftragsnummer_zf" class="form-label">Auftragsnummer (Zimmermann Formtechnik)</label>
+                        <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control" value="{{ old('auftragsnummer_zf', $project->auftragsnummer_zf) }}" placeholder="Enter order number (Zimmermann Formtechnik)" required>
                     </div>
 
                     <div class="mb-3">

@@ -15,8 +15,12 @@
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-3">
-                    <h6 class="text-muted">Auftragsnummer:</h6>
-                    <p class="fw-semibold">{{ $project->auftragsnummer }}</p>
+                    <h6 class="text-muted">Auftragsnummer (ZimaTech):</h6>
+                    <p class="fw-semibold">{{ $project->auftragsnummer_zt }}</p>
+                </div>
+                <div class="col-md-3">
+                    <h6 class="text-muted">Auftragsnummer (Zimmermann Formtechnik):</h6>
+                    <p class="fw-semibold">{{ $project->auftragsnummer_zf }}</p>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted">Projekt Status:</h6>

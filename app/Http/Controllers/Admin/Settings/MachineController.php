@@ -34,6 +34,7 @@ class MachineController extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'company'     => 'required|string|in:ZF,ZT',
         ]);
 
         if ($id) {
@@ -42,6 +43,7 @@ class MachineController extends Controller
                 'name'        => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'active'      => $request->has('active'),
+                'company'     => $validated['company'],
             ]);
             $message = 'Machine updated successfully!';
         } else {
@@ -49,6 +51,7 @@ class MachineController extends Controller
                 'name'        => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'active'      => $request->has('active'),
+                'company'     => $validated['company'],
             ]);
             $message = 'New machine created successfully!';
         }

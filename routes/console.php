@@ -9,4 +9,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('parse:drilllog storage/app/public/LOGFILE.OLD')->everyMinute();
+Schedule::command('parse:drilllog storage/app/public/LOGFILE.OLD --save=false')->everyMinute();
+Schedule::command('test:scheduler')->everyMinute();

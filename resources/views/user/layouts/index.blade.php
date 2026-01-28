@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <title>@yield('title', 'Fräsmaschine Logs')</title>
     <link rel="icon" href="{{ asset('images/zimmermann-logo-192.png') }}" type="image/x-icon" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <!-- Add this inside your <head> -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ asset('bootstrap/icons/bootstrap-icons.css') }}">
 
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
     @stack('styles')
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
     {{-- ========== NAVBAR ========== --}}
     <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
@@ -119,7 +119,7 @@
     </div>
 
     {{-- ========== MAIN CONTENT ========== --}}
-    <main class="container py-4">
+    <main class="container flex-grow-1 py-4">
         @yield('content')
     </main>
 
@@ -128,7 +128,7 @@
         &copy; {{ date('Y') }} ZiMaTec. Alle Rechte vorbehalten.
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('js/custom.js') }}"></script> 
     @stack('scripts')
 </body>

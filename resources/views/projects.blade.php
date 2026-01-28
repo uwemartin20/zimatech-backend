@@ -42,7 +42,7 @@
             const tr=document.createElement('tr');
             const procs=proc.processes.map(pr=>`${pr.name} (count:${pr.count}, time:${Math.floor(pr.total_seconds/60)}m ${pr.total_seconds%60}s)`).join('<br>');
             tr.innerHTML=`
-            <td>${p.auftragsnummer}</td>
+            <td>${p.auftragsnummer_zt}</td>
             <td>${p.project_name}</td>
             <td>${proc.start_time??''}</td>
             <td>${proc.end_time??''}</td>

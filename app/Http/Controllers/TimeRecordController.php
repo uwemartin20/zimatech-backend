@@ -18,7 +18,7 @@ class TimeRecordController extends Controller
 {
     public function index(Request $request)
     {
-        $query = TimeRecord::with(['user', 'project', 'machine']);
+        $query = TimeRecord::with(['user', 'project', 'position', 'machine']);
 
         // Filters
         if ($request->filled('user_id')) {
@@ -49,25 +49,46 @@ class TimeRecordController extends Controller
         $records = $query->orderBy('created_at', 'desc')->paginate(10)->withQueryString();
 
         // For filter dropdowns
-        $users = User::all();
+        $users = User::where('machine_user', true)->get();
         $projects = Project::all();
         $machines = Machine::all();
 
-        return view('user.time_records.index', compact('records', 'users', 'projects', 'machines'));
+        $selectedUser = $request->user_id
+            ? $users->firstWhere('id', $request->user_id)
+            : null;
+
+        return view('user.time_records.index', compact('records', 'users', 'projects', 'machines', 'selectedUser'));
     }
     /**
      * Show form to create a new time record
      */
+    // public function create()
+    // {
+    //     $users = User::where('machine_user', true)->get();
+    //     $projects = Project::all();
+    //     $machines = Machine::all();
+    //     $statuses = MachineStatus::where('active',true)->get();
+
+    //     return view('user.time_records.create', compact('users', 'projects', 'machines', 'statuses'));
+    // }
+
     public function create()
     {
-        $users = User::all();
-        $projects = Project::all();
+        $users = User::where('machine_user', true)->get();
+
+        $projects = Project::with('positions')
+            ->orderBy('project_name')
+            ->get();
+
         $machines = Machine::all();
-        $statuses = MachineStatus::where('active',true)->get();
 
-        return view('user.time_records.create', compact('users', 'projects', 'machines', 'statuses'));
+        $statuses = MachineStatus::where('active', true)->get();
+
+        return view(
+            'user.time_records.create',
+            compact('users', 'projects', 'machines', 'statuses')
+        );
     }
-
     /**
      * Store a new record (initial start)
      */
@@ -76,6 +97,7 @@ class TimeRecordController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'project_id' => 'required|exists:projects,id',
+            'position_id' => 'required|exists:positions,id',
             'machine_id' => 'required|exists:machines,id',
             'status_id' => 'required|exists:machine_statuses,id',
         ]);
@@ -83,6 +105,7 @@ class TimeRecordController extends Controller
         // Check if an open record already exists for this user/project/machine
         $existingRecord = TimeRecord::where('user_id', $request->user_id)
             ->where('project_id', $request->project_id)
+            ->where('position_id', $request->position_id)
             ->where('machine_id', $request->machine_id)
             ->whereNull('end_time')
             ->first();
@@ -96,6 +119,7 @@ class TimeRecordController extends Controller
         $record = TimeRecord::create([
             'user_id' => $request->user_id,
             'project_id' => $request->project_id,
+            'position_id' => $request->position_id,
             'machine_id' => $request->machine_id,
             'start_time' => now(),
         ]);
@@ -115,7 +139,7 @@ class TimeRecordController extends Controller
     public function show($id)
     {
         // Load record with relationships
-        $record = TimeRecord::with(['user', 'project', 'machine', 'logs.status'])->findOrFail($id);
+        $record = TimeRecord::with(['user', 'project', 'position', 'machine', 'logs.status'])->findOrFail($id);
 
         // Get all statuses for the status-switching buttons
         $statuses = MachineStatus::where('active',true)->get();

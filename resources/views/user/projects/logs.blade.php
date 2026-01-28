@@ -20,7 +20,7 @@
                       <option value="">Alle Projekte</option>
                       @foreach($allProjects as $proj)
                           <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
-                              {{ $proj->project_name }} ({{ $proj->auftragsnummer }})
+                              {{ $proj->project_name }} ({{ $proj->auftragsnummer_zt }})
                           </option>
                       @endforeach
                   </select>
@@ -46,7 +46,7 @@
       @foreach ($projects as $project)
         <div class="card mb-2 shadow-sm">
           <div class="card-header bg-dark text-white p-4" data-bs-toggle="collapse" data-bs-target="#project-{{ $project->id }}" style="cursor: pointer;">
-            <strong>Auftragsnummer:</strong> {{ $project->auftragsnummer ?? 'N/A' }} |
+            <strong>Auftragsnummer (ZimaTech):</strong> {{ $project->auftragsnummer_zt ?? 'N/A' }} |
             <strong>Projekt:</strong> {{ $project->project_name ?? 'N/A' }} |
             <strong>Anzahl der bauteilen:</strong> {{ $project->bauteile_count ?? 'N/A' }} |
             <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', $project->gesamtzeit) ?? '00:00' }}

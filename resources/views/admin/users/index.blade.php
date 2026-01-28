@@ -20,6 +20,8 @@
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Firma</th>
+                        <th>Machine Nutzer</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -31,20 +33,27 @@
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
                             <td><span class="badge bg-{{ $user->role === 'admin' ? 'warning' : 'secondary' }}">{{ ucfirst($user->role) }}</span></td>
+                            <td><span class="badge bg-{{ $user->company === 'ZF' ? 'primary' : 'success' }}">{{ ucfirst($user->getCompanyName()) }}</span></td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input toggle-active"
+                                        data-id="{{ $user->id }}" {{ $user->machine_user ? 'checked' : '' }}>
+                                </div>
+                            </td>
                             <td>{{ $user->created_at->diffForHumans() }}</td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.users.profile', $user) }}" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-eye"></i>
+                            <td>
+                                <a href="{{ route('admin.users.edit', $user) }}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil-square"></i>
                                 </a>
-                                <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-
-                                <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Diesen Benutzer wirklich löschen?')">
+                            
+                                <form action="{{ route('admin.users.delete', $user) }}"
+                                      method="POST"
+                                      class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Delete this user?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -52,7 +61,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted">No users found.</td>
+                            <td colspan="5" class="text-center text-muted">No users found.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -60,53 +69,36 @@
         </div>
     </div>
 
-    <table class="table table-striped align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Company</th>
-                <th>Created</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($users as $user)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $user->name }}</td>
-                    <td>{{ $user->email }}</td>
-                    <td><span class="badge bg-{{ $user->role === 'admin' ? 'warning' : 'secondary' }}">{{ ucfirst($user->role) }}</span></td>
-                    <td><span class="badge bg-{{ $user->company === 'ZF' ? 'primary' : 'success' }}">{{ ucfirst($user->getCompanyName()) }}</span></td>
-                    <td>{{ $user->created_at->diffForHumans() }}</td>
-                    <td>
-                        <a href="{{ route('admin.users.edit', $user) }}"
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-pencil-square"></i>
-                        </a>
-                    
-                        <form action="{{ route('admin.users.delete', $user) }}"
-                              method="POST"
-                              class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Delete this user?')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" class="text-center text-muted">No users found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
     {{ $users->links() }}
 </div>
+
+{{-- === AJAX Script for toggle === --}}
+<script>
+document.querySelectorAll('.toggle-active').forEach((checkbox) => {
+    checkbox.addEventListener('change', function() {
+        const id = this.dataset.id;
+        fetch(`/admin/users/machine-user/toggle/${id}`, {
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const status = data.active ? 'activated' : 'deactivated';
+                console.log(`Machine User ${id} ${status}`);
+                showAlert(`Machine User ${status} successfully.`, 'success');
+            } else {
+                showAlert('Something went wrong.', 'danger');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showAlert('Server error, please try again.', 'danger');
+        });
+    });
+});
+</script>
 @endsection

@@ -15,7 +15,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>Auftragsnummer</th>
+                                <th>Auftragsnummer (ZimaTech)</th>
                                 <th>Projekt Name</th>
                                 <th>Erstellt Am</th>
                             </tr>
@@ -24,7 +24,7 @@
                             @foreach($projects as $index => $project)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td>{{ $project->auftragsnummer }}</td>
+                                    <td>{{ $project->auftragsnummer_zt }}</td>
                                     <td>{{ $project->project_name }}</td>
                                     <td>{{ $project->created_at->format('d M Y') }}</td>
                                 </tr>

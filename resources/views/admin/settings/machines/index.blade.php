@@ -19,6 +19,7 @@
                         <th>#</th>
                         <th>Name</th>
                         <th>Active</th>
+                        <th>Company</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -35,6 +36,7 @@
                                            {{ $machine->active ? 'checked' : '' }}>
                                 </div>
                             </td>
+                            <td>{{ $machine->company }}</td>
                             <td>
                                 <a href="{{ route('admin.settings.machines.show', $machine->id) }}"
                                    class="btn btn-sm btn-outline-primary">

@@ -7,7 +7,7 @@ use App\Models\TimeRecord;
 
 class Machine extends Model
 {
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'active', 'company'];
     public function timeRecords()
     {
         return $this->hasMany(TimeRecord::class);

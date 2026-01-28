@@ -103,6 +103,17 @@ class UserController extends Controller
     }
 
     /**
+     * Toggle active/inactive.
+     */
+    public function toggleMachineUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $user->machine_user = !$user->machine_user;
+        $user->save();
+        return response()->json(['success' => true, 'active' => $user->machine_user]);
+    }
+
+    /**
      * Display the authenticated user's profile.
      */
     public function profile()

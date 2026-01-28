@@ -101,7 +101,7 @@ trait HandleMachineLogs
     public function parseMachineLogs($logFile = null) {
 
         if (!file_exists($logFile)) {
-            $sourceFile = "Y:/LOGFILE.OLD";
+            $sourceFile = '\\\\10.0.0.35\\fz37\\FIDIA\\Program\\LOGFILE.OLD';
             copy($sourceFile, $logFile);
         }
 

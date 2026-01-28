@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TimeChangeRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Traits\HandleMachineLogs;
 use App\Models\TimeRecord;
@@ -17,6 +18,7 @@ use Carbon\Carbon;
 class TimeController extends Controller
 {
     use HandleMachineLogs;
+
     public function records(Request $request) {
         $query = TimeRecord::with(['user', 'project', 'machine']);
 
@@ -53,7 +55,200 @@ class TimeController extends Controller
         $projects = Project::all();
         $machines = Machine::all();
 
-        return view('admin.time.list', compact('records', 'users', 'projects', 'machines'));
+        $weeks = [];
+        $today = Carbon::now();
+        $selectedWeek = request()->get('week', $today->format('oW')); // e.g., 202603
+        $maxWeeks = 5;
+
+        // Start from current week
+        $i = 0;
+        while (true) {
+            $weekStart = (clone $today)->startOfWeek()->subWeeks($i);
+            $weekNumber = $weekStart->format('oW');
+
+            $weeks[] = [
+                'label' => 'KW ' . $weekStart->format('W') . ' / ' . $weekStart->format('o'),
+                'value' => $weekNumber,
+            ];
+
+            $i++;
+
+            // Stop conditions:
+            // 1. Reached maxWeeks AND selectedWeek is already in the list
+            // 2. Or the last generated week matches selectedWeek
+            if (count($weeks) >= $maxWeeks && in_array($selectedWeek, array_column($weeks, 'value'))) {
+                break;
+            }
+            if ($weekNumber === $selectedWeek) {
+                break;
+            }
+        }
+
+        // Extract year and week number
+        $year = substr($selectedWeek, 0, 4);
+        $weekNumber = substr($selectedWeek, 4, 2);
+
+        // Set $fromDate as start of that week
+        $fromDate = Carbon::now()->setISODate($year, $weekNumber)->startOfWeek();
+        $toDate = Carbon::now()->setISODate($year, $weekNumber)->endOfWeek();
+
+        $weeklyRecords = DB::table('time_logs as tl')
+            ->join('time_records as tr', 'tr.id', '=', 'tl.time_record_id')
+            ->join('users as u', 'u.id', '=', 'tr.user_id')
+            ->join('projects as p', 'p.id', '=', 'tr.project_id')
+            ->join('positions as pos', 'pos.id', '=', 'tr.position_id')
+            ->join('machines as m', 'm.id', '=', 'tr.machine_id')
+            ->join('machine_statuses as ms', 'ms.id', '=', 'tl.machine_status_id')
+
+            ->whereNotNull('tl.end_time')
+            ->whereBetween('tl.start_time', [$fromDate, $toDate])
+
+            ->select([
+                DB::raw('YEARWEEK(tl.start_time, 1) as calendar_week'),
+                'u.company',
+
+                DB::raw("
+                    CASE
+                        WHEN u.company = 'ZF' THEN p.auftragsnummer_zf
+                        ELSE p.auftragsnummer_zt
+                    END as auftragsnummer
+                "),
+
+                'pos.id as position_id',
+                'm.id as machine_id',
+                'pos.name as position_name',
+                'm.name as machine_name',
+
+                DB::raw("
+                    SUM(
+                        CASE WHEN ms.name = 'Rustzeit'
+                        THEN TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time)
+                        ELSE 0 END
+                    ) as rustzeit_seconds
+                "),
+
+                DB::raw("
+                    SUM(
+                        CASE WHEN ms.name = 'Mit Aufsicht'
+                        THEN TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time)
+                        ELSE 0 END
+                    ) as mit_aufsicht_seconds
+                "),
+            ])
+
+            ->groupBy([
+                'calendar_week',
+                'u.company',
+                'auftragsnummer',
+                'pos.id',
+                'm.id',
+            ])
+
+            ->orderByDesc('calendar_week')
+            ->get();
+        // dd($weeklyRecords);
+
+        return view('admin.time.list', compact('weeklyRecords', 'weeks', 'selectedWeek', 'records', 'users', 'projects', 'machines'));
+    }
+
+    public function dailyRecords(Request $request) {
+        $calendarWeek = $request->input('calendar_week');
+        $auftragsnummer = $request->input('auftragsnummer');
+        $positionId = $request->input('position_id');
+        $machineId = $request->input('machine_id');
+
+        $dailyRecords = DB::table('time_logs as tl')
+            ->join('time_records as tr', 'tr.id', '=', 'tl.time_record_id')
+            ->join('users as u', 'u.id', '=', 'tr.user_id')
+            ->join('projects as p', 'p.id', '=', 'tr.project_id')
+            ->join('positions as pos', 'pos.id', '=', 'tr.position_id')
+            ->join('machines as m', 'm.id', '=', 'tr.machine_id')
+            ->join('machine_statuses as ms', 'ms.id', '=', 'tl.machine_status_id')
+
+            ->whereNotNull('tl.end_time')
+            ->whereRaw('YEARWEEK(tl.start_time, 1) = ?', [$calendarWeek])
+            ->where(function($query) use ($auftragsnummer) {
+                $query->whereRaw("(u.company = 'ZF' AND COALESCE(p.auftragsnummer_zf, '') = ?)", [$auftragsnummer])
+                  ->orWhereRaw("(u.company = 'ZT' AND COALESCE(p.auftragsnummer_zt, '') = ?)", [$auftragsnummer]);
+            })
+            ->where('pos.id', $positionId)
+            ->where('m.id', $machineId)
+
+            ->select([
+                DB::raw('DATE(tl.start_time) as record_date'),
+                'u.company',
+                DB::raw("
+                    CASE
+                        WHEN u.company = 'ZF' THEN p.auftragsnummer_zf
+                        ELSE p.auftragsnummer_zt
+                    END as auftragsnummer
+                "),
+                'pos.id as position_id',
+                'm.id as machine_id',
+                'pos.name as position_name',
+                'm.name as machine_name',
+                DB::raw("
+                    SUM(
+                        CASE WHEN ms.name = 'Rustzeit' THEN TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time) ELSE 0 END
+                    ) as rustzeit_seconds
+                "),
+                DB::raw("
+                    SUM(
+                        CASE WHEN ms.name = 'Mit Aufsicht' THEN TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time) ELSE 0 END
+                    ) as mit_aufsicht_seconds
+                "),
+            ])
+
+            ->groupBy([
+                'record_date',
+                'u.company',
+                'auftragsnummer',
+                'pos.id',
+                'm.id',
+            ])
+
+            ->orderBy('record_date', 'asc')
+            ->get()
+            ->map(function ($row) {
+                // Add the daily_key in PHP
+                $row->daily_key = "{$row->record_date}-{$row->auftragsnummer}-{$row->position_id}-{$row->machine_id}";
+                return $row;
+            });
+
+        return response()->json(['dailyRecords' => $dailyRecords]);
+    }
+
+    public function dayDetails(Request $request)
+    {
+        $date = $request->input('date');
+        $calendarWeek = $request->input('calendar_week');
+        $auftragsnummer = $request->input('auftragsnummer');
+        $positionId = $request->input('position_id');
+        $machineId = $request->input('machine_id');
+
+        $entries = DB::table('time_logs as tl')
+            ->join('time_records as tr', 'tr.id', '=', 'tl.time_record_id')
+            ->join('users as u', 'u.id', '=', 'tr.user_id')
+            ->join('projects as p', 'p.id', '=', 'tr.project_id')
+            ->join('machine_statuses as ms', 'ms.id', '=', 'tl.machine_status_id')
+            ->whereDate('tl.start_time', $date)
+            ->whereRaw('YEARWEEK(tl.start_time, 1) = ?', [$calendarWeek])
+            ->where(function ($query) use ($auftragsnummer) {
+                $query->whereRaw("(u.company = 'ZF' AND COALESCE(p.auftragsnummer_zf, '') = ?)", [$auftragsnummer])
+                    ->orWhereRaw("(u.company = 'ZT' AND COALESCE(p.auftragsnummer_zt, '') = ?)", [$auftragsnummer]);
+            })
+            ->where('tr.position_id', $positionId)
+            ->where('tr.machine_id', $machineId)
+            ->whereNotNull('tl.end_time')
+            ->orderBy('tl.start_time')
+            ->get([
+                'u.name as user_name',
+                'tl.start_time',
+                'tl.end_time',
+                'ms.name as machine_status',
+            ]);
+
+        return response()->json(['entries' => $entries]);
     }
 
     public function editRecord(Request $request, $id) {
@@ -334,14 +529,136 @@ class TimeController extends Controller
 
     public function machineLogs(Request $request)
     {
+        $weeks = [];
+        $today = Carbon::now();
+        $selectedWeek = $request->get('week', $today->format('oW'));
+        $maxWeeks = 5;
+
+        $i = 0;
+        while (true) {
+            $weekStart = (clone $today)->startOfWeek()->subWeeks($i);
+            $weekNumber = $weekStart->format('oW');
+
+            $weeks[] = [
+                'label' => 'KW ' . $weekStart->format('W') . ' / ' . $weekStart->format('o'),
+                'value' => $weekNumber,
+            ];
+
+            $i++;
+
+            if (
+                count($weeks) >= $maxWeeks &&
+                in_array($selectedWeek, array_column($weeks, 'value'))
+            ) {
+                break;
+            }
+
+            if ($weekNumber === $selectedWeek) {
+                break;
+            }
+        }
+
+        /* ================= DATE RANGE ================= */
+
+        $year = substr($selectedWeek, 0, 4);
+        $week = substr($selectedWeek, 4, 2);
+
+        $fromDate = Carbon::now()->setISODate($year, $week)->startOfWeek();
+        $toDate   = Carbon::now()->setISODate($year, $week)->endOfWeek();
+
+        /* ================= MACHINE WEEKLY RECORDS ================= */
+
+        $weeklyRecords = DB::table('processes as pr')
+            ->leftJoin('process_pauses as pp', 'pp.process_id', '=', 'pr.id')
+            ->join('projects as p', 'p.id', '=', 'pr.project_id')
+            ->leftJoin('bauteile as b', 'b.id', '=', 'pr.bauteil_id')
+            ->join('machines as m', 'm.id', '=', 'pr.machine_id')
+
+            ->whereBetween('pr.start_time', [$fromDate, $toDate])
+            ->whereNotNull('pr.end_time')
+
+            ->select([
+                DB::raw('YEARWEEK(pr.start_time, 1) as calendar_week'),
+
+                // Company (derived from project)
+                DB::raw("
+                    m.company as company
+                "),
+
+                DB::raw("
+                    COALESCE(p.auftragsnummer_zf, p.auftragsnummer_zt) as auftragsnummer
+                "),
+
+                DB::raw('COALESCE(b.name, \'\') as position_name'),
+
+                // DB::raw("'Fräsmaschine' as machine_name"),
+                'm.name as machine_name',
+
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, pr.start_time, pr.end_time)) as process_seconds'),
+
+                // TOTAL PAUSE TIME
+                DB::raw("
+                    SUM(
+                        GREATEST(
+                            0,
+                            TIMESTAMPDIFF(
+                                SECOND,
+                                GREATEST(pp.pause_start, pr.start_time),
+                                LEAST(
+                                    COALESCE(pp.pause_end, pr.end_time),
+                                    pr.end_time
+                                )
+                            )
+                        )
+                    ) as pause_seconds
+                "),
+            ])
+
+            ->groupBy([
+                'calendar_week',
+                'p.id',
+                'b.id',
+                'm.id',
+            ])
+
+            ->orderByDesc('calendar_week')
+            ->get();
+
+        return view('admin.time.logs', compact('weeks', 'weeklyRecords', 'selectedWeek'));
+    }
+
+    public function machineLogsOld(Request $request)
+    {
         $data = $this->getMachineLogs($request);
-        return view('admin.time.logs', $data);
+        return view('admin.time.logs_old', $data);
     }
 
     public function parseLog()
     {
-        $file = storage_path('app/public/logs/LOGFILE.OLD');
-        return $this->parseMachineLogs($file);
+        $source = '\\\\10.0.0.35\\fz37\\FIDIA\\Program\\LOGFILE.OLD';
+        $destination = storage_path('app\public\LOGFILE.OLD');
+
+        $this->copyNetworkFile($source, $destination);
+        // $file = storage_path('app/public/logs/LOGFILE.OLD');
+        // return $this->parseMachineLogs($file);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Datei kopiert von server!',
+        ]);
+    }
+
+    private function copyNetworkFile($source, $destination)
+    {
+        try {
+            if (!copy($source, $destination)) {
+                throw new \Exception("Failed to copy file from $source to $destination");
+            }
+        } catch (\Exception $e) {
+            dd($e);
+            // Handle error (log it, notify someone, etc.)
+            \Log::error("Error copying network file: " . $e->getMessage());
+        }
     }
 
     public function change(Request $request)

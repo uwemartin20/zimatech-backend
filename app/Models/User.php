@@ -73,6 +73,13 @@ class User extends Authenticatable
         };
     }
 
+    public function getCompanyKey(): string
+    {
+        return $this->company === 'ZF'
+            ? 'auftragsnummer_zf'
+            : 'auftragsnummer_zt';
+    }
+
     public function isZF(): bool
     {
         return $this->company === 'ZF';
