@@ -571,7 +571,7 @@ class TimeController extends Controller
         $weeklyRecords = DB::table('processes as pr')
             ->leftJoin('process_pauses as pp', 'pp.process_id', '=', 'pr.id')
             ->join('projects as p', 'p.id', '=', 'pr.project_id')
-            ->leftJoin('bauteile as b', 'b.id', '=', 'pr.bauteil_id')
+            ->leftJoin('positions as po', 'po.id', '=', 'pr.position_id')
             ->join('machines as m', 'm.id', '=', 'pr.machine_id')
 
             ->whereBetween('pr.start_time', [$fromDate, $toDate])
@@ -589,7 +589,7 @@ class TimeController extends Controller
                     COALESCE(p.auftragsnummer_zf, p.auftragsnummer_zt) as auftragsnummer
                 "),
 
-                DB::raw('COALESCE(b.name, \'\') as position_name'),
+                DB::raw('COALESCE(po.name, \'\') as position_name'),
 
                 // DB::raw("'Fräsmaschine' as machine_name"),
                 'm.name as machine_name',
@@ -617,7 +617,7 @@ class TimeController extends Controller
             ->groupBy([
                 'calendar_week',
                 'p.id',
-                'b.id',
+                'po.id',
                 'm.id',
             ])
 
