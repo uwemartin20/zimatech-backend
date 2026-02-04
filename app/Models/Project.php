@@ -3,9 +3,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Project extends Model
 {
+    use HasFactory;
     protected $fillable = ['auftragsnummer_zf', 'auftragsnummer_zt', 'project_name', 'from_machine_logs', 'project_status_id', 'start_time', 'end_time'];
 
     protected $casts = [
