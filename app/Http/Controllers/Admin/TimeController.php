@@ -10,6 +10,7 @@ use App\Traits\HandleMachineLogs;
 use App\Models\TimeRecord;
 use App\Models\User;
 Use App\Models\Project;
+use App\Models\Position;
 use App\Models\Machine;
 use App\Models\MachineStatus;
 use App\Models\TimeLog;
@@ -258,9 +259,10 @@ class TimeController extends Controller
         // Load dropdown data
         $users = User::all();
         $projects = Project::all();
+        $positions = Position::where('project_id', $record->project_id)->get();
         $machines = Machine::all();
 
-        return view('admin.time.record-edit', compact('record', 'users', 'projects', 'machines'));
+        return view('admin.time.record-edit', compact('record', 'users', 'projects', 'positions', 'machines'));
     }
 
     public function updateRecord(Request $request, $id) {
@@ -270,6 +272,7 @@ class TimeController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'project_id' => 'required|exists:projects,id',
+            'position_id' => 'required|exists:positions,id',
             'machine_id' => 'required|exists:machines,id',
             'start_time'=> 'required|date',
             'end_time'=> 'nullable|date|after_or_equal:start_time',
@@ -278,6 +281,7 @@ class TimeController extends Controller
         $record->update([
             'user_id' => $request->user_id,
             'project_id' => $request->project_id,
+            'position_id' => $request->position_id,
             'machine_id' => $request->machine_id,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
@@ -286,6 +290,13 @@ class TimeController extends Controller
         return redirect()
             ->route('admin.time.records')
             ->with('success', 'Time record updated successfully.');
+    }
+
+    public function thisProjectPositions(Request $request)
+    {
+        $projectId = $request->input("projectId");
+        $positions = Position::where('project_id', $projectId)->get();
+        return response()->json(['positions' => $positions]);
     }
 
     public function deleteRecord($id) {
@@ -426,105 +437,181 @@ class TimeController extends Controller
     public function compare(Request $request) {
 
         $comparison = [];
-        $totalRustzeit = 0;
-        $totalMitAufsicht = 0;
-        $totalOhneAufsicht = 0;
-        $totalNachtZeit = 0;
-        $totalMachineTime = 0;
 
+        $weeks = [];
+        $today = Carbon::now();
+        $selectedWeek = $request->get('week', $today->format('oW'));
+        $maxWeeks = 5;
 
-        // Filters
-        $query = Project::where('from_machine_logs', 1);
-        if ($request->filled('project_id')) {
-            $query->where('id', $request->project_id);
-        }
-        $projects = $query->get();
+        $i = 0;
+        while (true) {
+            $weekStart = (clone $today)->startOfWeek()->subWeeks($i);
+            $weekNumber = $weekStart->format('oW');
 
-        if ($request->filled('date')) {
-            $filterDate = Carbon::parse($request->date)->toDateString();
+            $weeks[] = [
+                'label' => 'KW ' . $weekStart->format('W') . ' / ' . $weekStart->format('o'),
+                'value' => $weekNumber,
+            ];
 
-            // Get time records overlapping the date
-            $records = TimeRecord::with(['logs.status', 'project.processes'])
-                ->when($request->filled('date'), function($q) use ($filterDate) {
-                    $q->whereDate('start_time', '<=', $filterDate)
-                    ->where(function($q2) use ($filterDate) {
-                        $q2->whereNull('end_time')
-                            ->orWhereDate('end_time', '>=', $filterDate);
-                    });
-                })
-                ->when($request->filled('project_id'), function($q) use ($request) {
-                    $q->where('project_id', $request->project_id);
-                })
-                ->get();
+            $i++;
 
-            foreach ($records as $record) {
+            if (
+                count($weeks) >= $maxWeeks &&
+                in_array($selectedWeek, array_column($weeks, 'value'))
+            ) {
+                break;
+            }
 
-                $recordStart = Carbon::parse($record->start_time);
-                $recordEnd = $record->end_time ? Carbon::parse($record->end_time) : Carbon::now();
-
-                $totalRustzeit = 0;
-                $totalMitAufsicht = 0;
-                $totalOhneAufsicht = 0;
-                $totalNachtZeit = 0;
-                $processesForRecord = [];
-
-                foreach ($record->logs as $log) {
-                    $logStart = Carbon::parse($log->start_time);
-                    $logEnd = $log->end_time ? Carbon::parse($log->end_time) : Carbon::now();
-                    $duration = $logStart->diffInSeconds($logEnd);
-
-                    switch ($log->status->name) {
-                        case 'Rustzeit': $totalRustzeit += $duration; break;
-                        case 'Mit Aufsicht': $totalMitAufsicht += $duration; break;
-                        case 'Ohne Aufsicht': $totalOhneAufsicht += $duration; break;
-                        case 'Nacht Zeit': $totalNachtZeit += $duration; break;
-                    }
-                }
-
-                // 2️⃣ Machine time totals
-                $totalMachineTime = 0;
-
-                foreach ($record->project->processes as $process) {
-                    $processStart = Carbon::parse($process->start_time);
-                    $processEnd = Carbon::parse($process->end_time);
-
-                    // Calculate overlap with record
-                    $overlapStart = $processStart->lt($recordStart) ? $recordStart : $processStart;
-                    $overlapEnd = $processEnd->gt($recordEnd) ? $recordEnd : $processEnd;
-
-                    if ($overlapEnd->gt($overlapStart)) {
-                        $totalMachineTime += $overlapStart->diffInSeconds($overlapEnd);
-
-                        // Extra time outside record counted as ohne Aufsicht
-                        if ($processEnd->gt($recordEnd) && $processStart->between($recordStart, $recordEnd)) {
-                            $extra = $recordEnd->diffInSeconds($processEnd);
-                            $totalOhneAufsicht += $extra;
-                        }
-
-                        // ✅ Collect process details for view
-                        $processesForRecord[] = [
-                            'process_name' => $process->name ?? 'N/A',
-                            'procedure_name' => $process->procedure->name ?? 'N/A',
-                            'bauteil_name' => $process->bauteil->name ?? 'N/A',
-                            'start_time' => $processStart->format('Y-m-d H:i:s'),
-                            'end_time' => $processEnd->format('Y-m-d H:i:s'),
-                        ];
-                    }
-                }
-
-                $comparison[] = [
-                    'record' => $record,
-                    'rustzeit' => gmdate('H:i:s', $totalRustzeit),
-                    'mit_aufsicht' => gmdate('H:i:s', $totalMitAufsicht),
-                    'ohne_aufsicht' => gmdate('H:i:s', $totalOhneAufsicht),
-                    'nacht_zeit' => gmdate('H:i:s', $totalNachtZeit),
-                    'machine_time' => gmdate('H:i:s', $totalMachineTime),
-                    'processes' => $processesForRecord,
-                ];
+            if ($weekNumber === $selectedWeek) {
+                break;
             }
         }
 
-        return view('admin.time.compare', compact('comparison', 'projects'));
+        $year = substr($selectedWeek, 0, 4);
+        $week = substr($selectedWeek, 4, 2);
+
+        $fromDate = Carbon::now()->setISODate($year, $week)->startOfWeek();
+        $toDate   = Carbon::now()->setISODate($year, $week)->endOfWeek();
+
+        $processTotals = DB::table('processes as pr')
+            ->leftJoin('process_pauses as pp', 'pp.process_id', '=', 'pr.id')
+
+            ->select([
+                'pr.project_id',
+                'pr.position_id',
+                'pr.machine_id',
+
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, pr.start_time, pr.end_time)) as process_seconds'),
+
+                DB::raw("
+                    SUM(
+                        GREATEST(
+                            0,
+                            TIMESTAMPDIFF(
+                                SECOND,
+                                GREATEST(pp.pause_start, pr.start_time),
+                                LEAST(COALESCE(pp.pause_end, pr.end_time), pr.end_time)
+                            )
+                        )
+                    ) as pause_seconds
+                "),
+
+                DB::raw('COUNT(pr.id) as process_count')
+            ])
+            ->whereNotNull('pr.end_time')
+            ->whereBetween('pr.start_time', [$fromDate, $toDate])
+            ->groupBy('pr.project_id','pr.position_id','pr.machine_id');
+
+        $logTotals = DB::table('time_logs as tl')
+            ->join('time_records as tr', 'tr.id', '=', 'tl.time_record_id')
+        
+            ->select([
+                'tr.user_id',
+                'tr.project_id',
+                'tr.position_id',
+                'tr.machine_id',
+        
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time)) as log_seconds')
+            ])
+            ->whereNotNull('tl.end_time')
+            ->whereBetween('tl.start_time', [$fromDate, $toDate])
+            ->groupBy('tr.user_id','tr.project_id','tr.position_id','tr.machine_id');    
+            
+        $groups = DB::query()
+            ->fromSub($logTotals,'lt')
+
+            ->leftJoinSub($processTotals,'pt', function($join){
+                $join->on('pt.project_id','=','lt.project_id')
+                    ->on('pt.position_id','=','lt.position_id')
+                    ->on('pt.machine_id','=','lt.machine_id');
+            })
+            ->join('users as u','u.id','=','lt.user_id')
+            ->join('projects as p','p.id','=','lt.project_id')
+            ->join('positions as pos','pos.id','=','lt.position_id')
+            ->join('machines as m','m.id','=','lt.machine_id')
+
+            ->select([
+                'lt.user_id',
+                'lt.project_id',
+                'lt.position_id',
+                'lt.machine_id',
+
+                DB::raw('COALESCE(lt.log_seconds,0) as user_seconds'),
+                DB::raw('COALESCE(pt.process_seconds - pt.pause_seconds,0) as machine_seconds'),
+                DB::raw('COALESCE(pt.process_count,0) as process_count'),
+
+                'u.name as user_name',
+                'p.project_name',
+                'pos.name as position_name',
+                'm.name as machine_name'
+            ])
+            ->get();
+
+        $processRows = DB::table('processes')
+            ->select('id','project_id','position_id','machine_id',
+                    'name','start_time','end_time')
+            ->whereBetween('start_time', [$fromDate,$toDate])
+            ->whereNotNull('end_time')
+            ->get()
+            ->groupBy(fn($r) =>
+                "$r->project_id-$r->position_id-$r->machine_id"
+            );
+
+        $logRows = DB::table('time_logs as tl')
+            ->join('time_records as tr','tr.id','=','tl.time_record_id')
+            ->join('machine_statuses as ms','ms.id','=','tl.machine_status_id')
+        
+            ->select(
+                'tr.user_id','tr.project_id','tr.position_id','tr.machine_id',
+                'ms.name as status',
+                'tl.start_time','tl.end_time'
+            )
+            ->whereBetween('tl.start_time', [$fromDate,$toDate])
+            ->whereNotNull('tl.end_time')
+            ->get()
+            ->groupBy(fn($r) =>
+                "$r->user_id-$r->project_id-$r->position_id-$r->machine_id"
+            );
+
+        foreach ($groups as $g) {
+
+            $procKey = "$g->project_id-$g->position_id-$g->machine_id";
+            $logKey  = "$g->user_id-$g->project_id-$g->position_id-$g->machine_id";
+    
+            $comparison[] = [
+                'record' => (object)[
+                    'user' => (object)['name'=>$g->user_name],
+                    'project' => (object)['project_name'=>$g->project_name],
+                    'Position' => (object)['name'=>$g->position_name],
+                    'machine' => (object)['name'=>$g->machine_name],
+                ],
+        
+                'total_user_time'    => $this->hms($g->user_seconds),
+                'total_machine_time' => $this->hms($g->machine_seconds),
+                'process_count'      => $g->process_count,
+        
+                'processes' => ($processRows[$procKey] ?? collect())
+                    ->map(fn($p)=>[
+                        'process_name'=>$p->name,
+                        'start_time'=>$p->start_time,
+                        'end_time'=>$p->end_time
+                    ])->values()->all(),
+        
+                'logs' => ($logRows[$logKey] ?? collect())
+                    ->map(fn($l)=>[
+                        'status'=>$l->status,
+                        'start_time'=>$l->start_time,
+                        'end_time'=>$l->end_time
+                    ])->values()->all(),
+            ];
+        }
+
+        return view('admin.time.compare', compact('comparison', 'weeks', 'selectedWeek'));
+    }
+
+    private function hms($sec)
+    {
+        return gmdate('H:i:s', (int)$sec);
     }
 
     public function machineLogs(Request $request)

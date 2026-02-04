@@ -17,7 +17,7 @@
 
                 {{-- Record Information --}}
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label">Bediener</label>
                         <select name="user_id" class="form-select" required>
                             <option value="">Bediener auswählen</option>
@@ -29,19 +29,7 @@
                         </select>
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label">Projekt</label>
-                        <select name="project_id" class="form-select" required>
-                            <option value="">Projekt auswählen</option>
-                            @foreach($projects as $project)
-                                <option value="{{ $project->id }}" {{ $record->project_id == $project->id ? 'selected' : '' }}>
-                                    {{ $project->project_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <label class="form-label">Maschine</label>
                         <select name="machine_id" class="form-select" required>
                             <option value="">Maschine auswählen</option>
@@ -51,6 +39,33 @@
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Projekt</label>
+                        <select onchange="fetchPositions()" name="project_id" class="form-select" id="project-select" required>
+                            <option value="">Projekt auswählen</option>
+                            @foreach($projects as $project)
+                                <option value="{{ $project->id }}" {{ $record->project_id == $project->id ? 'selected' : '' }}>
+                                    {{ $project->project_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Position</label>
+                        <select name="position_id" class="form-select" id="position-select" required>
+                            <option value="">Position auswählen</option>
+                            @foreach($positions as $position)
+                                <option value="{{ $position->id }}" {{ $record->position_id == $position->id ? 'selected' : '' }}>
+                                    {{ $position->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" id="positionId" value="{{ $record->position_id }}" />
                     </div>
                 </div>
 
@@ -76,4 +91,29 @@
         </div>
     </div>
 </div>
+<script>
+    function fetchPositions() {
+        projectId = document.getElementById('project-select').value;
+        positionSelector = document.getElementById('position-select');
+        positionId = document.getElementById('positionId').value;
+        fetch(`/admin/time/project/positions?projectId=${projectId}`, {method: "GET"})
+            .then(response => response.json())
+            .then(data =>{
+                if('positions' in data){
+                    positionSelector.innerHTML = `<option value="">Position auswählen</option>`;
+                    data['positions'].forEach(position => {
+                        selected = '';
+                        if(position.id == positionId){
+                            selected = 'selected';
+                        }
+                        positionSelector.innerHTML += `
+                            <option value=${position.id} ${selected}>
+                                ${position.name}
+                            </option>
+                        `;
+                    });
+                }
+            })
+    }
+</script>
 @endsection

@@ -170,6 +170,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/time/change', [TimeController::class, 'change'])->name('time.change');
         Route::post('/time/change/accept/{id}', [TimeController::class, 'acceptChange'])->name('time.change.accept');
         Route::post('/time/change/reject/{id}', [TimeController::class, 'rejectChange'])->name('time.change.reject');
+        Route::get('/time/project/positions', [TimeController::class, 'thisProjectPositions'])->name('time.project.positions');
 
         // Supplier Routes
         Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');

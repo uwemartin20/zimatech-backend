@@ -1,9 +1,11 @@
 <div class="sidebar d-flex flex-column p-3">
-    <div class="d-flex align-items-center justify-content-center mb-3">
-        <img src="{{ asset('images/zimmermann-logo-192.png') }}" alt="Zimatec Logo"
-            class="img-fluid me-2" style="width: 40px; height: 40px;">
-        <h5 class="fw-bold mb-0">ZiMaTec</h5>
-    </div>
+    <a href="{{ route('home') }}" class="d-flex align-items-center justify-content-center mb-3">
+        {{-- <a href="{{ route('home') }}"> --}}
+            <img src="{{ asset('images/zimmermann-logo-192.png') }}" alt="Zimatec Logo"
+                class="img-fluid me-2" style="width: 40px; height: 40px;">
+            <h5 class="fw-bold mb-0">ZiMaTec</h5>
+        {{-- </a> --}}
+        </a>
     <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin/dashboard') ? 'active' : '' }}">
         <i class="bi bi-speedometer2 me-2"></i>Dashboard
     </a>

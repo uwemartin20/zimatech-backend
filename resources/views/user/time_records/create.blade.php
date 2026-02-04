@@ -13,7 +13,7 @@
             <form action="{{ route('time-records.store') }}" method="POST">
                 @csrf
                 <div id="step-user" class="mb-4">
-                    <h6>Select Operator</h6>
+                    <h6>Bediener Auswahlen</h6>
                 
                     <div class="row g-2">
                         @foreach($users as $user)
@@ -32,7 +32,7 @@
                 <input type="hidden" name="user_id" id="user_id">
 
                 <div id="step-project" class="mb-4 d-none">
-                    <h6>Select Project</h6>
+                    <h6>Projekte Auswahlen</h6>
                 
                     <div class="row g-2">
                         @foreach($projects as $project)
@@ -54,7 +54,7 @@
                 <input type="hidden" name="project_id" id="project_id">
 
                 <div id="step-position" class="mb-4 d-none">
-                    <h6>Select Position</h6>
+                    <h6>Position Auswahlen</h6>
                 
                     <div id="positions-container" class="row g-2"></div>
                 </div>
@@ -64,7 +64,7 @@
                 <input type="hidden" name="machine_id" id="machine_id">
 
                 <div id="step-machine" class="mb-4 d-none">
-                    <h6>Select Machine</h6>
+                    <h6>Maschine Auswahlen</h6>
 
                     <div class="row g-2">
                         @foreach($machines as $machine)
@@ -100,7 +100,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-success d-none" id="start-btn">
-                    <i class="bi bi-play-circle"></i> Start Time
+                    <i class="bi bi-play-circle"></i> Start
                 </button>
                 
             </form>
