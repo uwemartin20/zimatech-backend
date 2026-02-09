@@ -203,8 +203,9 @@ class ParseDrillLog extends Command
             $fullPath = $matches[1];
             $state->sourceFile = mb_convert_encoding($fullPath, 'UTF-8', 'auto');
 
-            $parts = preg_split('/\\\\/', $fullPath);
-            $filename = basename($fullPath);
+            $normalizedPath = str_replace('\\', '/', $fullPath);
+            $parts = explode('/', $normalizedPath); 
+            $filename = basename($normalizedPath);
 
             $projectName = null;
             $auftragsnummer = null;
