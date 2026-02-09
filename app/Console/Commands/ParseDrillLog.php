@@ -100,7 +100,7 @@ class ParseDrillLog extends Command
     private function finalize($state, $file_name)
     {
         if ($state->saveToDb)
-            rename($state->path, $state->processedDir . $file_name);
+            copy($state->path, $state->processedDir . $file_name);
 
         $this->info('✅ Parsing complete.');
     }
