@@ -143,6 +143,8 @@ class TimeController extends Controller
                 'auftragsnummer',
                 'pos.id',
                 'm.id',
+                'm.name',
+                'pos.name',
             ])
 
             ->orderByDesc('calendar_week')
@@ -206,6 +208,8 @@ class TimeController extends Controller
                 'auftragsnummer',
                 'pos.id',
                 'm.id',
+                'm.name',
+                'pos.name',
             ])
 
             ->orderBy('record_date', 'asc')
@@ -668,9 +672,7 @@ class TimeController extends Controller
                 DB::raw('YEARWEEK(pr.start_time, 1) as calendar_week'),
 
                 // Company (derived from project)
-                DB::raw("
-                    m.company as company
-                "),
+                DB::raw('MAX(m.company) as company'),
 
                 DB::raw("
                     COALESCE(p.auftragsnummer_zf, p.auftragsnummer_zt) as auftragsnummer
@@ -706,6 +708,8 @@ class TimeController extends Controller
                 'p.id',
                 'po.id',
                 'm.id',
+                'm.name',
+                'po.name',
             ])
 
             ->orderByDesc('calendar_week')
