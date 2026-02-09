@@ -210,11 +210,11 @@ class ParseDrillLog extends Command
             $auftragsnummer = null;
             $bauteil = null;
             $position = null;
-            if ((strtoupper($filename === "NULLEN.FID")) || (stripos($parts[count($parts)-1], '.fid') === false)) return true;
+            if ((strtoupper($filename) === "NULLEN.FID") || (stripos($parts[count($parts)-1], '.fid') === false)) return true;
 
             // --- basic validation ---
             if (count($parts) < 6) {
-                throw new RuntimeException('Path too short to be a valid CNC path');
+                throw new RuntimeException('Path too short to be a valid CNC path ' . $fullPath);
             }
             
             $machine      = $parts[1];
