@@ -210,7 +210,7 @@ class ParseDrillLog extends Command
             $auftragsnummer = null;
             $bauteil = null;
             $position = null;
-            if ((strtoupper($filename) === "NULLEN.FID") || (stripos($parts[count($parts)-1], '.fid') === false)) return true;
+            if (strtoupper($filename) === "NULLEN.FID" || substr(strtolower($filename), -4) !== '.fid') return true;
 
             // --- basic validation ---
             if (count($parts) < 6) {
