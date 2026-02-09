@@ -204,7 +204,7 @@ class ParseDrillLog extends Command
             $state->sourceFile = mb_convert_encoding($fullPath, 'UTF-8', 'auto');
 
             $parts = preg_split('/\\\\/', $fullPath);
-            $filename = strtoupper(basename($fullPath));
+            $filename = basename($fullPath);
 
             $projectName = null;
             $auftragsnummer = null;
@@ -214,7 +214,7 @@ class ParseDrillLog extends Command
 
             // --- basic validation ---
             if (count($parts) < 6) {
-                throw new RuntimeException('Path too short to be a valid CNC path ' . $fullPath);
+                throw new RuntimeException('Path too short to be a valid CNC file ' . $filename . ' in path ' . $fullPath);
             }
             
             $machine      = $parts[1];
