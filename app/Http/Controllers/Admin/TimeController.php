@@ -675,7 +675,7 @@ class TimeController extends Controller
                 DB::raw('MAX(m.company) as company'),
 
                 DB::raw("
-                    COALESCE(p.auftragsnummer_zf, p.auftragsnummer_zt) as auftragsnummer
+                    MAX(COALESCE(p.auftragsnummer_zf, p.auftragsnummer_zt)) as auftragsnummer
                 "),
 
                 DB::raw('COALESCE(po.name, \'\') as position_name'),
