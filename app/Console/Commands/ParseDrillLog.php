@@ -116,7 +116,7 @@ class ParseDrillLog extends Command
             $year = $state->firstDate->format('Y');
             $week = $state->firstDate->format('W');
 
-            $state->processedDir = dirname($state->path) . "/processed/{$year}/{$week}/";
+            $state->processedDir = storage_path('app/public') . "/processed/{$year}/{$week}/";
             if (!is_dir($state->processedDir)) {
                 mkdir($state->processedDir, 0755, true);
             }
