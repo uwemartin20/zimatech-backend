@@ -38,7 +38,7 @@ class ParseDrillLog extends Command
     public function handle()
     {
         $state = new ParserState();
-        $state->path = $this->argument('path');
+        $state->path = storage_path('app/public');
         $state->saveToDb = filter_var($this->option('save'), FILTER_VALIDATE_BOOLEAN);
 
         $lines = $this->init($state);
