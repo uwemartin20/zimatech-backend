@@ -214,7 +214,7 @@ class ParseDrillLog extends Command
             if (strtoupper($filename) === "NULLEN.FID" || substr(strtolower($filename), -4) !== '.fid') return true;
 
             // --- basic validation ---
-            if (count($parts) < 6) {
+            if (count($parts) < 5) {
                 throw new RuntimeException('Path too short to be a valid CNC file ' . $filename . ' in path ' . $fullPath);
             }
             
@@ -222,7 +222,7 @@ class ParseDrillLog extends Command
             $this->machineSelection($machine, $state);
             $projectPart  = $parts[2];
             $position     = $parts[3];
-            $bauteil      = $parts[4];
+            $bauteil      = $parts[4] ?? null;
             // $file         = $parts[count($parts) - 1];
 
             // Project split
@@ -246,13 +246,15 @@ class ParseDrillLog extends Command
                     ]
                 );
 
-                $state->currentBauteil = Bauteil::firstOrCreate(
-                    [
-                        'name' => mb_convert_encoding($bauteil, 'UTF-8', 'auto'),
-                        'project_id' => $state->currentProject->id,
-                        'parent_id' => null
-                    ]
-                );
+                if ($bauteil !== null) {
+                    $state->currentBauteil = Bauteil::firstOrCreate(
+                        [
+                            'name' => mb_convert_encoding($bauteil, 'UTF-8', 'auto'),
+                            'project_id' => $state->currentProject->id,
+                            'parent_id' => null
+                        ]
+                    );
+                }
 
             } else {
                 $state->currentProject = new Project([
@@ -269,18 +271,22 @@ class ParseDrillLog extends Command
                     ]
                 );
 
-                $state->currentBauteil = new Bauteil([
-                    'id' => null,
-                    'name' => mb_convert_encoding($bauteil, 'UTF-8', 'auto'),
-                    'project_id' => $state->currentProject->id,
-                    'parent_id' => null,
-                ]);
+                if ($bauteil !== null) {
+                    $state->currentBauteil = new Bauteil([
+                        'id' => null,
+                        'name' => mb_convert_encoding($bauteil, 'UTF-8', 'auto'),
+                        'project_id' => $state->currentProject->id,
+                        'parent_id' => null,
+                    ]);
+                }
 
             }
 
             $this->info("Neue START fur projekt: {$projectName} ({$auftragsnummer}) auf Machine {$state->machineId}, {$machine}");
             $this->info("   └─ Postion: {$position}");
-            $this->info("       └─ Bauteil: {$bauteil}");
+            if ($bauteil !== null) {
+                $this->info("       └─ Bauteil: {$bauteil}");
+            }
         }
 
         // combine time from log line
