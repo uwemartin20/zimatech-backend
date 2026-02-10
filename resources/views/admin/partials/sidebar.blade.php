@@ -115,7 +115,7 @@
     @endif
 
     {{-- Settings --}}
-    @if(config('modules.emails'))
+    @if(config('modules.settings'))
         @php
             $settingsActive = request()->is('admin/settings*');
         @endphp
