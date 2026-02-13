@@ -15,26 +15,26 @@
 
                     <div class="mb-3">
                         <label for="kunde" class="form-label">Kunde Name</label>
-                        <input type="text" name="kunde" id="kunde" class="form-control" placeholder="Enter customer name" required>
+                        <input type="text" name="kunde" id="kunde" class="form-control" placeholder="Kundennamen eingeben">
                     </div>
 
                     <div class="mb-3">
                         <label for="auftragsnummer_zt" class="form-label">Auftragsnummer (ZimaTech)</label>
-                        <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control" placeholder="Enter order number (ZimaTech)" required>
+                        <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control" placeholder="Auftragsnummer eingeben (ZimaTech)">
                     </div>
 
                     <div class="mb-3">
                         <label for="auftragsnummer_zf" class="form-label">Auftragsnummer (Zimmermann Formtechnik)</label>
-                        <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control" placeholder="Enter order number (ZimaF)" required>
+                        <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control" placeholder="Auftragsnummer eingeben (Zimmermann Formtechnik)">
                     </div>
 
                     <div class="mb-3">
-                        <label for="project_name" class="form-label">Project Name</label>
-                        <input type="text" name="project_name" id="project_name" class="form-control" placeholder="Enter project name" required>
+                        <label for="project_name" class="form-label">Projektnamen</label>
+                        <input type="text" name="project_name" id="project_name" class="form-control" placeholder="Projektnamen eingeben" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="project_status_id" class="form-label">Project Status</label>
+                        <label for="project_status_id" class="form-label">Projekt Status</label>
                         <select name="project_status_id" id="project_status_id" class="form-select" required>
                             @foreach($statuses as $status)
                                 <option value="{{ $status->id }}" {{ (old('project_status_id', $project->project_status_id ?? '') == $status->id) ? 'selected' : '' }}>
@@ -45,13 +45,13 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="start_time" class="form-label">Start Time</label>
+                        <label for="start_time" class="form-label">Start Zeit</label>
                         <input type="datetime-local" name="start_time" id="start_time" class="form-control"
                                value="{{ old('start_time', isset($project) ? $project->start_time->format('Y-m-d\TH:i') : '') }}">
                     </div>
                     
                     <div class="mb-3">
-                        <label for="end_time" class="form-label">End Time</label>
+                        <label for="end_time" class="form-label">Ende Zeit</label>
                         <input type="datetime-local" name="end_time" id="end_time" class="form-control"
                                value="{{ old('end_time', isset($project) && $project->end_time ? $project->end_time->format('Y-m-d\TH:i') : '') }}">
                     </div>

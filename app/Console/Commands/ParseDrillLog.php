@@ -219,32 +219,33 @@ class ParseDrillLog extends Command
             }
             
             $machine      = $parts[1];
-            $this->machineSelection($machine, $state);
+            $this->machineSelection(strtolower($machine), $state);
             $projectPart  = $parts[2];
             $position     = $parts[3];
             $bauteil      = $parts[4] ?? null;
             // $file         = $parts[count($parts) - 1];
 
-            // Project split
-            $segments = explode('_', $projectPart, 3);
-            if (count($segments) !== 3) {
-                throw new RuntimeException("Invalid project format: {$projectPart}");
-            }
-
-            [$auftragsnummer, $kunde, $projectName] = $segments;
+            $auftragsnummer = $projectPart;
+            $positionNumber = explode('_', $position, 2)[0];
 
             if ($state->saveToDb) {
-                $company = $this->auftragsnummerCompany($auftragsnummer);
-                $state->currentProject = Project::firstOrCreate(
-                    ['auftragsnummer_' . $company => $auftragsnummer, 'project_name' => $projectName]
-                );
+                $state->currentProject = Project::where('auftragsnummer_zt', $auftragsnummer)
+                    ->orWhere('auftragsnummer_zf', $auftragsnummer)
+                    ->first();
 
-                $state->currentPosition = Position::firstOrCreate(
-                    [
-                        'name' => $position,
-                        'project_id' => $state->currentProject->id,
-                    ]
-                );
+                if (!$state->currentProject) {
+                    $this->info("Project not found for auftragsnummer {$auftragsnummer} — skipping process");
+                    return true;
+                }
+
+                $state->currentPosition = Position::where('project_id', $state->currentProject->id)
+                    ->where('name', 'like', $positionNumber . '%')
+                    ->first();
+                
+                if (!$state->currentPosition) {
+                    $this->info("Position {$positionNumber} not found in project {$auftragsnummer} — skipping process");
+                    return true;
+                }
 
                 if ($bauteil !== null) {
                     $state->currentBauteil = Bauteil::firstOrCreate(
@@ -537,9 +538,9 @@ class ParseDrillLog extends Command
 
     private function machineSelection(string $machine, ParserState $state)
     {
-        if($machine == "Auftraege") {
+        if($machine == "auftraege_zt") {
             $state->machineId = 2;
-        } elseif ($machine == "AUFTRAEGE_D-FZ37_ZIMATEC") {
+        } elseif ($machine == "auftraege_zf") {
             $state->machineId = 3;
         } else {
             $state->machineId = 1;

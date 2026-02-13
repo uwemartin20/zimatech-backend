@@ -40,9 +40,9 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'kunde' => 'required|string|max:255',
-            'auftragsnummer_zt' => 'required|string|max:255|unique:projects,auftragsnummer_zt',
-            'auftragsnummer_zf' => 'required|string|max:255|unique:projects,auftragsnummer_zf',
+            'kunde' => 'nullable|string|max:255',
+            'auftragsnummer_zt' => 'nullable|string|max:255|unique:projects,auftragsnummer_zt',
+            'auftragsnummer_zf' => 'nullable|string|max:255|unique:projects,auftragsnummer_zf',
             'project_name' => 'required|string|max:255',
             'project_status_id' => 'required|exists:project_statuses,id',
             'start_time' => 'nullable|date',
@@ -150,11 +150,11 @@ class ProjectController extends Controller
     public function update(Request $request, Project $project)
     {
         $request->validate([
-            'kunde' => 'required|string|max:255',
+            'kunde' => 'nullable|string|max:255',
             'auftragsnummer_zt' => 'nullable|string|max:255|unique:projects,auftragsnummer_zt,' . $project->id,
             'auftragsnummer_zf' => 'nullable|string|max:255|unique:projects,auftragsnummer_zf,' . $project->id,
             'project_name' => 'required|string|max:255',
-            'project_status_id' => 'nullable|exists:project_statuses,id',
+            'project_status_id' => 'required|exists:project_statuses,id',
             'start_time' => 'nullable|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
         ]);

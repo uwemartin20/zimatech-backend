@@ -40,6 +40,11 @@ class Project extends Model
         return $this->bauteile()->count();
     }
 
+    public function getPositionCountAttribute()
+    {
+        return $this->positions()->count();
+    }
+
     public function getGesamtzeitAttribute()
     {
         $time = 0;

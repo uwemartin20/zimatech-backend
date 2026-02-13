@@ -21,8 +21,13 @@
                   <select name="project_id" id="projectFilter" class="form-select">
                       <option value="">Alle Projekte</option>
                       @foreach($allProjects as $proj)
+                          @php
+                            $auftragsnummer = ($proj->auftragsnummer_zt && $proj->auftragsnummer_zf) ? $proj->auftragsnummer_zt ."/".$proj->auftragsnummer_zf :
+                              ((!$proj->auftragsnummer_zt && $proj->auftragsnummer_zf) ? $proj->auftragsnummer_zf :
+                              (($proj->auftragsnummer_zt && !$proj->auftragsnummer_zf) ? $proj->auftragsnummer_zt : ""));
+                          @endphp
                           <option value="{{ $proj->id }}" {{ request('project_id') == $proj->id ? 'selected' : '' }}>
-                              {{ $proj->project_name }} ({{ $proj->auftragsnummer_zt }})
+                              {{ $proj->project_name }} ({{ $auftragsnummer }})
                           </option>
                       @endforeach
                   </select>
@@ -46,10 +51,19 @@
       </form>
 
       @foreach ($projects as $project)
+        @php
+          $auftragsnummer = ($project->auftragsnummer_zt && $project->auftragsnummer_zf) ? $project->auftragsnummer_zt ."/".$project->auftragsnummer_zf :
+            ((!$project->auftragsnummer_zt && $project->auftragsnummer_zf) ? $project->auftragsnummer_zf :
+            (($project->auftragsnummer_zt && !$project->auftragsnummer_zf) ? $project->auftragsnummer_zt : ""));
+          $company = ($project->auftragsnummer_zt && $project->auftragsnummer_zf) ? "ZT/ZF" :
+            ((!$project->auftragsnummer_zt && $project->auftragsnummer_zf) ? "ZF" :
+            (($project->auftragsnummer_zt && !$project->auftragsnummer_zf) ? "ZT" : ""));
+        @endphp
         <div class="card mb-2 shadow-sm">
           <div class="card-header bg-dark text-white p-4" data-bs-toggle="collapse" data-bs-target="#project-{{ $project->id }}" style="cursor: pointer;">
-            <strong>Auftragsnummer (ZimaTech):</strong> {{ $project->auftragsnummer_zt ?? 'N/A' }} |
+            <strong>Auftragsnummer ({{ $company }}):</strong> {{ $auftragsnummer ?? 'N/A' }} |
             <strong>Projekt:</strong> {{ $project->project_name ?? 'N/A' }} |
+            <strong>Anzahl der Positionen:</strong> {{ $project->position_count ?? 'N/A' }} |
             <strong>Anzahl der bauteilen:</strong> {{ $project->bauteile_count ?? 'N/A' }} |
             <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', $project->gesamtzeit) ?? '00:00' }}
           </div>
@@ -63,6 +77,7 @@
                 @foreach ($project->bauteile as $bauteil)
                   <div class="border rounded p-3 mb-3 bg-light">
                     <p class="mb-2" data-bs-toggle="collapse" data-bs-target="#bauteilTable{{ $bauteil->id }}" aria-expanded="false" aria-controls="bauteilTable{{ $bauteil->id }}" style="cursor: pointer;">
+                      <strong>Position:</strong> {{ $bauteil->processes[0]->position->name ?? 'N/A' }} |
                       <strong>Bauteil:</strong> {{ $bauteil->name }} |
                       <strong>Anzahl Prozesse:</strong> {{ $bauteil->processes->count() }} |
                       <strong>Gesamtzeit:</strong> {{ gmdate('H:i:s', $bauteil->processes->sum('total_seconds')) ?? '00:00' }}
@@ -180,6 +195,7 @@
                 @foreach ($project->procedures as $procedure)
                   <div class="border rounded p-3 mb-3 bg-light">
                     <p class="mb-1" data-bs-toggle="collapse" data-bs-target="#procedureTable{{ $procedure->id }}" aria-expanded="false" aria-controls="procedureTable{{ $procedure->id }}" style="cursor: pointer;">
+                      <strong>Position:</strong> {{ $procedure->processes[0]->position->name ?? 'N/A' }} |
                       <strong>Start:</strong> {{ $procedure->start_time ?? '-' }} |
                       <strong>Ende:</strong> {{ $procedure->end_time ?? '-' }} |
                       <strong>Anzahl Prozesse:</strong> {{ $procedure->processes->count() }} |
@@ -245,6 +261,7 @@
                       <thead class="table-warning">
                         <tr>
                           <th>Prozess Name</th>
+                          <th>Position</th>
                           <th>Start Zeit</th>
                           <th>End Zeit</th>
                           <th>Zeit</th>
@@ -254,6 +271,7 @@
                         @foreach ($project->processes->whereNull('procedure_id')->whereNull('bauteil_id') as $process)
                           <tr>
                             <td>{{ $process->name }}</td>
+                            <td>{{ $process->position->name ?? 'N/A' }}</td>
                             <td>{{ $process->start_time }}</td>
                             <td>{{ $process->end_time }}</td>
                             <td>{{ gmdate('H:i:s', $process->total_seconds) }}</td>

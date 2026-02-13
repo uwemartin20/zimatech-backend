@@ -14,8 +14,6 @@ trait HandleMachineLogs
                 ->orWhereHas('bauteile.processes');
             });
 
-        $query->where('from_machine_logs', 1);
-
         if ($request->filled('project_id')) {
             $query->where('id', $request->project_id);
         }
