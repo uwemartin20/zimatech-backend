@@ -42,7 +42,7 @@
             <hr>
 
             <h5 class="mb-3"><i class="bi bi-cpu me-2"></i> Zugehörige Positionen<span class="text-muted"> - {{ $project->positions->count() ?? '0' }}</span></h5>
-            @if($project->bauteile->isEmpty())
+            @if($project->positions->isEmpty())
                 <p class="text-muted">Keine Positionen gefunden.</p>
             @else
                 <div class="row">
