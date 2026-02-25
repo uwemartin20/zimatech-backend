@@ -78,7 +78,12 @@
                             <tr>
                                 <td>{{ $records->firstItem() + $index }}</td>
                                 <td>{{ $record->user->name }}</td>
-                                <td>{{ $record->project->project_name }}</td>
+                                <td>
+                                    {{ $record->project->project_name }}
+                                    <small class="text-muted d-block project-auftrag">
+                                        {{ "ZF: ".$record->project->auftragsnummer_zf ." ZT: " .$record->project->auftragsnummer_zt }}
+                                    </small>
+                                </td>
                                 <td>{{ $record->machine->name }}</td>
                                 <td>{{ \Carbon\Carbon::parse($record->start_time)->format('d.m.Y H:i') }}</td>
                                 <td>

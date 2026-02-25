@@ -72,7 +72,7 @@ class TimeRecordController extends Controller
     //     return view('user.time_records.create', compact('users', 'projects', 'machines', 'statuses'));
     // }
 
-    public function create()
+    public function create(Request $request)
     {
         $users = User::where('machine_user', true)->get();
 
@@ -84,9 +84,13 @@ class TimeRecordController extends Controller
 
         $statuses = MachineStatus::where('active', true)->get();
 
+        $selectedUser = $request->user_id
+            ? $users->firstWhere('id', $request->user_id)
+            : null;
+
         return view(
             'user.time_records.create',
-            compact('users', 'projects', 'machines', 'statuses')
+            compact('users', 'projects', 'machines', 'statuses', 'selectedUser')
         );
     }
     /**
@@ -112,7 +116,7 @@ class TimeRecordController extends Controller
 
         if ($existingRecord) {
             return redirect()->back()
-                ->withErrors(['duplicate' => 'A running record already exists for this user, project, and machine.'])
+                ->withErrors(['duplicate' => 'Für diesen Benutzer, dieses Projekt und diesen Maschine existiert bereits ein laufender Datensatz..'])
                 ->withInput();
         }
 
@@ -166,7 +170,7 @@ class TimeRecordController extends Controller
         $record->end_time = now();
         $record->save();
 
-        return redirect()->route('time-records.list')->with('success', 'Session ended successfully.');
+        return redirect()->route('time-records.list')->with('success', 'Die Sitzung wurde erfolgreich beendet.');
     }
 
     public function switch(Request $request, TimeLog $log)
@@ -192,7 +196,7 @@ class TimeRecordController extends Controller
 
         // Redirect back to the same record page
         return redirect()->route('time-records.show', $log->time_record_id)
-                         ->with('success', 'Status switched successfully.');
+                        ->with('success', 'Status erfolgreich umgeschaltet.');
     }
 
     public function changeAllOtherLogs($time_record_id)
@@ -271,7 +275,7 @@ class TimeRecordController extends Controller
         ]);
 
         return redirect()->route('time-records.show', $record_id)
-            ->with('success', 'Change request submitted successfully.');
+            ->with('success', 'Änderungsantrag erfolgreich übermittelt.');
     }
 
 }

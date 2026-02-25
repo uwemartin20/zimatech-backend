@@ -13,55 +13,60 @@
                 <form action="{{ route('admin.projects.store') }}" method="POST">
                     @csrf
 
-                    <div class="mb-3">
-                        <label for="kunde" class="form-label">Kunde Name</label>
-                        <input type="text" name="kunde" id="kunde" class="form-control" placeholder="Kundennamen eingeben">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="project_name" class="form-label fw-bold">Projektname *</label>
+                            <input type="text" name="project_name" id="project_name" class="form-control" placeholder="Projektname" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="project_status_id" class="form-label fw-bold">Status *</label>
+                            <select name="project_status_id" id="project_status_id" class="form-select" required>
+                                @foreach($statuses as $status)
+                                    <option value="{{ $status->id }}" {{ (old('project_status_id', $project->project_status_id ?? '') == $status->id) ? 'selected' : '' }}>
+                                        {{ ucfirst($status->name) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label for="auftragsnummer_zt" class="form-label fw-bold">Auftragsnummer <span class="text-muted">(Nur ein oder beide eingeben)</span> *</label>
+                        <div class="col-md-6">
+                            <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control at-least-one" placeholder="ZimaTech" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control at-least-one" placeholder="Zimmermann Formtechnik" required>
+                        </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="auftragsnummer_zt" class="form-label">Auftragsnummer (ZimaTech)</label>
-                        <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control" placeholder="Auftragsnummer eingeben (ZimaTech)">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="auftragsnummer_zf" class="form-label">Auftragsnummer (Zimmermann Formtechnik)</label>
-                        <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control" placeholder="Auftragsnummer eingeben (Zimmermann Formtechnik)">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="project_name" class="form-label">Projektnamen</label>
-                        <input type="text" name="project_name" id="project_name" class="form-control" placeholder="Projektnamen eingeben" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="project_status_id" class="form-label">Projekt Status</label>
-                        <select name="project_status_id" id="project_status_id" class="form-select" required>
-                            @foreach($statuses as $status)
-                                <option value="{{ $status->id }}" {{ (old('project_status_id', $project->project_status_id ?? '') == $status->id) ? 'selected' : '' }}>
-                                    {{ ucfirst($status->name) }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <label for="kunde" class="form-label fw-bold">Kundenname</label>
+                        <input type="text" name="kunde" id="kunde" class="form-control" placeholder="Kundenname">
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="start_time" class="form-label">Start Zeit</label>
-                        <input type="datetime-local" name="start_time" id="start_time" class="form-control"
-                               value="{{ old('start_time', isset($project) ? $project->start_time->format('Y-m-d\TH:i') : '') }}">
-                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_time" class="form-label fw-bold">Projektstart</label>
+                            <input type="datetime-local" name="start_time" id="start_time" class="form-control"
+                                value="{{ old('start_time', isset($project) ? $project->start_time->format('Y-m-d\TH:i') : '') }}">
+                        </div>
                     
-                    <div class="mb-3">
-                        <label for="end_time" class="form-label">Ende Zeit</label>
-                        <input type="datetime-local" name="end_time" id="end_time" class="form-control"
-                               value="{{ old('end_time', isset($project) && $project->end_time ? $project->end_time->format('Y-m-d\TH:i') : '') }}">
+                        <div class="col-md-6">
+                            <label for="end_time" class="form-label fw-bold">Projektende</label>
+                            <input type="datetime-local" name="end_time" id="end_time" class="form-control"
+                                value="{{ old('end_time', isset($project) && $project->end_time ? $project->end_time->format('Y-m-d\TH:i') : '') }}">
+                        </div>
                     </div>
 
-                    <div class="form-check mb-4">
+                    {{-- <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" id="save_to_db" name="save_to_db" value="1">
                         <label class="form-check-label" for="save_to_db">
                             Projekt im Datenbank speichern
                         </label>
-                    </div>
+                    </div> --}}
+                    <input type="hidden" name="save_to_db" value="1">
 
                     <div class="text-end">
                         <button type="submit" class="btn btn-wechsel">Projekt Erstellen</button>
@@ -70,7 +75,7 @@
             </div>
         </div>
         {{-- Folder Structure Preview --}}
-        <div class="card mt-4">
+        {{-- <div class="card mt-4">
             <div class="card-header bg-dark text-white">
                 <h5 class="mb-0">Vorschau der Verzeichnisstruktur</h5>
             </div>
@@ -122,10 +127,28 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputs = document.querySelectorAll('.at-least-one');
+
+            inputs.forEach(input => {
+                input.addEventListener('input', function () {
+                    // Check if at least one input has a value
+                    const oneIsFilled = Array.from(inputs).some(el => el.value.trim() !== "");
+
+                    inputs.forEach(el => {
+                        // If one is filled, neither are strictly required by the browser
+                        el.required = !oneIsFilled;
+                    });
+                });
+            });
+        });
+    </script>
     
     {{-- Live JavaScript Preview --}}
-    <script>
+    {{-- <script>
     document.addEventListener("DOMContentLoaded", function() {
         const kundeInput = document.getElementById("kunde");
         const auftragInput = document.getElementById("auftragsnummer_zt");
@@ -143,5 +166,5 @@
         auftragInput.addEventListener("input", updatePath);
         projektInput.addEventListener("input", updatePath);
     });
-    </script>
+    </script> --}}
 @endsection

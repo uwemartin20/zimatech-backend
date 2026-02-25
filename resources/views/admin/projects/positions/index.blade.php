@@ -5,18 +5,18 @@
     <div class="card">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                Positions – {{ $project->project_name }}
+                Positionen – {{ $project->project_name }}
             </h5>
 
             <div>
                 <a href="{{ route('admin.projects') }}"
                    class="btn btn-outline-light btn-sm me-2">
-                    <i class="bi bi-arrow-left"></i> Projects
+                    <i class="bi bi-arrow-left"></i> Projekte
                 </a>
 
                 <a href="{{ route('admin.projects.positions.create', $project) }}"
-                   class="btn btn-success btn-sm">
-                    <i class="bi bi-plus-circle"></i> Add Position
+                   class="btn btn-secondary btn-sm">
+                    <i class="bi bi-plus-circle"></i> Position erstellen
                 </a>
             </div>
         </div>
@@ -24,7 +24,7 @@
         <div class="card-body">
             @if($positions->isEmpty())
                 <p class="text-muted text-center mb-0">
-                    No positions found for this project.
+                    Für dieses Projekt wurden keine Stellen gefunden..
                 </p>
             @else
                 <table class="table table-striped align-middle">
@@ -32,8 +32,8 @@
                         <tr>
                             <th>#</th>
                             <th>Name</th>
-                            <th>Projekt Leistung</th>
-                            <th class="text-center">Actions</th>
+                            <th>Leistung</th>
+                            <th class="text-center">Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -54,7 +54,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-outline-danger btn-sm"
-                                                onclick="return confirm('Delete this position?')">
+                                                onclick="return confirm('Diese Position löschen?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

@@ -46,7 +46,7 @@
                         </a>
                     @endif
             
-                    <a href="{{ route('time-records.create') }}" class="btn btn-success btn-sm">
+                    <a href="{{ route('time-records.create', ['user_id' => $selectedUser->id]) }}" class="btn btn-success btn-sm">
                         <i class="bi bi-plus-circle me-1"></i>
                         Neue Aufzeichnung
                     </a>
@@ -109,7 +109,12 @@
                                     @if(!$selectedUser)
                                         <td>{{ $record->user->name }}</td>
                                     @endif
-                                    <td>{{ $record->project->project_name }}</td>
+                                    <td>
+                                        {{ $record->project->project_name }}
+                                        <small class="text-muted d-block project-auftrag">
+                                            {{ $selectedUser->company === 'ZF' ? $record->project->auftragsnummer_zf : $record->project->auftragsnummer_zt }}
+                                        </small>
+                                    </td>
                                     <td>{{ $record->position->name }}</td>
                                     <td>{{ $record->machine->name }}</td>
                                     <td>{{ \Carbon\Carbon::parse($record->start_time)->format('d.m.Y H:i') }}</td>

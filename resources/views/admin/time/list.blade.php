@@ -222,7 +222,13 @@
                                     <tr>
                                         <td>{{ $records->firstItem() + $index }}</td>
                                         <td>{{ $record->user->name }}</td>
-                                        <td>{{ $record->project->project_name }}</td>
+                                        <td>
+                                            {{ $record->project->project_name }}
+                                            <small class="text-muted d-block project-auftrag">
+                                                {{ ($record->project->auftragsnummer_zf ? "ZF: ".$record->project->auftragsnummer_zf : '')
+                                                .($record->project->auftragsnummer_zt ? " ZT: " .$record->project->auftragsnummer_zt : '') }}
+                                            </small>
+                                        </td>
                                         <td>{{ $record->position->name }}</td>
                                         <td>{{ $record->machine->name }}</td>
                                         <td>{{ \Carbon\Carbon::parse($record->start_time)->format('d.m.Y H:i') }}</td>
@@ -253,7 +259,7 @@
                                                 <form action="{{ route('admin.time.delete', $record->id) }}" method="POST">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this status?')">
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Diesen Status löschen?')">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </form>

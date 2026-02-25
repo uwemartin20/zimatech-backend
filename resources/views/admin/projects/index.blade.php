@@ -18,25 +18,28 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
-                                <th>Auftragsnummer (ZimaTech)</th>
-                                <th>Auftragsnummer (Zimmermann Formtechnik)</th>
-                                <th>Projekt Name</th>
-                                <th>Erstellt Am</th>
-                                <th>Endet Am</th>
-                                <th>Total Buateilen</th>
+                                <th>Projektname</th>
+                                <th>Erstellt am</th>
+                                <th>Positionen</th>
+                                <th>Buateilen</th>
                                 <th>Status</th>
-                                <th class="text-center">Actionen</th>
+                                <th class="text-center">Aktionen</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($projects as $index => $project)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td>{{ $project->auftragsnummer_zt }}</td>
-                                    <td>{{ $project->auftragsnummer_zf }}</td>
-                                    <td>{{ $project->project_name }}</td>
+                                    <td>
+                                        {{ $project->project_name }} 
+                                        <div class="text-muted">
+                                            {{ $project->auftragsnummer_zt ? "ZT: ".$project->auftragsnummer_zt : '' }} 
+                                            {{ $project->auftragsnummer_zf ? "ZF: ".$project->auftragsnummer_zf : '' }}
+                                        </div>
+                                    </td>
                                     <td>{{ $project->created_at->format('d M Y') }}</td>
-                                    <td>{{ $project->end_time ? $project->end_time->format('d M Y') : 'NA' }}</td>
+                                    {{-- <td>{{ $project->end_time ? $project->end_time->format('d M Y') : 'NA' }}</td> --}}
+                                    <td>{{ $project->positions->count() ?? '0' }}</td>
                                     <td>{{ $project->bauteile->count() ?? '0' }}</td>
                                     <td>
                                         @if($project->status)
@@ -49,7 +52,7 @@
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('admin.projects.positions.index', $project) }}"class="btn btn-outline-success btn-sm"
-                                            title="Positions">
+                                            title="Positionen">
                                                 <i class="bi bi-list-ul"></i>
                                         </a>
                                         <a href="{{ route('admin.projects.show', $project) }}" class="btn btn-sm btn-outline-secondary">

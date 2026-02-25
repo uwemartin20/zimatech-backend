@@ -50,7 +50,7 @@ class ProjectController extends Controller
         ]);
 
         $projectData = $request->only([
-            'kunde',
+            // 'kunde',
             'auftragsnummer_zt',
             'auftragsnummer_zf',
             'project_name',
@@ -66,7 +66,7 @@ class ProjectController extends Controller
         }
 
         // Create folder structure
-        $this->createProject($request->kunde, $request->auftragsnummer_zt, $request->project_name);
+        // $this->createProject($request->kunde, $request->auftragsnummer_zt, $request->project_name);
         return redirect()->route('admin.projects')->with('success', 'Project created successfully!');
     }
 

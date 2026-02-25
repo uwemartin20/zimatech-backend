@@ -797,7 +797,7 @@ class TimeController extends Controller
         }
 
         if (!empty($changeRequest->record_start_time) || !empty($changeRequest->record_end_time)) {
-            $record = TimeRecord::find($id);
+            $record = TimeRecord::find($changeRequest->time_record_id);
             if ($record) {
                 $record->update([
                     'start_time'=> $changeRequest->record_start_time,

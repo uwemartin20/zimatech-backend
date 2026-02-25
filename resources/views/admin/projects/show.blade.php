@@ -5,7 +5,7 @@
     <div class="card shadow-sm border-0">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                <i class="bi bi-folder2-open me-2"></i> Projekt: {{ $project->project_name }}
+                <i class="bi bi-folder2-open me-2"></i> {{ $project->project_name }}
             </h5>
             <a href="{{ route('admin.projects') }}" class="btn btn-secondary btn-sm">
                 <i class="bi bi-arrow-left-circle"></i> Zurück
@@ -15,15 +15,14 @@
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-3">
-                    <h6 class="text-muted">Auftragsnummer (ZimaTech):</h6>
-                    <p class="fw-semibold">{{ $project->auftragsnummer_zt }}</p>
+                    <h6 class="text-muted">Auftragsnummer</h6>
+                    <p class="fw-semibold">
+                        {{ $project->auftragsnummer_zt ? "ZT: ".$project->auftragsnummer_zt : '' }} 
+                        {{ $project->auftragsnummer_zf ? "ZF: ".$project->auftragsnummer_zf : '' }}
+                    </p>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-muted">Auftragsnummer (Zimmermann Formtechnik):</h6>
-                    <p class="fw-semibold">{{ $project->auftragsnummer_zf }}</p>
-                </div>
-                <div class="col-md-3">
-                    <h6 class="text-muted">Projekt Status:</h6>
+                    <h6 class="text-muted">Status:</h6>
                     @if($project->status)
                         <span class="badge" style="background-color: {{ $project->status->color }};">{{ $project->status->name }}</span>
                     @else
@@ -39,6 +38,53 @@
                     <p>{{ $project->end_time ? \Carbon\Carbon::parse($project->end_time)->format('d.m.Y H:i') : '—' }}</p>
                 </div>
             </div>
+
+            <hr>
+
+            <h5 class="mb-3"><i class="bi bi-cpu me-2"></i> Zugehörige Positionen<span class="text-muted"> - {{ $project->positions->count() ?? '0' }}</span></h5>
+            @if($project->bauteile->isEmpty())
+                <p class="text-muted">Keine Positionen gefunden.</p>
+            @else
+                <div class="row">
+                    @foreach($project->positions as $position)
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        {{-- Bauteil image or placeholder --}}
+                                        @if($position->image)
+                                            <img src="{{ asset('storage/' . $position->image) }}" 
+                                                alt="{{ $position->name }}" 
+                                                class="rounded me-3" 
+                                                width="70" height="70"
+                                                style="object-fit: cover;">
+                                        @else
+                                            <div class="bg-light border rounded me-3 d-flex align-items-center justify-content-center"
+                                                style="width:70px;height:70px;">
+                                                <i class="bi bi-box-fill fs-3 text-secondary"></i>
+                                            </div>
+                                        @endif
+                        
+                                        <div class="flex-grow-1">
+                                            {{-- Bauteil Name --}}
+                                            <a href="{{ route('admin.projects.positions.edit', [$project->id, $position->id]) }}" 
+                                            class="fw-semibold text-decoration-none text-dark">
+                                                {{ $position->name }}
+                                            </a>
+                        
+                                            {{-- Type icons --}}
+                                            <div class="small text-muted mt-1">
+                                                <i class="bi bi-box-fill text-secondary" title="Position"></i> Position                        
+                                            </div>
+                        
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
 
             <hr>
 

@@ -15,23 +15,43 @@
                 <div id="step-user" class="mb-4">
                     <h6>Bediener Auswahlen</h6>
                 
-                    <div class="row g-2">
-                        @foreach($users as $user)
-                            <div class="col-md-3">
-                                <button type="button"
-                                        class="btn btn-outline-dark w-100 user-btn"
-                                        data-user-id="{{ $user->id }}"
-                                        data-company="{{ $user->company }}">
-                                    <i class="bi bi-person"></i> {{ $user->name }}
-                                </button>
-                            </div>
-                        @endforeach
-                    </div>
+                    @if(!$selectedUser)
+                        <div class="row g-2">
+                            @foreach($users as $user)
+                                <div class="col-md-3">
+                                    <button type="button"
+                                            class="btn btn-outline-dark w-100 user-btn"
+                                            data-user-id="{{ $user->id }}"
+                                            data-company="{{ $user->company }}">
+                                        <i class="bi bi-person"></i> {{ $user->name }}
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="row g-2">
+                            @foreach($users as $user)
+                                @if($user->id == $selectedUser->id)
+                                    <div class="col-md-3">
+                                        @php 
+                                            $isActive = isset($selectedUser) && $selectedUser->id == $user->id;
+                                        @endphp
+                                        <button type="button"
+                                                class="btn {{ $isActive ? 'btn-primary active' : 'btn-outline-dark' }} w-100 user-btn"
+                                                data-user-id="{{ $user->id }}"
+                                                data-company="{{ $user->company }}">
+                                            <i class="bi bi-person"></i> {{ $user->name }}
+                                        </button>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
 
-                <input type="hidden" name="user_id" id="user_id">
+                <input type="hidden" name="user_id" id="user_id" value="{{ $selectedUser->id ?? '' }}">
 
-                <div id="step-project" class="mb-4 d-none">
+                <div id="step-project" class="mb-4 {{ isset($selectedUser) ? '' : 'd-none' }}">
                     <h6>Projekte Auswahlen</h6>
                 
                     <div class="row g-2">
@@ -44,7 +64,12 @@
                                         data-zf="{{ $project->auftragsnummer_zf }}"
                                         data-positions='@json($project->positions)'>
                                     {{ $project->project_name }}
-                                    <small class="text-muted d-block project-auftrag"></small>
+                                    <small class="text-muted d-block project-auftrag">
+                                        {{-- Show initial labels if user is pre-selected --}}
+                                        @if(isset($selectedUser))
+                                            {{ $selectedUser->company === 'ZF' ? "(ZF: " . ($project->auftragsnummer_zf ?? '—') . ")" : "(ZT: " . ($project->auftragsnummer_zt ?? '—') . ")" }}
+                                        @endif
+                                    </small>
                                 </button>
                             </div>
                         @endforeach
@@ -85,14 +110,14 @@
                     <div class="btn-group">
                         @foreach($statuses as $status)
                             <input type="radio"
-                                   class="btn-check"
-                                   name="status_id"
-                                   id="status-{{ $status->id }}"
-                                   value="{{ $status->id }}"
-                                   required>
+                                class="btn-check"
+                                name="status_id"
+                                id="status-{{ $status->id }}"
+                                value="{{ $status->id }}"
+                                required>
                 
                             <label class="btn btn-outline-dark"
-                                   for="status-{{ $status->id }}">
+                                for="status-{{ $status->id }}">
                                 {{ $status->name }}
                             </label>
                         @endforeach
