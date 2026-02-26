@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class TimeRecord extends Model
 {
@@ -27,6 +28,11 @@ class TimeRecord extends Model
         return $this->belongsTo(Machine::class);
     }
 
+    public function processes()
+    {
+        return $this->hasMany(Process::class);
+    }
+
     public function logs() 
     { 
         return $this->hasMany(TimeLog::class); 
@@ -38,7 +44,7 @@ class TimeRecord extends Model
             return 0;
         }
 
-        return $this->end_time->diffInMinutes($this->start_time);
+        return Carbon::parse($this->end_time)->diffInMinutes($this->start_time);
     }
 
 }

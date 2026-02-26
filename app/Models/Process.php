@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Process extends Model
 {
     use HasFactory;
-    protected $fillable = ['project_id', 'position_id', 'procedure_id', 'bauteil_id', 'machine_id', 'name', 'start_time', 'end_time', 'count', 'source_file', 'total_seconds'];
+    protected $fillable = ['project_id', 'position_id', 'procedure_id', 'bauteil_id', 'machine_id', 'time_record_id', 'name', 'start_time', 'end_time', 'count', 'source_file', 'total_seconds'];
 
     public function project()
     {
@@ -33,6 +33,11 @@ class Process extends Model
     public function machine()
     {
         return $this->belongsTo(Machine::class);
+    }
+
+    public function timeRecord()
+    {
+        return $this->belongsTo(TimeRecord::class);
     }
 
     public function getDurationSecondsAttribute()

@@ -107,20 +107,47 @@
                 <div id="step-status" class="mb-4 d-none">
                     <h6>Status</h6>
                 
-                    <div class="btn-group">
-                        @foreach($statuses as $status)
-                            <input type="radio"
-                                class="btn-check"
-                                name="status_id"
-                                id="status-{{ $status->id }}"
-                                value="{{ $status->id }}"
-                                required>
-                
-                            <label class="btn btn-outline-dark"
-                                for="status-{{ $status->id }}">
-                                {{ $status->name }}
-                            </label>
-                        @endforeach
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <div class="btn-group">
+                            @foreach($statuses as $status)
+                                @php
+                                    $isMitAufsicht = strtolower($status->name ?? '') === 'mit aufsicht';
+                                @endphp
+                                <input type="radio"
+                                    class="btn-check"
+                                    name="status_id"
+                                    id="status-{{ $status->id }}"
+                                    value="{{ $status->id }}"
+                                    required>
+                    
+                                <label class="btn btn-outline-dark"
+                                    for="status-{{ $status->id }}">
+                                    {{ $status->name }}
+                                </label>
+                            @endforeach
+                        </div>
+                        @if($isMitAufsicht)
+                            <div class="d-none d-flex align-items-center gap-2" id="manual-process-wrap">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input"
+                                        type="checkbox"
+                                        id="manual-process-checkbox"
+                                        name="manual_process"
+                                        value="1">
+                                    <label class="form-check-label ms-1" for="manual-process-checkbox">
+                                        Manueller Prozess
+                                    </label>
+                                </div>
+                                <div id="manual-process-name-wrap" class="d-none ms-3">
+                                    <input type="text"
+                                        class="form-control form-control-sm border-dark-subtle shadow-sm"
+                                        id="manual-process-name"
+                                        name="manual_process_name"
+                                        placeholder="Prozess Name"
+                                        autocomplete="off">
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 
@@ -211,6 +238,48 @@
 
             document.getElementById('step-status').classList.remove('d-none');
             document.getElementById('start-btn').classList.remove('d-none');
+        }
+    });
+
+    /* ========== MANUAL PROCESS (Mit Aufsicht) ========== */
+    const manualProcessWrap = document.getElementById('manual-process-wrap');
+    const manualProcessCheckbox = document.getElementById('manual-process-checkbox');
+    const manualProcessNameWrap = document.getElementById('manual-process-name-wrap');
+    const manualProcessName = document.getElementById('manual-process-name');
+
+    function toggleManualProcessUI() {
+        if (!manualProcessWrap || !manualProcessCheckbox || !manualProcessNameWrap || !manualProcessName) {
+            return;
+        }
+
+        const selectedStatus = document.querySelector('input[name="status_id"]:checked');
+        const isMitAufsicht = selectedStatus && selectedStatus.nextElementSibling
+            ? selectedStatus.nextElementSibling.textContent.trim().toLowerCase() === 'mit aufsicht'
+            : false;
+
+        if (!isMitAufsicht) {
+            manualProcessWrap.classList.add('d-none');
+            manualProcessCheckbox.checked = false;
+            manualProcessNameWrap.classList.add('d-none');
+            manualProcessName.required = false;
+            manualProcessName.value = '';
+            return;
+        }
+
+        manualProcessWrap.classList.remove('d-none');
+        if (manualProcessCheckbox.checked) {
+            manualProcessNameWrap.classList.remove('d-none');
+            manualProcessName.required = true;
+        } else {
+            manualProcessNameWrap.classList.add('d-none');
+            manualProcessName.required = false;
+            manualProcessName.value = '';
+        }
+    }
+
+    document.addEventListener('change', e => {
+        if (e.target.name === 'status_id' || e.target.id === 'manual-process-checkbox') {
+            toggleManualProcessUI();
         }
     });
 </script>    

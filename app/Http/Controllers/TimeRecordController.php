@@ -11,6 +11,7 @@ use App\Models\MachineStatus;
 use Illuminate\Http\Request;
 use App\Models\TimeChangeRequest;
 use App\Models\Notification;
+use App\Models\Process;
 use Carbon\Carbon;
 use Laravel\Pail\ValueObjects\Origin\Console;
 
@@ -98,12 +99,14 @@ class TimeRecordController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'project_id' => 'required|exists:projects,id',
             'position_id' => 'required|exists:positions,id',
             'machine_id' => 'required|exists:machines,id',
             'status_id' => 'required|exists:machine_statuses,id',
+            'manual_process' => 'nullable|boolean',
+            'manual_process_name' => 'nullable|string|required_if:manual_process,1',
         ]);
 
         // Check if an open record already exists for this user/project/machine
@@ -136,6 +139,24 @@ class TimeRecordController extends Controller
             'machine_status_id' => $request->status_id,
             'start_time' => now(),
         ]);
+
+        // Create manual process if requested
+        if (!empty($validated['manual_process']) && $validated['manual_process'] == 1) {
+
+            Process::create([
+                'project_id' => $validated['project_id'],
+                'position_id' => $validated['position_id'],
+                'procedure_id' => null,
+                'bauteil_id' => null,
+                'machine_id' => $validated['machine_id'],
+                'time_record_id' => $record->id,
+                'name' => $validated['manual_process_name'],
+                'start_time' => now(),
+                'end_time' => null,
+                'total_seconds' => 0,
+                'source_file' => null,
+            ]);
+        }
 
         return redirect()->route('time-records.show', $record->id);
     }
@@ -170,6 +191,8 @@ class TimeRecordController extends Controller
         $record->end_time = now();
         $record->save();
 
+        $this->closeRunningManualProcess($record->id);
+
         return redirect()->route('time-records.list')->with('success', 'Die Sitzung wurde erfolgreich beendet.');
     }
 
@@ -193,6 +216,24 @@ class TimeRecordController extends Controller
             'machine_status_id' => $request->status_id,
             'start_time' => now(),
         ]);
+
+        $this->closeRunningManualProcess($log->time_record_id);
+
+        if ($request->manual_process == 1 && $request->manual_process_name) {
+
+            $record = TimeRecord::find($log->time_record_id);
+
+            Process::create([
+                'time_record_id' => $record->id,
+                'project_id' => $record->project_id,
+                'position_id' => $record->position_id,
+                'machine_id' => $record->machine_id,
+                'name' => $request->manual_process_name,
+                'start_time' => now(),
+                'end_time' => null,
+                'total_seconds' => 0,
+            ]);
+        }
 
         // Redirect back to the same record page
         return redirect()->route('time-records.show', $log->time_record_id)
@@ -276,6 +317,44 @@ class TimeRecordController extends Controller
 
         return redirect()->route('time-records.show', $record_id)
             ->with('success', 'Änderungsantrag erfolgreich übermittelt.');
+    }
+
+    public function endProcess(Process $process)
+    {
+        if (!$process->end_time) {
+
+            $end = now();
+            $seconds = Carbon::parse($process->start_time)->diffInSeconds($end);
+
+            $process->update([
+                'end_time' => $end,
+                'total_seconds' => $seconds,
+            ]);
+        }
+
+        return back();
+    }
+
+    protected function closeRunningManualProcess(int $timeRecordId): void
+    {
+        $runningProcess = Process::where('time_record_id', $timeRecordId)
+            ->whereNull('end_time')
+            ->latest()
+            ->first();
+
+        if (!$runningProcess) {
+            return;
+        }
+
+        $end = now();
+        $seconds = $runningProcess->start_time
+            ? Carbon::parse($runningProcess->start_time)->diffInSeconds($end)
+            : 0;
+
+        $runningProcess->update([
+            'end_time' => $end,
+            'total_seconds' => $seconds,
+        ]);
     }
 
 }

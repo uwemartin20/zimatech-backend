@@ -43,6 +43,7 @@ Route::prefix('time-records')->name('time-records.')->group(function() {
     Route::post('/store', [TimeRecordController::class, 'store'])->name('store');
     Route::post('/end/{id}', [TimeRecordController::class, 'end'])->name('end');
     Route::post('/switch/{log}', [TimeRecordController::class, 'switch'])->name('switch');
+    Route::post('/processes/{process}/end', [TimeRecordController::class, 'endProcess'])->name('processes.end');
 });
 
 // Language routes

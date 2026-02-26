@@ -88,10 +88,11 @@
                     <div class="btn-group" role="group" aria-label="Status selection">
                         @foreach($statuses as $status)
                             <input type="radio"
-                                class="btn-check"
+                                class="btn-check status-radio"
                                 name="status_id"
                                 id="status-{{ $status->id }}"
                                 value="{{ $status->id }}"
+                                data-name="{{ strtolower($status->name) }}"
                                 autocomplete="off"
                                 {{ $currentLog->machine_status_id == $status->id ? 'checked' : '' }}>
 
@@ -100,6 +101,27 @@
                                 <i class="bi bi-circle me-1"></i> {{ $status->name }}
                             </label>
                         @endforeach
+                    </div>
+
+                    <div id="manual-process-wrap" class="d-none d-flex align-items-center gap-2">
+
+                        <div class="form-check m-0">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                id="manual-process-checkbox"
+                                name="manual_process"
+                                value="1">
+                    
+                            <label class="form-check-label ms-1">
+                                Manueller Prozess
+                            </label>
+                        </div>
+                    
+                        <input type="text"
+                            class="form-control form-control-sm d-none"
+                            id="manual-process-name"
+                            name="manual_process_name"
+                            placeholder="Prozess Name">
                     </div>
 
                     <button type="submit" class="btn btn-wechsel ms-auto">
@@ -131,6 +153,38 @@
                         {{ $log->start_time }} - {{ $log->end_time ?? 'Laufend' }}
                     </li>
                 @endforeach
+            </ul>
+
+            <hr>
+
+            <h5>Manuelle Prozesse</h5>
+
+            <ul class="list-group">
+                @forelse($record->processes as $process)
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                        <div>
+                            <strong>{{ $process->name }}</strong><br>
+                            {{ $process->start_time }}
+                            –
+                            {{ $process->end_time ?? 'Laufend' }}
+                        </div>
+
+                        @if(!$process->end_time)
+                            <form action="{{ route('time-records.processes.end', $process->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    Beenden
+                                </button>
+                            </form>
+                        @endif
+
+                    </li>
+                @empty
+                    <li class="list-group-item text-muted">
+                        Keine manuellen Prozesse vorhanden.
+                    </li>
+                @endforelse
             </ul>
         </div>
     </div>
@@ -190,5 +244,39 @@
         }
     
     })();
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const radios = document.querySelectorAll('.status-radio');
+        const wrap = document.getElementById('manual-process-wrap');
+        const checkbox = document.getElementById('manual-process-checkbox');
+        const input = document.getElementById('manual-process-name');
+
+        radios.forEach(radio => {
+            radio.addEventListener('change', function () {
+
+                if (this.dataset.name === 'mit aufsicht') {
+                    wrap.classList.remove('d-none');
+                } else {
+                    wrap.classList.add('d-none');
+                    checkbox.checked = false;
+                    input.classList.add('d-none');
+                    input.required = false;
+                    input.value = '';
+                }
+            });
+        });
+
+        checkbox.addEventListener('change', function () {
+            if (this.checked) {
+                input.classList.remove('d-none');
+                input.required = true;
+            } else {
+                input.classList.add('d-none');
+                input.required = false;
+                input.value = '';
+            }
+        });
+    });
 </script>      
 @endsection
