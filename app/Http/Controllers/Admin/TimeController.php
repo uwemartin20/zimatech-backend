@@ -488,7 +488,7 @@ class TimeController extends Controller
                 DB::raw('SUM(TIMESTAMPDIFF(SECOND, pr.start_time, pr.end_time)) as process_seconds'),
 
                 DB::raw("
-                    SUM(
+                    COALESCE(SUM(
                         GREATEST(
                             0,
                             TIMESTAMPDIFF(
@@ -497,7 +497,7 @@ class TimeController extends Controller
                                 LEAST(COALESCE(pp.pause_end, pr.end_time), pr.end_time)
                             )
                         )
-                    ) as pause_seconds
+                    ), 0) as pause_seconds
                 "),
 
                 DB::raw('COUNT(pr.id) as process_count')
