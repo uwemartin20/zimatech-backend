@@ -4,7 +4,7 @@
     <div class="container mt-4">
         <div class="card">
             <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Change Request for Record</h5>
+                <h5 class="mb-0">Änderungsantrag für Datensatz</h5>
                 {{-- <a href="{{ route('time-records.list') }}" class="btn btn-success btn-sm">
                     <i class="bi bi-plus-circle me-1"></i> Alle Aufzeichnung
                 </a> --}}
@@ -42,7 +42,7 @@
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-clock-fill me-1 text-warning"></i>
                             <strong>Beendet:</strong>
-                            <input type="datetime-local" name="record_end_time" 
+                            <input type="datetime-local" name="record_end_time" id="mainEndTime"
                                 value="{{ $record->end_time ? \Carbon\Carbon::parse($record->end_time)->format('Y-m-d\TH:i') : '' }}" 
                                 class="form-control form-control-sm">
                         </div>
@@ -55,9 +55,9 @@
                         <thead>
                             <tr>
                                 <th>Status</th>
-                                <th>Start Time</th>
-                                <th>End Time</th>
-                                <th>Still Running</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Läuft noch</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -90,14 +90,14 @@
                         </tbody>
                     </table>
 
-                    <button type="button" id="addRowBtn" class="btn btn-outline-primary mb-3">+ Add New Log</button>
+                    <button type="button" id="addRowBtn" class="btn btn-outline-primary mb-3">+ Neues Protokoll hinzufügen</button>
 
                     <div class="mb-3">
-                        <label for="reason" class="form-label"><strong>Reason for Change:</strong></label>
+                        <label for="reason" class="form-label"><strong>Grund für die Änderung:</strong></label>
                         <textarea name="reason" id="reason" rows="4" class="form-control" required></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-success">Submit Change Request</button>
+                    <button type="submit" class="btn btn-success">Änderungsantrag einreichen</button>
                 </form>
             </div>
         </div>
@@ -106,6 +106,78 @@
     {{-- JS for adding new rows dynamically --}}
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+
+        const mainEndTime = document.getElementById('mainEndTime');
+        const tbody = document.getElementById('logTableBody');
+
+        function getVisibleRows() {
+            return Array.from(tbody.querySelectorAll('tr'))
+                .filter(row => row.style.display !== 'none');
+        }
+
+        function getLastVisibleRow() {
+            const rows = getVisibleRows();
+            return rows.length ? rows[rows.length - 1] : null;
+        }
+
+        function syncMainEndTime() {
+            const lastRow = getLastVisibleRow();
+
+            if (!lastRow) {
+                mainEndTime.value = '';
+                mainEndTime.classList.add('border-danger');
+                return;
+            }
+
+            const endTimeField = lastRow.querySelector('.end-time-field');
+            const stillRunning = lastRow.querySelector('.still-running');
+
+            if (stillRunning && stillRunning.checked) {
+                mainEndTime.value = '';
+                mainEndTime.classList.add('border-danger');
+            } else if (endTimeField && endTimeField.value) {
+                mainEndTime.value = endTimeField.value;
+                mainEndTime.classList.remove('border-danger');
+            } else {
+                mainEndTime.value = '';
+                mainEndTime.classList.add('border-danger');
+            }
+        }
+
+        // Listen to any change in log end times
+        document.addEventListener('input', function (e) {
+            if (e.target.classList.contains('end-time-field')) {
+                syncMainEndTime();
+            }
+        });
+
+        // Listen to still running toggle
+        document.addEventListener('change', function (e) {
+            if (e.target.classList.contains('still-running')) {
+                const row = e.target.closest('tr');
+                const endTimeField = row.querySelector('.end-time-field');
+
+                endTimeField.disabled = e.target.checked;
+                if (e.target.checked) endTimeField.value = '';
+
+                syncMainEndTime();
+            }
+        });
+
+        // After adding new row
+        document.getElementById('addRowBtn').addEventListener('click', function () {
+            setTimeout(syncMainEndTime, 50);
+        });
+
+        // After removing row
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('removeRowBtn')) {
+                setTimeout(syncMainEndTime, 50);
+            }
+        });
+
+        // Initial sync on load
+        syncMainEndTime();
         let logIndex = {{ $record->logs->count() }};
 
         // Handle "still running" toggle

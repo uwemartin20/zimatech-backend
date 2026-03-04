@@ -8,7 +8,7 @@
     ======================= --}}
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Pending Nachtrag Requests</h5>
+            <h5 class="mb-0">Ausstehende Nachtragsanträge</h5>
         </div>
 
         <div class="card-body">
@@ -17,21 +17,28 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>Project</th>
-                            <th>Machine</th>
-                            <th>User</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Reason</th>
+                            <th>Projekt</th>
+                            <th>Position</th>
+                            <th>Maschine</th>
+                            <th>Bediener</th>
+                            <th>Start</th>
+                            <th>Ende</th>
+                            <th>Grund</th>
                             <th>Payload</th>
-                            <th>Actions</th>
+                            <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($pendingRequests as $index => $record)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $record->timeRecord->project->project_name ?? 'N/A' }}</td>
+                                <td>
+                                    {{ $record->timeRecord->project->project_name ?? 'N/A' }}
+                                    <small class="text-muted d-block project-auftrag">
+                                        {{ "ZF: ".$record->timeRecord->project->auftragsnummer_zf ." ZT: " .$record->timeRecord->project->auftragsnummer_zt }}
+                                    </small>
+                                </td>
+                                <td>{{ $record->timeRecord->position->name }}</td>
                                 <td>{{ $record->timeRecord->machine->name ?? 'N/A' }}</td>
                                 <td>{{ $record->requestedBy->name ?? 'N/A' }}</td>
                                 <td>{{ $record->timeRecord->start_time ?? 'N/A' }}</td>
@@ -40,21 +47,21 @@
                                 <td>
                                     <button class="btn btn-sm btn-outline-secondary toggle-details" type="button"
                                         data-bs-toggle="collapse" data-target="#details{{ $record->id }}">
-                                        <i class="bi bi-eye"></i> View Changes
+                                        <i class="bi bi-eye"></i> Änderungen anzeigen
                                     </button>                              
                                 <td>
                                     <div class="d-flex gap-2">
                                         <form action="{{ route('admin.time.change.accept', $record->id) }}" method="POST">
                                             @csrf
                                             <button class="btn btn-success btn-sm" type="submit">
-                                                <i class="bi bi-check-circle"></i> Accept
+                                                <i class="bi bi-check-circle"></i> Übernehmen
                                             </button>
                                         </form>
 
                                         <form action="{{ route('admin.time.change.reject', $record->id) }}" method="POST">
                                             @csrf
                                             <button class="btn btn-danger btn-sm" type="submit">
-                                                <i class="bi bi-x-circle"></i> Reject
+                                                <i class="bi bi-x-circle"></i> Ablehnen
                                             </button>
                                         </form>
                                     </div>
@@ -73,7 +80,7 @@
                                             {{-- Original Logs --}}
                                             <div class="col-md-6">
                                                 <h6 class="fw-bold text-danger mb-2">
-                                                    <i class="bi bi-clock-history"></i> Original Logs
+                                                    <i class="bi bi-clock-history"></i> Originalprotokolle
                                                 </h6>
                                                 <div class="table-responsive">
                                                     <table class="table table-sm table-bordered align-middle mb-0">
@@ -81,8 +88,8 @@
                                                             <tr>
                                                                 <th>ID</th>
                                                                 <th>Status</th>
-                                                                <th>Start Time</th>
-                                                                <th>End Time</th>
+                                                                <th>Start</th>
+                                                                <th>Ende</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -95,7 +102,7 @@
                                                                 </tr>
                                                             @empty
                                                                 <tr>
-                                                                    <td colspan="4" class="text-center text-muted">No original logs found.</td>
+                                                                    <td colspan="4" class="text-center text-muted">Es wurden keine Originalprotokolle gefunden.</td>
                                                                 </tr>
                                                             @endforelse
                                                         </tbody>
@@ -106,16 +113,16 @@
                                             {{-- Requested Changes --}}
                                             <div class="col-md-6">
                                                 <h6 class="fw-bold text-success mb-2">
-                                                    <i class="bi bi-arrow-repeat"></i> Requested Changes
+                                                    <i class="bi bi-arrow-repeat"></i> Gewünschte Änderungen
                                                 </h6>
                                                 <div class="table-responsive">
                                                     <table class="table table-sm table-bordered align-middle mb-0">
                                                         <thead class="table-success text-center">
                                                             <tr>
                                                                 <th>ID</th>
-                                                                <th>Status ID</th>
-                                                                <th>Start Time</th>
-                                                                <th>End Time</th>
+                                                                <th>Status</th>
+                                                                <th>Start</th>
+                                                                <th>End</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -144,8 +151,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">
-                                    No pending requests found.
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    Es wurden keine ausstehenden Anfragen gefunden.
                                 </td>
                             </tr>
                         @endforelse
@@ -160,7 +167,7 @@
     ======================= --}}
     <div class="card shadow-sm">
         <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">Previously Processed Requests</h5>
+            <h5 class="mb-0">Zuvor bearbeitete Anfragen</h5>
         </div>
 
         <div class="card-body">
@@ -169,23 +176,30 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Project</th>
-                            <th>Machine</th>
-                            <th>User</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Reason</th>
+                            <th>Projekt</th>
+                            <th>Position</th>
+                            <th>Maschine</th>
+                            <th>Bediener</th>
+                            <th>Start</th>
+                            <th>Ende</th>
+                            <th>Grund</th>
                             <th>Payload</th>
                             <th>Status</th>
-                            <th>Reviewed By</th>
-                            <th>Reviewed At</th>
+                            <th>Rezension von</th>
+                            <th>Rezension am</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($processedRequests as $index => $record)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $record->timeRecord->project->project_name ?? 'N/A' }}</td>
+                                <td>
+                                    {{ $record->timeRecord->project->project_name ?? 'N/A' }}
+                                    <small class="text-muted d-block project-auftrag">
+                                        {{ "ZF: ".$record->timeRecord->project->auftragsnummer_zf ." ZT: " .$record->timeRecord->project->auftragsnummer_zt }}
+                                    </small>
+                                </td>
+                                <td>{{ $record->timeRecord->position->name }}</td>
                                 <td>{{ $record->timeRecord->machine->name ?? 'N/A' }}</td>
                                 <td>{{ $record->requestedBy->name ?? 'N/A' }}</td>
                                 <td>{{ $record->timeRecord->start_time ?? 'N/A' }}</td>
@@ -194,14 +208,14 @@
                                 <td>
                                     <button class="btn btn-sm btn-outline-secondary toggle-details" type="button"
                                         data-bs-toggle="collapse" data-target="#details{{ $record->id }}">
-                                        <i class="bi bi-eye"></i> View Changes
+                                        <i class="bi bi-eye"></i> Änderungen anzeigen
                                     </button>
                                 </td>
                                 <td>
                                     @if($record->status === 'accepted')
-                                        <span class="badge bg-success">Accepted</span>
+                                        <span class="badge bg-success">Übernimmt</span>
                                     @elseif($record->status === 'rejected')
-                                        <span class="badge bg-danger">Rejected</span>
+                                        <span class="badge bg-danger">Abgelehnt</span>
                                     @endif
                                 </td>
                                 <td>{{ $record->approvedBy->name ?? '-' }}</td>
@@ -220,16 +234,16 @@
                                             {{-- Requested Changes --}}
                                             <div class="col-md-6">
                                                 <h6 class="fw-bold text-success mb-2">
-                                                    <i class="bi bi-arrow-repeat"></i> Requested Changes
+                                                    <i class="bi bi-arrow-repeat"></i> Gewünschte Änderungen
                                                 </h6>
                                                 <div class="table-responsive">
                                                     <table class="table table-sm table-bordered align-middle mb-0">
                                                         <thead class="table-success text-center">
                                                             <tr>
                                                                 <th>ID</th>
-                                                                <th>Status ID</th>
-                                                                <th>Start Time</th>
-                                                                <th>End Time</th>
+                                                                <th>Status</th>
+                                                                <th>Start</th>
+                                                                <th>End</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -258,8 +272,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    No processed requests yet.
+                                <td colspan="12" class="text-center text-muted py-4">
+                                    Bisher wurden noch keine Anfragen bearbeitet.
                                 </td>
                             </tr>
                         @endforelse
