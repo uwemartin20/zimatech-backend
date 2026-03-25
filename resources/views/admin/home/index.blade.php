@@ -20,7 +20,11 @@
                         <i class="bi bi-kanban-fill fs-2 text-primary me-3"></i>
                         <div>
                             <h5 class="card-title mb-0">Projekte</h5>
-                            <h3 class="fw-bold">{{ $projectsCount ?? 0 }}</h3>
+                            <h3 class="fw-bold">
+                                <a class="text-decoration-none text-dark" href="{{ route('admin.projects') }}">
+                                    {{ $projectsCount ?? 0 }}
+                                </a>
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -33,7 +37,11 @@
                         <i class="bi bi-people-fill fs-2 text-success me-3"></i>
                         <div>
                             <h5 class="card-title mb-0">Benutzer</h5>
-                            <h3 class="fw-bold">{{ $usersCount ?? 0 }}</h3>
+                            <h3 class="fw-bold">
+                                <a class="text-decoration-none text-dark" href="{{ route('admin.users') }}">
+                                    {{ $usersCount ?? 0 }}
+                                </a>
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -46,7 +54,11 @@
                         <i class="bi bi-list-task fs-2 text-warning me-3"></i>
                         <div>
                             <h5 class="card-title mb-0">Prozesse</h5>
-                            <h3 class="fw-bold">{{ $processesCount ?? 0 }}</h3>
+                            <h3 class="fw-bold">
+                                <a class="text-decoration-none text-dark" href="{{ route('admin.time.logs_old') }}">
+                                    {{ $processesCount ?? 0 }}
+                                </a>
+                            </h3>
                         </div>
                     </div>
                 </div>
