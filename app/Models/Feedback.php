@@ -11,10 +11,11 @@ class Feedback extends Model
     protected $fillable = [
         'type',
         'machine',
-        'description',
-        'priority',
+        'department',
+        'error_code',
+        'problem',
+        'solution',
         'name',
-        'ai_solution',
         'attachment',
     ];
 }

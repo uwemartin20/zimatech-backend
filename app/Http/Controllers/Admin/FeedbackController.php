@@ -12,102 +12,156 @@ class FeedbackController extends Controller
     public function index(Request $request)
     {
         // -----------------------------
-        // Base Query
+        // Base Query (filter-driven)
         // -----------------------------
-        $query = Feedback::query();
-
+        $baseQuery = Feedback::query();
+    
         // -----------------------------
         // Filters
         // -----------------------------
         if ($request->filled('machine')) {
-            $query->whereIn('machine', (array) $request->machine);
+            $baseQuery->whereIn('machine', (array) $request->machine);
         }
-
-        if ($request->filled('ai_only')) {
-            $query->where('ai_solution', 'ja');
+    
+        if ($request->filled('department')) {
+            $baseQuery->whereIn('department', (array) $request->department);
         }
-
-        if ($request->filled('sentiment')) {
-            if ($request->sentiment === 'frustrated') {
-                $query->where('description', 'like', '%nicht%')
-                    ->orWhere('description', 'like', '%problem%');
-            }
+    
+        if ($request->filled('type')) {
+            $baseQuery->whereIn('type', (array) $request->type);
         }
-
+    
+        if ($request->filled('has_attachment')) {
+            $baseQuery->whereNotNull('attachment');
+        }
+    
+        if ($request->filled('anonymous')) {
+            $baseQuery->whereNull('name');
+        }
+    
         // -----------------------------
-        // Main dataset
+        // Dataset (table feed)
         // -----------------------------
-        $feedbacks = $query->latest()->get();
-
-        // -----------------------------
-        // COMMAND CENTER METRICS
-        // -----------------------------
-
-        // AI Readiness Ratio
-        $totals = Feedback::selectRaw("
-            SUM(CASE WHEN ai_solution = 'ja' THEN 1 ELSE 0 END) as ready,
-            SUM(CASE WHEN ai_solution = 'naja' THEN 1 ELSE 0 END) as partial,
-            SUM(CASE WHEN ai_solution = 'nein' THEN 1 ELSE 0 END) as not_ready,
-            SUM(CASE WHEN ai_solution IS NULL THEN 1 ELSE 0 END) as unknown
-        ")->first();
-
-        $aiStats = [
-            'ready' => (int) $totals->ready,
-            'partial' => (int) $totals->partial,
-            'not_ready' => (int) $totals->not_ready,
-            'unknown' => (int) $totals->unknown,
+        $feedbacks = (clone $baseQuery)
+            ->latest()
+            ->limit(200) // safety for UI performance
+            ->get();
+    
+        // =========================================================
+        // KPI METRICS (computed from filtered dataset)
+        // =========================================================
+    
+        $totals = (clone $baseQuery)
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN solution IS NOT NULL AND solution != '' THEN 1 ELSE 0 END) as with_solution,
+                SUM(CASE WHEN solution IS NULL OR solution = '' THEN 1 ELSE 0 END) as without_solution,
+                SUM(CASE WHEN name IS NULL THEN 1 ELSE 0 END) as anonymous,
+                SUM(CASE WHEN attachment IS NOT NULL THEN 1 ELSE 0 END) as with_attachment
+            ")
+            ->first();
+    
+        $kpi = [
+            'total' => (int) $totals->total,
+            'with_solution' => (int) $totals->with_solution,
+            'without_solution' => (int) $totals->without_solution,
+            'anonymous' => (int) $totals->anonymous,
+            'with_attachment' => (int) $totals->with_attachment,
         ];
-
-        // Machine/Process Feedback Heatmap 
-        $heatmap = Feedback::select('machine', DB::raw('COUNT(*) as count'))
+    
+        // =========================================================
+        // CHART DATASETS
+        // =========================================================
+    
+        $byMachine = (clone $baseQuery)
+            ->select('machine', DB::raw('COUNT(*) as count'))
+            ->whereNotNull('machine')
             ->groupBy('machine')
             ->orderByDesc('count')
             ->get();
-
-        // Priority distribution
-        $priority = Feedback::select('priority', DB::raw('COUNT(*) as count'))
-            ->groupBy('priority')
-            ->pluck('count', 'priority');
-
+    
+        $byDepartment = (clone $baseQuery)
+            ->select('department', DB::raw('COUNT(*) as count'))
+            ->whereNotNull('department')
+            ->groupBy('department')
+            ->orderByDesc('count')
+            ->get();
+    
+        $byErrorCode = (clone $baseQuery)
+            ->select('error_code', DB::raw('COUNT(*) as count'))
+            ->whereNotNull('error_code')
+            ->groupBy('error_code')
+            ->orderByDesc('count')
+            ->get();
+    
+        $solutionStats = (clone $baseQuery)
+            ->selectRaw("
+                SUM(CASE WHEN solution IS NULL OR solution = '' THEN 1 ELSE 0 END) as no_solution,
+                SUM(CASE WHEN solution IS NOT NULL AND solution != '' THEN 1 ELSE 0 END) as has_solution
+            ")
+            ->first();
+    
         return view('admin.feedback.index', [
             'feedbacks' => $feedbacks,
-            'aiStats' => $aiStats,
-            'heatmap' => $heatmap,
-            'priority' => $priority,
+            'kpi' => $kpi,
+            'byMachine' => $byMachine,
+            'byDepartment' => $byDepartment,
+            'byErrorCode' => $byErrorCode,
+            'solutionStats' => $solutionStats,
         ]);
     }
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:fehler,vorschlag,anleitung',
-            'machine' => 'required|string|max:255',
-            'description' => 'required|string',
-            'ai_solution' => 'nullable|string',
-            'priority' => 'required|in:niedrig,mittel,hoch',
+            'type' => 'required|in:maschinen,bereiche,sonstiges',
+
+            'problem' => 'required|string',
+
+            'solution' => 'nullable|string',
+
+            'machine' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
+            'errorCode' => 'nullable|string|max:255',
             'name' => 'nullable|string|max:255',
+
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
+
+        // Optional: enforce logical constraints
+        if ($validated['type'] === 'maschinen' && empty($validated['machine'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Machine is required for maschinen type'
+            ], 422);
+        }
+
+        if ($validated['type'] === 'bereiche' && empty($validated['department'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Department is required for bereiche type'
+            ], 422);
+        }
 
         $path = null;
 
         if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $path = $file->store('feedback', 'public');
+            $path = $request->file('attachment')->store('feedback', 'public');
         }
 
         $feedback = Feedback::create([
             'type' => $validated['type'],
-            'machine' => $validated['machine'],
-            'description' => $validated['description'],
-            'ai_solution' => $validated['ai_solution'] ?? null,
-            'priority' => $validated['priority'],
+            'machine' => $validated['machine'] ?? null,
+            'department' => $validated['department'] ?? null,
+            'error_code' => $validated['errorCode'] ?? null,
+            'problem' => $validated['problem'],
+            'solution' => $validated['solution'] ?? null,
             'name' => $validated['name'] ?? null,
             'attachment' => $path,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Feedback erfolgreich abgegen',
+            'message' => 'Feedback erfolgreich abgegeben',
             'data' => $feedback
         ], 201);
     }
