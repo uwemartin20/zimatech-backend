@@ -9,4 +9,5 @@ return [
     'suppliers' => false,
     'settings' => true,
     'feedback' => true,
+    'tablar'    => true,
 ];

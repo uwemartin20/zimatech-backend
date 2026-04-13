@@ -130,6 +130,22 @@
         </div>
     @endif
 
+    {{-- Tablar-übersicht --}}
+    @if(config('modules.tablar'))
+        @php
+            $tablarActive = request()->is('admin/tablar*');
+        @endphp
+        <a data-bs-toggle="collapse" href="#tablarSubmenu" role="button"
+        aria-expanded="{{ $tablarActive ? 'true' : 'false' }}"
+        aria-controls="tablarSubmenu"
+        class="{{ $tablarActive ? 'active' : '' }}">
+            <i class="bi bi-folder2-open me-2"></i> Tablar Übersicht
+        </a>
+        <div class="collapse submenu {{ $tablarActive ? 'show' : '' }}" id="tablarSubmenu">
+            <a href="{{ route('admin.tablar.index') }}" class="{{ request()->is('admin/tablar') ? 'active' : '' }}">Tablar</a>
+        </div>
+    @endif
+
     {{-- Settings --}}
     @if(config('modules.settings'))
         @php

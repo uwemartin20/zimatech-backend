@@ -33,10 +33,10 @@ class HomeController extends Controller
                 'route'=> 'projects',
             ],
             [
-                'name' => 'Machine Logs',
-                'description'=> 'Verfolgen Sie Maschinenaktivitäten und Wartungsprotokolle in Echtzeit.',
+                'name' => 'Tablar-Verwaltung',
+                'description'=> 'Verfolgen Sie Materialverbrauch & Bestandsübersicht & Materialverwaltung (Werkstatt).',
                 'image'=> 'images/cards/machine_logs.png',
-                'route'=> 'projects.logs',
+                'route'=> 'tablar.index',
             ],
             [
                 'name' => 'Zeiten Erfassung',

@@ -23,6 +23,8 @@ use App\Http\Controllers\Admin\Settings\EmailTemplateController;
 use App\Http\Controllers\Admin\EmailController;
 use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\FeedbackController;
+use App\Http\Controllers\TablarController;
+use App\Http\Controllers\Admin\TablarController as AdminTablarController;
 
 Auth::routes();
 
@@ -46,6 +48,8 @@ Route::prefix('time-records')->name('time-records.')->group(function() {
     Route::post('/switch/{log}', [TimeRecordController::class, 'switch'])->name('switch');
     Route::post('/processes/{process}/end', [TimeRecordController::class, 'endProcess'])->name('processes.end');
 });
+
+Route::get('/tablar', [TablarController::class, 'index'])->name('tablar.index');
 
 // Language routes
 Route::get('/language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
@@ -194,6 +198,11 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
             Route::get('suppliers/show/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
             Route::get('suppliers/projects', [SupplierController::class, 'projects'])->name('suppliers.projects');
+        }
+
+        // Projects Routes
+        if (config('modules.tablar')) {
+            Route::get('/tablar', [AdminTablarController::class, 'index'])->name('tablar.index');
         }
 
 
