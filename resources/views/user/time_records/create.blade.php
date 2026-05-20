@@ -66,7 +66,7 @@
                     </div>
                 
                     <!-- Scrollable Project Container -->
-                    <div class="row g-2 project-list-container" style="max-height: 400px; overflow-y: auto; overflow-x: hidden;">
+                    <div class="row g-2 project-list-container" style="max-height: 200px; overflow-y: auto; overflow-x: hidden;">
                         @foreach($projects as $project)
                             <!-- project-wrapper with data-search attribute for JS filtering -->
                             <div class="col-md-4 project-wrapper" data-search="{{ strtolower($project->project_name . ' ' . $project->auftragsnummer_zt . ' ' . $project->auftragsnummer_zf) }}">
