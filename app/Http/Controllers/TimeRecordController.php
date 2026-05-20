@@ -78,7 +78,7 @@ class TimeRecordController extends Controller
         $users = User::where('machine_user', true)->get();
 
         $projects = Project::with('positions')
-            ->orderBy('project_name')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $machines = Machine::all();
