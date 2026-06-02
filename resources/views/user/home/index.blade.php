@@ -26,6 +26,10 @@
                             <i class="bi bi-speedometer2 me-1"></i> {{ __('Projekte Anzeigen') }}
                         </a>
 
+                        <a href="{{ route('printer-problems.index') }}" class="btn btn-wechsel px-4">
+                            <i class="bi bi-printer me-1"></i> {{ __('Druckprobleme Anzeigen') }}
+                        </a>
+
                         @if(Auth::user()->role === 'admin')
                             <a href="{{ route('admin.dashboard') }}" class="btn btn-warning px-4">
                                 <i class="bi bi-gear-wide-connected me-1"></i> Admin Dashboard

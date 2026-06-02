@@ -25,6 +25,10 @@ use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\TablarController;
 use App\Http\Controllers\Admin\TablarController as AdminTablarController;
+use App\Http\Controllers\FeedbackController as PublicFeedbackController;
+use App\Http\Controllers\PrinterProblemController;
+use App\Http\Controllers\PrinterProblemAttachmentController;
+use App\Http\Controllers\PrinterProblemEmailController;
 
 Auth::routes();
 
@@ -35,6 +39,59 @@ Route::get('/home', [HomeController::class, 'index']);
 Route::get('/projects/index', [ProjectController::class, 'index'])->name('projects');
 Route::get('/projects/logs', [ProjectController::class, 'projectLogs'])->name('projects.logs');
 Route::get('/parse-log', [ProjectController::class, 'parseLog'])->name('parse.log');
+
+// Feedback routes
+Route::prefix('feedback')->controller(PublicFeedbackController::class)->name('feedback.')->group(function () {
+    Route::get('/',        'index')        ->name('index');
+    Route::post('/',       'ask')          ->name('ask');
+    Route::post('/clear', 'clearHistory') ->name('clear');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('printer-problems', PrinterProblemController::class);
+
+    // Attachment routes nested under a problem
+    Route::prefix('printer-problems/{problem}/attachments')
+            ->name('printer-problems.attachments.')
+            ->group(function () {
+
+        // POST   /printer-problems/{problem}/attachments
+        Route::post('/',
+            [PrinterProblemAttachmentController::class, 'store']
+        )->name('store');
+
+        // GET    /printer-problems/{problem}/attachments/{attachment}/download
+        Route::get('/{attachment}/download',
+            [PrinterProblemAttachmentController::class, 'download']
+        )->name('download');
+
+        // DELETE /printer-problems/{problem}/attachments/{attachment}
+        Route::delete('/{attachment}',
+            [PrinterProblemAttachmentController::class, 'destroy']
+        )->name('destroy');
+
+    });
+
+    Route::prefix('printer-problems/{problem}/emails')
+        ->name('printer-problems.emails.')
+        ->group(function () {
+    
+        // GET    — full thread (JSON, consumed by modal)
+        Route::get('/',         [PrinterProblemEmailController::class, 'index'])    ->name('index');
+    
+        // POST   — generate first AI draft
+        Route::post('/generate',[PrinterProblemEmailController::class, 'generate']) ->name('generate');
+    
+        // POST   — rewrite with remarks
+        Route::post('/rewrite', [PrinterProblemEmailController::class, 'rewrite'])  ->name('rewrite');
+    
+        // POST   — save approved draft
+        Route::post('/save',    [PrinterProblemEmailController::class, 'save'])     ->name('save');
+    
+        // POST   — store manufacturer reply
+        Route::post('/reply',   [PrinterProblemEmailController::class, 'storeReply'])->name('reply');
+    });
+});
 
 // Time Recording Routes
 Route::prefix('time-records')->name('time-records.')->group(function() {
