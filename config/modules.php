@@ -6,7 +6,7 @@ return [
     'time' => true,
     'project_offers' => false,
     'emails' => false,
-    'suppliers' => false,
+    'suppliers' => true,
     'settings' => true,
     'feedback' => true,
     'tablar'    => true,

@@ -7,14 +7,29 @@ use Illuminate\Http\Request;
 use App\Models\Material;
 use Illuminate\Support\Facades\DB;
 use App\Models\MaterialConsumption;
+use App\Models\Supplier;
 
 class TablarController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $materials = Material::orderBy('name')->get();
+        $query = Material::with('suppliers')->orderBy('name');
 
-        $maxQuantity = $materials->max('quantity') ?? 0;
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->filled('shelf')) {
+            $query->where('tablar', 'like', '%' . $request->shelf . '%');
+        }
+
+        if ($request->filled('max_qty')) {
+            $query->where('quantity', '<=', $request->max_qty);
+        }
+
+        $materials = $query->paginate(5)->withQueryString(); // withQueryString keeps filters in pagination links
+
+        $maxQuantity = Material::max('quantity') ?? 0; // separate query, not affected by filters
 
         return view('admin.tablar.index', compact('materials', 'maxQuantity'));
     }
@@ -56,6 +71,24 @@ class TablarController extends Controller
         $material = Material::findOrFail($id);
         $material->delete();
 
+        return response()->json(['success' => true]);
+    }
+
+    public function getSuppliers($id)
+    {
+        $material = Material::with('suppliers')->findOrFail($id);
+
+        return response()->json($material->suppliers);
+    }
+
+    public function attach(Request $request, Material $material) {
+        // Sync Without Detaching avoids duplicate rows in the pivot table setup
+        $material->suppliers()->syncWithoutDetaching([$request->input('supplier_id')]);
+        return response()->json(['success' => true]);
+    }
+
+    public function detach(Material $material, Supplier $supplier) {
+        $material->suppliers()->detach($supplier->id);
         return response()->json(['success' => true]);
     }
 

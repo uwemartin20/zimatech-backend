@@ -41,7 +41,7 @@
                         <input type="email" name="email" value="{{ old('email', $supplier->email) }}" class="form-control">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Website</label>
+                        <label class="form-label">Webseite</label>
                         <input type="url" name="website" value="{{ old('website', $supplier->website) }}" class="form-control">
                     </div>
                 </div>

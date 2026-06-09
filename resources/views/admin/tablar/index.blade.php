@@ -19,33 +19,76 @@
 
         <div class="card-body">
             <!-- FILTERS -->
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <div class="row g-3">
+            <form id="filterForm" method="GET" action="{{ route('admin.tablar.index') }}">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
 
-                        <!-- Name Filter -->
-                        <div class="col-md-4">
-                            <label class="form-label">Materialname</label>
-                            <input type="text" id="filterName" class="form-control" placeholder="z.B. Schraube">
+                            <!-- Name Filter -->
+                            <div class="col-md-4">
+                                <label class="form-label">Materialname</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    id="filterName"
+                                    class="form-control"
+                                    placeholder="z.B. Schraube"
+                                    value="{{ request('name') }}"
+                                >
+                            </div>
+
+                            <!-- Quantity Range -->
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    Menge (max): <span id="qtyValue">{{ request('max_qty', $maxQuantity) }}</span>
+                                </label>
+                                <input
+                                    type="range"
+                                    class="form-range"
+                                    min="0"
+                                    max="{{ $maxQuantity }}"
+                                    value="{{ request('max_qty', $maxQuantity) }}"
+                                    id="filterQuantity"
+                                    name="max_qty"
+                                >
+                            </div>
+
+                            <!-- Tablar -->
+                            <div class="col-md-3">
+                                <label class="form-label">Tablar</label>
+                                <input
+                                    type="text"
+                                    name="shelf"
+                                    id="filterShelf"
+                                    class="form-control"
+                                    placeholder="z.B. A1"
+                                    value="{{ request('shelf') }}"
+                                >
+                            </div>
+
+                            <!-- Submit -->
+                            <div class="d-none">
+                                <div class="col-md-1">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+
                         </div>
 
-                        <!-- Quantity Range -->
-                        <div class="col-md-4">
-                            <label class="form-label">
-                                Menge (max): <span id="qtyValue">{{ $maxQuantity }}</span>
-                            </label>
-                            <input type="range" class="form-range" min="0" max="{{ $maxQuantity }}" value="{{ $maxQuantity }}" id="filterQuantity">
+                        <!-- Active filters + reset -->
+                        @if(request()->hasAny(['name', 'shelf', 'max_qty']))
+                        <div class="mt-2">
+                            <a href="{{ route('admin.tablar.index') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i> Filter zurücksetzen
+                            </a>
                         </div>
-
-                        <!-- Tablar -->
-                        <div class="col-md-4">
-                            <label class="form-label">Tablar</label>
-                            <input type="text" id="filterShelf" class="form-control" placeholder="z.B. A1">
-                        </div>
+                        @endif
 
                     </div>
                 </div>
-            </div>
+            </form>
 
             <table class="table table-hover align-middle border-top">
                 <thead class="table-light">
@@ -75,6 +118,9 @@
                             <td><span class="badge rounded-pill bg-light text-dark border">{{ $material->quantity }} Stk.</span></td>
                             <td class="text-muted small">{{ $material->tablar }}</td>
                             <td class="text-end">
+                                <button class="btn btn-outline-dark btn-sm me-1" onclick="openSupplierModal(this)">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
                                 <button class="btn btn-outline-primary btn-sm me-1" onclick="openEditModal(this)">
                                     <i class="bi bi-pencil"></i>
                                 </button>
@@ -86,6 +132,9 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="d-flex justify-content-center mt-4">
+                {{ $materials->links() }}
+            </div>
         </div>
     </div>
 </div>
@@ -161,178 +210,104 @@
     </div>
 </div>
 
+<!-- SUPPLIER MODAL -->
+<div class="modal fade" id="supplierModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Lieferanten für: <span id="supplierModalMaterialName" class="text-muted fw-normal"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Search & Attach -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body py-3">
+                        <label class="form-label small fw-bold text-muted mb-2">Bestehenden Lieferanten hinzufügen</label>
+
+                        <!-- Search input -->
+                        <div class="position-relative">
+                            <input
+                                type="text"
+                                id="supplierSearchInput"
+                                class="form-control form-control-sm"
+                                placeholder="Name oder Firma suchen..."
+                                autocomplete="off"
+                            >
+                            <!-- Live results dropdown -->
+                            <ul
+                                id="supplierSearchResults"
+                                class="list-group shadow position-absolute w-100 d-none"
+                                style="z-index: 1055; max-height: 200px; overflow-y: auto; top: 100%; left: 0;"
+                            ></ul>
+                        </div>
+
+                        <!-- Selected supplier badge -->
+                        <div id="supplierSearchSelected" class="mt-2 d-none">
+                            <span class="badge bg-success fs-6 fw-normal py-2 px-3">
+                                <i class="bi bi-check-circle me-1"></i>
+                                <span id="supplierSearchSelectedName"></span>
+                                <button
+                                    type="button"
+                                    class="btn-close btn-close-white ms-2"
+                                    style="font-size:0.6rem;"
+                                    onclick="clearSupplierSelection()"
+                                ></button>
+                            </span>
+                        </div>
+
+                        <!-- Attach button -->
+                        <div class="mt-2">
+                            <button class="btn btn-success btn-sm" type="button" onclick="attachSupplier()">
+                                <i class="bi bi-plus-lg me-1"></i> Zuweisen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading spinner -->
+                <div id="supplierLoading" class="text-center py-4">
+                    <div class="spinner-border text-secondary" role="status"></div>
+                    <p class="text-muted mt-2 mb-0">Lieferanten werden geladen...</p>
+                </div>
+
+                <!-- Error -->
+                <div id="supplierError" class="alert alert-danger d-none">
+                    Fehler beim Verarbeiten der Anfrage.
+                </div>
+
+                <!-- Empty state -->
+                <div id="supplierEmpty" class="text-center text-muted py-4 d-none">
+                    <i class="bi bi-box-seam fs-3 d-block mb-2"></i>
+                    Kein Lieferant für dieses Material hinterlegt.
+                </div>
+
+                <!-- Attached suppliers list -->
+                <ul id="supplierList" class="list-group list-group-flush d-none"></ul>
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <a href="{{ route('admin.suppliers.create') }}" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Neuer Lieferant
+                </a>
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Schließen</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <script>
-let editMode = false;
-let currentId = null;
-
-// CSRF helper
-const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-// OPEN ADD
-function openAddModal() {
-    editMode = false;
-    currentId = null;
-
-    document.getElementById('modalTitle').innerText = "Neues Material";
-    document.getElementById('materialForm').reset();
-
-    new bootstrap.Modal(document.getElementById('materialModal')).show();
-}
-
-// OPEN EDIT
-function openEditModal(button) {
-    editMode = true;
-
-    const row = button.closest('.clickable-row');
-    currentId = row.getAttribute('data-id');
-
-    document.getElementById('modalTitle').innerText = "Material bearbeiten";
-
-    document.getElementById('name').value = row.getAttribute('data-name');
-    document.getElementById('currentQuantity').value = row.getAttribute('data-quantity');
-    document.getElementById('addQuantity').value = 0;
-
-    document.getElementById('tablar').value = row.getAttribute('data-tablar') ?? '';
-    document.getElementById('threshold').value = row.getAttribute('data-threshold') ?? '';
-    document.getElementById('type').value = row.getAttribute('data-type') ?? '';
-
-    new bootstrap.Modal(document.getElementById('materialModal')).show();
-}
-
-// HELPER: Show floating error for 5 seconds
-function showAlert(message, type = 'danger') {
-    const container = document.getElementById('alert-container');
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type} shadow-lg border-0 fade show`;
-    alert.innerHTML = `<strong>${message}</strong>`;
-    container.appendChild(alert);
-    
-    setTimeout(() => {
-        alert.classList.remove('show');
-        setTimeout(() => alert.remove(), 500);
-    }, 5000);
-}
-
-/// SAVE (CREATE + UPDATE)
-async function saveMaterial() {
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-
-    const addQty = parseInt(document.getElementById('addQuantity')?.value || 0);
-    const currentQty = parseInt(document.getElementById('currentQuantity')?.value || 0);
-
-    const data = {
-        name: document.getElementById('name').value,
-        quantity: editMode ? (currentQty + addQty) : addQty,
-        tablar: document.getElementById('tablar').value,
-        threshold: document.getElementById('threshold').value || null,
-        type: document.getElementById('type').value || null
+    window.tablarAdmin = {
+        token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        maxQuantity: {{ $maxQuantity }}
     };
-
-    if (!data.name) {
-        showAlert("Bitte alle Felder korrekt ausfüllen");
-        return;
-    }
-
-    if (editMode && addQty < 0) {
-        showAlert("Ungültige Menge");
-        return;
-    }
-
-    // Start Loading Transition
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Speichern...`;
-
-    let url = '/admin/tablar';
-    let method = 'POST';
-
-    if (editMode) {
-        url = `/admin/tablar/${currentId}`;
-        method = 'PUT';
-    }
-
-    try {
-        const res = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': token
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (!res.ok) throw new Error();
-
-        location.reload(); // simple + reliable for MVP
-
-    } catch (e) {
-        showAlert("Fehler beim Speichern - Bitte erneut versuchen");
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
-}
-
-// DELETE (SIMULATED)
-async function deleteMaterial(id) {
-    if (!confirm("Wirklich löschen?")) return;
-
-    try {
-        const res = await fetch(`/admin/tablar/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': token
-            }
-        });
-
-        if (!res.ok) throw new Error();
-
-        location.reload();
-
-    } catch {
-        alert("Fehler beim Löschen");
-    }
-}
-
-// FILTER ELEMENTS
-const filterName = document.getElementById('filterName');
-const filterQuantity = document.getElementById('filterQuantity');
-const filterShelf = document.getElementById('filterShelf');
-const qtyValue = document.getElementById('qtyValue');
-
-// UPDATE SLIDER LABEL
-filterQuantity.addEventListener('input', () => {
-    qtyValue.innerText = filterQuantity.value;
-    applyFilters();
-});
-
-// INPUT EVENTS
-filterName.addEventListener('keyup', applyFilters);
-filterShelf.addEventListener('keyup', applyFilters);
-
-// MAIN FILTER FUNCTION
-function applyFilters() {
-    const name = filterName.value.toLowerCase();
-    const maxQty = parseInt(filterQuantity.value);
-    const shelf = filterShelf.value.toLowerCase();
-
-    const rows = document.querySelectorAll('.clickable-row');
-
-    rows.forEach(row => {
-        const rowName = (row.dataset.name).toLowerCase();
-        const rowQty = parseInt(row.dataset.quantity);
-        const rowShelf = (row.dataset.tablar).toLowerCase();
-
-        const matchName = rowName.includes(name);
-        const matchQty = rowQty <= maxQty;
-        const matchShelf = rowShelf.includes(shelf);
-
-        if (matchName && matchQty && matchShelf) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-}
 </script>
+<script src="{{ asset('js/admin/tablar/index.js') }}?v=1.0"></script>
 
 @endsection

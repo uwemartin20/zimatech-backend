@@ -250,6 +250,7 @@ Route::middleware(['auth', 'role:admin'])
         // Supplier Routes
         if (config('modules.suppliers')) {
             Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+            Route::get('suppliers/get', [SupplierController::class, 'getSuppliers'])->name('suppliers.get');
             Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
             Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
             Route::get('suppliers/edit/{supplier}', [SupplierController::class, 'edit'])->name('suppliers.edit');
@@ -257,6 +258,7 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
             Route::get('suppliers/show/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
             Route::get('suppliers/projects', [SupplierController::class, 'projects'])->name('suppliers.projects');
+            Route::get('/suppliers/search', [SupplierController::class, 'search'])->name('suppliers.search');
         }
 
         // Projects Routes
@@ -266,6 +268,9 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/tablar/{id}', [AdminTablarController::class, 'update'])->name('tablar.update');
             Route::delete('/tablar/{id}', [AdminTablarController::class, 'destroy'])->name('tablar.destroy');
             Route::get('/tablar/overview', [AdminTablarController::class, 'overview'])->name('tablar.overview');
+            Route::get('/tablar/{id}/suppliers', [AdminTablarController::class, 'getSuppliers'])->name('tablar.suppliers');
+            Route::post('/tablar/{material}/suppliers', [AdminTablarController::class, 'attach'])->name('tablar.suppliers.attach');
+            Route::delete('/tablar/{material}/suppliers/{supplier}', [AdminTablarController::class, 'detach'])->name('tablar.suppliers.detach');
         }
 
 

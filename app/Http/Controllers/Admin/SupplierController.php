@@ -33,6 +33,25 @@ class SupplierController extends Controller
         return view('admin.suppliers.index', compact('suppliers', 'services'));
     }
 
+    public function getSuppliers()
+    {
+        $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
+        return response()->json($suppliers);
+    }
+
+    public function search(Request $request)
+    {
+        $q = $request->input('q', '');
+
+        $suppliers = Supplier::where('name', 'like', "%{$q}%")
+            ->orWhere('company', 'like', "%{$q}%")
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name', 'company', 'email', 'phone_number']);
+
+        return response()->json($suppliers);
+    }
+
     public function create()
     {
         $services = ProjectService::all();

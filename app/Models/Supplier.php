@@ -19,4 +19,9 @@ class Supplier extends Model
     {
         return $this->hasMany(SupplierOffer::class);
     }
+
+    public function materials()
+    {
+        return $this->belongsToMany(Material::class, 'material_suppliers');
+    }
 }

@@ -12,23 +12,19 @@ class TablarController extends Controller
 {
     public function index()
     {
-        $materials = Material::orderBy('name')->get();
+        $materials = Material::orderBy('tablar')->orderBy('name')->get();
 
-        // Map to match existing frontend structure (name, quantity, shelf)
-        $mapped = $materials->map(function ($m) {
-            return [
-                'id' => $m->id,
-                'name' => $m->name,
-                'quantity' => $m->quantity,
-                'threshold' => $m->threshold ?? 20,
-                'shelf' => $m->tablar,
-            ];
-        });
+        $flatList = $materials->map(fn($m) => [
+            'id'        => $m->id,
+            'name'      => $m->name,
+            'quantity'  => $m->quantity,
+            'shelf'     => $m->tablar,
+            'threshold' => $m->threshold,
+        ])->values();
 
-        $columns = $mapped->chunk(ceil($mapped->count() / 2));
-        $flatList = $mapped->values();
+        $shelves = $materials->pluck('tablar')->unique()->sort()->values();
 
-        return view('user.tablar.index', compact('columns', 'flatList'));
+        return view('user.tablar.index', compact('flatList', 'shelves'));
     }
 
     /**
