@@ -17,7 +17,7 @@
 <body class="bg-light d-flex flex-column min-vh-100">
 
     {{-- ========== NAVBAR ========== --}}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm mb-0">
         <div class="container">
             {{-- Brand / Logo --}}
             <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}">
@@ -103,33 +103,35 @@
     </nav>
 
     {{-- Alert placeholder --}}
-    <div class="container mt-3">
-        {{-- ✅ Success message --}}
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert" id="logAlert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+    @if(session('success') || session('error') || $errors->any())
+        <div class="container mt-3">
+            {{-- ✅ Success message --}}
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert" id="logAlert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
-        {{-- ⚠️ General error message --}}
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert" id="logAlert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" id="logAlert">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-    </div>
+            {{-- ⚠️ General error message --}}
+            @if (session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert" id="logAlert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show" id="logAlert">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+        </div>
+    @endif
 
     {{-- ========== MAIN CONTENT ========== --}}
     <main class="flex-grow-1">
