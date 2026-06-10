@@ -53,6 +53,16 @@
                         </a>
                     </li>
 
+                    @auth
+                        @if(Auth::user()->role === 'admin')
+                            <li class="nav-item mx-2">
+                                <a href="{{ route('admin.dashboard') }}" class="nav-link">
+                                    <i class="bi bi-speedometer me-1"></i> Admin
+                                </a>
+                            </li>
+                        @endif
+                    @endauth
+
                     {{-- Divider --}}
                     <li class="nav-item mx-2 text-muted">|</li>
 
@@ -122,12 +132,12 @@
     </div>
 
     {{-- ========== MAIN CONTENT ========== --}}
-    <main class="container flex-grow-1 py-4">
+    <main class="flex-grow-1">
         @yield('content')
     </main>
 
     {{-- ========== FOOTER ========== --}}
-    <footer class="bg-dark text-white text-center py-3 mt-4">
+    <footer class="bg-dark text-white text-center py-3">
         &copy; {{ date('Y') }} ZiMaTec. Alle Rechte vorbehalten.
     </footer>
 
