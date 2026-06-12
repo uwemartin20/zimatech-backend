@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Material;
-use Illuminate\Support\Facades\DB;
 use App\Models\MaterialConsumption;
 use App\Models\Supplier;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TablarController extends Controller
 {
@@ -16,11 +16,11 @@ class TablarController extends Controller
         $query = Material::with('suppliers')->orderBy('name');
 
         if ($request->filled('name')) {
-            $query->where('name', 'like', '%' . $request->name . '%');
+            $query->where('name', 'like', '%'.$request->name.'%');
         }
 
         if ($request->filled('shelf')) {
-            $query->where('tablar', 'like', '%' . $request->shelf . '%');
+            $query->where('tablar', 'like', '%'.$request->shelf.'%');
         }
 
         if ($request->filled('max_qty')) {
@@ -81,14 +81,18 @@ class TablarController extends Controller
         return response()->json($material->suppliers);
     }
 
-    public function attach(Request $request, Material $material) {
+    public function attach(Request $request, Material $material)
+    {
         // Sync Without Detaching avoids duplicate rows in the pivot table setup
         $material->suppliers()->syncWithoutDetaching([$request->input('supplier_id')]);
+
         return response()->json(['success' => true]);
     }
 
-    public function detach(Material $material, Supplier $supplier) {
+    public function detach(Material $material, Supplier $supplier)
+    {
         $material->suppliers()->detach($supplier->id);
+
         return response()->json(['success' => true]);
     }
 
@@ -118,9 +122,9 @@ class TablarController extends Controller
         // =========================
 
         $topUsed10Days = MaterialConsumption::select(
-                'material_id',
-                DB::raw('SUM(quantity) as total_used')
-            )
+            'material_id',
+            DB::raw('SUM(quantity) as total_used')
+        )
             ->where('created_at', '>=', now()->subDays(10))
             ->groupBy('material_id')
             ->orderByDesc('total_used')
@@ -129,9 +133,9 @@ class TablarController extends Controller
             ->get();
 
         $topUsed30Days = MaterialConsumption::select(
-                'material_id',
-                DB::raw('SUM(quantity) as total_used')
-            )
+            'material_id',
+            DB::raw('SUM(quantity) as total_used')
+        )
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('material_id')
             ->orderByDesc('total_used')
@@ -153,9 +157,9 @@ class TablarController extends Controller
         // =========================
 
         $shelfActivity = MaterialConsumption::select(
-                'materials.tablar',
-                DB::raw('SUM(material_consumption.quantity) as total_used')
-            )
+            'materials.tablar',
+            DB::raw('SUM(material_consumption.quantity) as total_used')
+        )
             ->join('materials', 'materials.id', '=', 'material_consumption.material_id')
             ->groupBy('materials.tablar')
             ->orderByDesc('total_used')

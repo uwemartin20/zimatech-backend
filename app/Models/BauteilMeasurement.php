@@ -8,7 +8,7 @@ class BauteilMeasurement extends Model
 {
     protected $fillable = [
         'bauteil_id', 'height', 'width', 'weight', 'depth',
-        'thickness', 'radius', 'unit'
+        'thickness', 'radius', 'unit',
     ];
 
     public function bauteil()

@@ -3,25 +3,27 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\OfferEmail;
-use App\Models\ProjectOffer;
+use App\Models\EmailTemplate;
 use App\Models\Notification;
 use App\Models\OfferCalculation;
-use App\Models\EmailTemplate;
-use App\Models\ProjectService;
-use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\OfferEmail;
 use App\Models\OfferFile;
-use Illuminate\Support\Facades\Storage;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\ProjectOffer;
+use App\Models\ProjectService;
+use App\Models\User;
 use App\Traits\Emails;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectOfferController extends Controller
 {
     use Emails;
+
     public function index()
     {
         $offers = ProjectOffer::latest()->paginate(10);
+
         return view('admin.project_offers.index', compact('offers'));
     }
 
@@ -29,11 +31,11 @@ class ProjectOfferController extends Controller
     {
 
         $offer = ProjectOffer::with([
-            'calculations',        
-            'files',               
-            'emails.files',        
-            'assignedUser'         
-        ])->findOrFail($offer);   
+            'calculations',
+            'files',
+            'emails.files',
+            'assignedUser',
+        ])->findOrFail($offer);
 
         return view('admin.project_offers.show', compact('offer'));
     }
@@ -41,6 +43,7 @@ class ProjectOfferController extends Controller
     public function create()
     {
         $users = User::all();
+
         return view('admin.project_offers.create', compact('users'));
     }
 
@@ -57,11 +60,11 @@ class ProjectOfferController extends Controller
             'emails.*.subject' => 'nullable|string|max:255',
             'emails.*.body' => 'nullable|string',
             'emails.*.attachments' => 'array',
-            'files.*.file_name'=> 'nullable|string|max:255',
-            'files.*.description'=> 'nullable|string',
-            'files.*.file'=> 'nullable|file',
+            'files.*.file_name' => 'nullable|string|max:255',
+            'files.*.description' => 'nullable|string',
+            'files.*.file' => 'nullable|file',
         ]);
-    
+
         $offer = ProjectOffer::create([
             'customer_name' => $data['customer_name'] ?? null,
             'customer_email' => $data['customer_email'] ?? null,
@@ -69,30 +72,30 @@ class ProjectOfferController extends Controller
             'description' => $data['description'] ?? null,
             'assigned_user_id' => $data['assigned_user_id'] ?? null,
         ]);
-    
+
         // 🔹 Store uploaded files (direct offer files)
         if ($request->has('files')) {
             foreach ($request->file('files') as $fileData) {
-                
+
                 if (empty($fileData['file'])) {
                     continue;
                 }
-        
-                $uploadedFile = $fileData['file']; 
+
+                $uploadedFile = $fileData['file'];
                 $filePath = $uploadedFile->store('project_offers/files', 'public');
 
                 OfferFile::create([
                     'project_offer_id' => $offer->id,
-                    'file_name'        => $fileData['file_name'] ?? $uploadedFile->getClientOriginalName(),
-                    'description'      => $fileData['description'] ?? null,
-                    'file_path'        => $filePath,
-                    'uploaded_by'      => auth()->id(),
+                    'file_name' => $fileData['file_name'] ?? $uploadedFile->getClientOriginalName(),
+                    'description' => $fileData['description'] ?? null,
+                    'file_path' => $filePath,
+                    'uploaded_by' => auth()->id(),
                 ]);
             }
         }
-    
+
         // 🔹 Add manually entered emails
-        if (!empty($data['emails'])) {
+        if (! empty($data['emails'])) {
             foreach ($data['emails'] as $emailData) {
                 $email = $offer->emails()->create([
                     'sender' => $emailData['sender'] ?? null,
@@ -101,39 +104,39 @@ class ProjectOfferController extends Controller
                     'body' => $emailData['body'] ?? '',
                     'direction' => 'inbound',
                 ]);
-    
+
                 // Check if files are attached to this email
-                if (!empty($emailData['attachments'])) {
+                if (! empty($emailData['attachments'])) {
                     foreach ($emailData['attachments'] as $attachment) {
                         // Skip if no file uploaded
-                        if (!isset($attachment['file'])) {
+                        if (! isset($attachment['file'])) {
                             continue;
                         }
 
-                        $uploadedFile = $attachment['file']; 
+                        $uploadedFile = $attachment['file'];
                         $filePath = $uploadedFile->store('project_offers/email_attachments', 'public');
 
                         OfferFile::create([
                             'project_offer_id' => $offer->id,
-                            'offer_email_id'   => $email->id,
-                            'file_name'        => $attachment['file_name'] ?? $uploadedFile->getClientOriginalName(),
-                            'description'      => $attachment['description'] ?? null,
-                            'file_path'        => $filePath,
-                            'uploaded_by'      => auth()->id(),
+                            'offer_email_id' => $email->id,
+                            'file_name' => $attachment['file_name'] ?? $uploadedFile->getClientOriginalName(),
+                            'description' => $attachment['description'] ?? null,
+                            'file_path' => $filePath,
+                            'uploaded_by' => auth()->id(),
                         ]);
                     }
                 }
             }
         }
-    
+
         // 🔔 Create admin notification
         Notification::create([
             'user_id' => $offer->assigned_user_id ?? auth()->id(),
             'type' => 'project_offer_created',
-            'message' => 'Neues Projektangebot erstellt: ' . $offer->subject,
+            'message' => 'Neues Projektangebot erstellt: '.$offer->subject,
             'url' => route('admin.project_offers.show', $offer),
         ]);
-    
+
         return redirect()
             ->route('admin.project_offers.show', $offer)
             ->with('success', 'Projektangebot wurde erfolgreich erstellt.');
@@ -156,20 +159,20 @@ class ProjectOfferController extends Controller
             'subject' => 'required|string|max:255',
             'description' => 'nullable|string',
             'assigned_user_id' => 'nullable|exists:users,id',
-    
+
             // Emails
             'emails.*.id' => 'nullable|exists:offer_emails,id',
             'emails.*.sender' => 'nullable|string|max:255',
             'emails.*.recipient' => 'nullable|string|max:255',
             'emails.*.subject' => 'nullable|string|max:255',
             'emails.*.body' => 'nullable|string',
-    
+
             // Attachments
             'emails.*.attachments.*.id' => 'nullable|exists:offer_files,id',
             'emails.*.attachments.*.file_name' => 'nullable|string|max:255',
             'emails.*.attachments.*.description' => 'nullable|string',
             'emails.*.attachments.*.file' => 'nullable|file',
-    
+
             // Direct files
             'files.*.id' => 'nullable|exists:offer_files,id',
             'files.*.file_name' => 'nullable|string|max:255',
@@ -178,7 +181,7 @@ class ProjectOfferController extends Controller
         ]);
 
         $offer = ProjectOffer::findOrFail($offer);
-    
+
         // 🔹 Update offer main fields
         $offer->update([
             'customer_name' => $data['customer_name'] ?? null,
@@ -187,27 +190,27 @@ class ProjectOfferController extends Controller
             'description' => $data['description'] ?? null,
             'assigned_user_id' => $data['assigned_user_id'] ?? null,
         ]);
-    
+
         /* ============================================================
            🔹 HANDLE EMAILS (Update, Delete Missing, Add New)
            ============================================================ */
         $existingEmailIds = $offer->emails->pluck('id')->toArray();
         $submittedEmailIds = collect($data['emails'] ?? [])->pluck('id')->filter()->toArray();
-    
+
         // Delete removed emails
         foreach ($offer->emails as $email) {
-            if (!in_array($email->id, $submittedEmailIds)) {
+            if (! in_array($email->id, $submittedEmailIds)) {
                 $email->attachments()->delete();
                 $email->delete();
             }
         }
-    
+
         // Add/update emails
-        if (!empty($data['emails'])) {
+        if (! empty($data['emails'])) {
             foreach ($data['emails'] as $emailData) {
-    
+
                 // 🔸 Update existing
-                if (!empty($emailData['id'])) {
+                if (! empty($emailData['id'])) {
                     $email = OfferEmail::find($emailData['id']);
                     $email->update([
                         'sender' => $emailData['sender'] ?? null,
@@ -226,29 +229,29 @@ class ProjectOfferController extends Controller
                         'direction' => 'inbound',
                     ]);
                 }
-    
+
                 /* Attachments */
-                if (!empty($emailData['attachments'])) {
+                if (! empty($emailData['attachments'])) {
                     foreach ($emailData['attachments'] as $att) {
-    
+
                         // Update existing attachment
-                        if (!empty($att['id'])) {
+                        if (! empty($att['id'])) {
                             $file = OfferFile::find($att['id']);
                             $file->update([
                                 'file_name' => $att['file_name'] ?? $file->file_name,
                                 'description' => $att['description'] ?? $file->description,
                             ]);
-    
-                            if (!empty($att['file'])) {
+
+                            if (! empty($att['file'])) {
                                 $path = $att['file']->store('project_offers/email_attachments', 'public');
                                 $file->update(['file_path' => $path]);
                             }
                         }
-    
+
                         // Add new attachment
-                        elseif (!empty($att['file'])) {
+                        elseif (! empty($att['file'])) {
                             $path = $att['file']->store('project_offers/email_attachments', 'public');
-    
+
                             OfferFile::create([
                                 'project_offer_id' => $offer->id,
                                 'offer_email_id' => $email->id,
@@ -262,41 +265,40 @@ class ProjectOfferController extends Controller
                 }
             }
         }
-    
+
         /* ============================================================
            🔹 DIRECT FILES (Offer-level files)
            ============================================================ */
         $existingFileIds = $offer->files()->whereNull('offer_email_id')->pluck('id')->toArray();
         $submittedFileIds = collect($data['files'] ?? [])->pluck('id')->filter()->toArray();
-    
+
         // Delete removed files
         foreach ($offer->files()->whereNull('offer_email_id')->get() as $file) {
-            if (!in_array($file->id, $submittedFileIds)) {
+            if (! in_array($file->id, $submittedFileIds)) {
                 $file->delete();
             }
         }
-    
+
         // Add/update files
-        if (!empty($data['files'])) {
+        if (! empty($data['files'])) {
             foreach ($data['files'] as $fileInput) {
-    
-                if (!empty($fileInput['id'])) {
+
+                if (! empty($fileInput['id'])) {
                     // update
                     $file = OfferFile::find($fileInput['id']);
                     $file->update([
                         'file_name' => $fileInput['file_name'] ?? $file->file_name,
                         'description' => $fileInput['description'] ?? $file->description,
                     ]);
-    
-                    if (!empty($fileInput['file'])) {
+
+                    if (! empty($fileInput['file'])) {
                         $path = $fileInput['file']->store('project_offers/files', 'public');
                         $file->update(['file_path' => $path]);
                     }
-                } 
-                elseif (!empty($fileInput['file'])) {
+                } elseif (! empty($fileInput['file'])) {
                     // create new
                     $path = $fileInput['file']->store('project_offers/files', 'public');
-    
+
                     OfferFile::create([
                         'project_offer_id' => $offer->id,
                         'file_name' => $fileInput['file_name'] ?? $fileInput['file']->getClientOriginalName(),
@@ -307,7 +309,7 @@ class ProjectOfferController extends Controller
                 }
             }
         }
-    
+
         return redirect()->route('admin.project_offers.show', $offer)
             ->with('success', 'Projektangebot wurde erfolgreich aktualisiert.');
     }
@@ -316,6 +318,7 @@ class ProjectOfferController extends Controller
     {
         $offer = ProjectOffer::findOrFail($offer);
         $offer->delete();
+
         return redirect()->route('admin.project_offers.index')->with('success', 'Offer deleted successfully.');
     }
 
@@ -341,8 +344,8 @@ class ProjectOfferController extends Controller
     {
         // Get all active email templates with type 'project_offers'
         $templates = \App\Models\EmailTemplate::where('template_type', 'project_offers')
-                        ->where('active', true)
-                        ->get();
+            ->where('active', true)
+            ->get();
 
         return view('admin.project_offers.email_templates.select', compact('offer', 'templates'));
     }
@@ -351,7 +354,7 @@ class ProjectOfferController extends Controller
     {
         $offer->load(['calculations']);
         // dd($offer->calculations);
-        if (!$template) {
+        if (! $template) {
             $subject = '';
             $body = '';
         } else {
@@ -390,7 +393,7 @@ class ProjectOfferController extends Controller
                 [
                     $offer->id,
                     $offer->customer_name,
-                    $offer->calculations->sum(fn($c)=>$c->gesamt_angebot),
+                    $offer->calculations->sum(fn ($c) => $c->gesamt_angebot),
                     $calculationTable,
                 ],
                 $template->description
@@ -415,10 +418,10 @@ class ProjectOfferController extends Controller
     public function updateEmail(Request $request, OfferEmail $email)
     {
         $data = $request->validate([
-            'subject'   => 'required|string|max:255',
-            'body'      => 'nullable|string',
-            'pdf'       => 'nullable|file|mimes:pdf|max:20480',
-            'sender'    => 'nullable|string|max:255',
+            'subject' => 'required|string|max:255',
+            'body' => 'nullable|string',
+            'pdf' => 'nullable|file|mimes:pdf|max:20480',
+            'sender' => 'nullable|string|max:255',
             'recipient' => 'nullable|string|max:255',
         ]);
 
@@ -433,9 +436,9 @@ class ProjectOfferController extends Controller
 
         Notification::create([
             'user_id' => auth()->id(),
-            'type'    => 'offer_email_updated',
-            'message' => 'Offer email updated: ' . $email->subject,
-            'url'     => route('admin.project_offers.show', $email->project_offer_id),
+            'type' => 'offer_email_updated',
+            'message' => 'Offer email updated: '.$email->subject,
+            'url' => route('admin.project_offers.show', $email->project_offer_id),
         ]);
 
         return redirect()
@@ -450,27 +453,27 @@ class ProjectOfferController extends Controller
         return redirect()->back()->with('success', 'Successfully Sent Email!');
     }
 
-    public function destroyEmail(ProjectOffer $offer,OfferEmail $email)
+    public function destroyEmail(ProjectOffer $offer, OfferEmail $email)
     {
         $email->delete();
 
-        return redirect()->route('admin.project_offers.edit', $offer)->with('success','Email Deleted successfully!');
+        return redirect()->route('admin.project_offers.edit', $offer)->with('success', 'Email Deleted successfully!');
     }
 
-    public function destroyFile(ProjectOffer $offer,OfferFile $file)
+    public function destroyFile(ProjectOffer $offer, OfferFile $file)
     {
         $file->delete();
 
-        return redirect()->route('admin.project_offers.edit', $offer)->with('success','File Deleted successfully!');
+        return redirect()->route('admin.project_offers.edit', $offer)->with('success', 'File Deleted successfully!');
     }
 
     public function addFile(Request $request, ProjectOffer $offer)
     {
         $data = $request->validate([
-            'file_name'    => 'required|string|max:255',
-            'file'         => 'required|file|max:20480',
-            'description'  => 'nullable|string',
-            'date'         => 'nullable|date',
+            'file_name' => 'required|string|max:255',
+            'file' => 'required|file|max:20480',
+            'description' => 'nullable|string',
+            'date' => 'nullable|date',
         ]);
 
         $data['file_path'] = $request->file('file')->store('offer_files', 'public');
@@ -478,9 +481,9 @@ class ProjectOfferController extends Controller
 
         Notification::create([
             'user_id' => auth()->id(),
-            'type'    => 'offer_file_added',
-            'message' => 'New file added to offer: ' . $data['file_name'],
-            'url'     => route('admin.project_offers.show', $offer->id),
+            'type' => 'offer_file_added',
+            'message' => 'New file added to offer: '.$data['file_name'],
+            'url' => route('admin.project_offers.show', $offer->id),
         ]);
 
         return back()->with('success', 'File added successfully!');
@@ -500,11 +503,11 @@ class ProjectOfferController extends Controller
         Notification::create([
             'user_id' => $offer->assigned_user_id ?? auth()->id(),
             'type' => 'project_offer_calculated',
-            'message' => 'Projektangebot Kalkuliert: ' . $offer->subject,
+            'message' => 'Projektangebot Kalkuliert: '.$offer->subject,
             'url' => route('admin.project_offers.calculations', $offer),
         ]);
 
-        return redirect()->back()->with('success','Neue Mitteillung geschickt!');
+        return redirect()->back()->with('success', 'Neue Mitteillung geschickt!');
     }
 
     public function calculationPdf(ProjectOffer $offer)
@@ -532,7 +535,7 @@ class ProjectOfferController extends Controller
 
         return view('admin.project_offers.items.create', [
             'offer' => $offer,
-            'rootServices' => $rootServices
+            'rootServices' => $rootServices,
         ]);
     }
 
@@ -552,11 +555,10 @@ class ProjectOfferController extends Controller
             'cost_type.*' => 'nullable|in:cost,material,fremd_leistung',
         ]);
 
-
         // 1️⃣ Create new parent calculation record
         $calculation = $offer->calculations()->create([
             'designation' => $request->designation,
-            'pieces'=> $request->t_pieces,
+            'pieces' => $request->t_pieces,
             'total_cost' => 0,
         ]);
 
@@ -610,7 +612,7 @@ class ProjectOfferController extends Controller
             $final_offer = $total_cost + ($total_cost * ($request->final_offer / 100));
         } else {
             $final_offer += $total_cost;
-        } 
+        }
 
         // 3️⃣ Update calculation total after adding all items
         $calculation->update([
@@ -639,7 +641,7 @@ class ProjectOfferController extends Controller
             'offer' => $offer,
             'calculation' => $calculation,
             'items' => $items,
-            'rootServices' => $rootServices
+            'rootServices' => $rootServices,
         ]);
     }
 
@@ -674,9 +676,13 @@ class ProjectOfferController extends Controller
 
             $costType = $request->cost_type[$i] ?? 'cost';
 
-            if ($costType === 'cost') $total_sum += $itemTotal;
-            elseif ($costType === 'material') $materialCost += $itemTotal;
-            elseif ($costType === 'fremd_leistung') $externalCost += $itemTotal;
+            if ($costType === 'cost') {
+                $total_sum += $itemTotal;
+            } elseif ($costType === 'material') {
+                $materialCost += $itemTotal;
+            } elseif ($costType === 'fremd_leistung') {
+                $externalCost += $itemTotal;
+            }
 
             $total_hours += $hours;
 
@@ -698,13 +704,13 @@ class ProjectOfferController extends Controller
             $total_cost += $total_cost * ($request->extra_tax / 100);
         }
 
-        $final_offer = $request->filled('final_offer') 
-            ? $total_cost + ($total_cost * ($request->final_offer / 100)) 
+        $final_offer = $request->filled('final_offer')
+            ? $total_cost + ($total_cost * ($request->final_offer / 100))
             : $total_cost;
 
         $calculation->update([
             'designation' => $request->designation,
-            'pieces'=> $request->t_pieces,
+            'pieces' => $request->t_pieces,
             'cost' => round($total_sum),
             'hours' => $total_hours,
             'material_cost' => round($materialCost),
@@ -723,20 +729,20 @@ class ProjectOfferController extends Controller
     public function duplicateItems(ProjectOffer $offer, OfferCalculation $calculation)
     {
         // Duplicate the calculation
-        $newCalc = $calculation->replicate(); 
+        $newCalc = $calculation->replicate();
         $newCalc->created_at = now();
         $newCalc->updated_at = now();
         $newCalc->save();
 
         // Duplicate items
         foreach ($calculation->items as $item) {
-            $newItem = $item->replicate(); 
+            $newItem = $item->replicate();
             $newItem->offer_calculation_id = $newCalc->id;
             $newItem->save();
         }
 
         return redirect()->route('admin.project_offers.items.edit', [$offer, $newCalc])
-                        ->with('success', 'Calculation duplicated successfully.');
+            ->with('success', 'Calculation duplicated successfully.');
     }
 
     public function destroyItems(ProjectOffer $offer, OfferCalculation $calculation)
@@ -745,7 +751,7 @@ class ProjectOfferController extends Controller
         $calculation->delete();
 
         return redirect()->route('admin.project_offers.calculations', $offer->id)
-                        ->with('success', 'Kalkulation und alle zugehörigen Positionen wurden gelöscht.');
+            ->with('success', 'Kalkulation und alle zugehörigen Positionen wurden gelöscht.');
     }
 
     public function loadChildServices($parentId)
@@ -765,5 +771,4 @@ class ProjectOfferController extends Controller
             'offer_cost' => $sum,
         ]);
     }
-
 }

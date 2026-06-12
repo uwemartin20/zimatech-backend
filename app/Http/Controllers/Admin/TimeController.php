@@ -3,24 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\TimeChangeRequest;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
-use App\Traits\HandleMachineLogs;
-use App\Models\TimeRecord;
-use App\Models\User;
-Use App\Models\Project;
-use App\Models\Position;
 use App\Models\Machine;
 use App\Models\MachineStatus;
+use App\Models\Position;
+use App\Models\Project;
+use App\Models\TimeChangeRequest;
 use App\Models\TimeLog;
+use App\Models\TimeRecord;
+use App\Models\User;
+use App\Traits\HandleMachineLogs;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TimeController extends Controller
 {
     use HandleMachineLogs;
 
-    public function records(Request $request) {
+    public function records(Request $request)
+    {
         $query = TimeRecord::with(['user', 'project', 'machine']);
 
         // Filters
@@ -68,7 +69,7 @@ class TimeController extends Controller
             $weekNumber = $weekStart->format('oW');
 
             $weeks[] = [
-                'label' => 'KW ' . $weekStart->format('W') . ' / ' . $weekStart->format('o'),
+                'label' => 'KW '.$weekStart->format('W').' / '.$weekStart->format('o'),
                 'value' => $weekNumber,
             ];
 
@@ -154,7 +155,8 @@ class TimeController extends Controller
         return view('admin.time.list', compact('weeklyRecords', 'weeks', 'selectedWeek', 'records', 'users', 'projects', 'machines'));
     }
 
-    public function dailyRecords(Request $request) {
+    public function dailyRecords(Request $request)
+    {
         $calendarWeek = $request->input('calendar_week');
         $auftragsnummer = $request->input('auftragsnummer');
         $positionId = $request->input('position_id');
@@ -170,9 +172,9 @@ class TimeController extends Controller
 
             ->whereNotNull('tl.end_time')
             ->whereRaw('YEARWEEK(tl.start_time, 1) = ?', [$calendarWeek])
-            ->where(function($query) use ($auftragsnummer) {
+            ->where(function ($query) use ($auftragsnummer) {
                 $query->whereRaw("(u.company = 'ZF' AND COALESCE(p.auftragsnummer_zf, '') = ?)", [$auftragsnummer])
-                  ->orWhereRaw("(u.company = 'ZT' AND COALESCE(p.auftragsnummer_zt, '') = ?)", [$auftragsnummer]);
+                    ->orWhereRaw("(u.company = 'ZT' AND COALESCE(p.auftragsnummer_zt, '') = ?)", [$auftragsnummer]);
             })
             ->where('pos.id', $positionId)
             ->where('m.id', $machineId)
@@ -217,6 +219,7 @@ class TimeController extends Controller
             ->map(function ($row) {
                 // Add the daily_key in PHP
                 $row->daily_key = "{$row->record_date}-{$row->auftragsnummer}-{$row->position_id}-{$row->machine_id}";
+
                 return $row;
             });
 
@@ -256,8 +259,9 @@ class TimeController extends Controller
         return response()->json(['entries' => $entries]);
     }
 
-    public function editRecord(Request $request, $id) {
-        
+    public function editRecord(Request $request, $id)
+    {
+
         $record = TimeRecord::findOrFail($id);
 
         // Load dropdown data
@@ -269,8 +273,9 @@ class TimeController extends Controller
         return view('admin.time.record-edit', compact('record', 'users', 'projects', 'positions', 'machines'));
     }
 
-    public function updateRecord(Request $request, $id) {
-        
+    public function updateRecord(Request $request, $id)
+    {
+
         $record = TimeRecord::findOrFail($id);
 
         $request->validate([
@@ -278,8 +283,8 @@ class TimeController extends Controller
             'project_id' => 'required|exists:projects,id',
             'position_id' => 'required|exists:positions,id',
             'machine_id' => 'required|exists:machines,id',
-            'start_time'=> 'required|date',
-            'end_time'=> 'nullable|date|after_or_equal:start_time',
+            'start_time' => 'required|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
         ]);
 
         $record->update([
@@ -298,17 +303,21 @@ class TimeController extends Controller
 
     public function thisProjectPositions(Request $request)
     {
-        $projectId = $request->input("projectId");
+        $projectId = $request->input('projectId');
         $positions = Position::where('project_id', $projectId)->get();
+
         return response()->json(['positions' => $positions]);
     }
 
-    public function deleteRecord($id) {
+    public function deleteRecord($id)
+    {
         TimeRecord::findOrFail($id)->delete();
+
         return back()->with('success', 'Machine status deleted successfully.');
     }
 
-    public function changeTimeLogs($id) {
+    public function changeTimeLogs($id)
+    {
         $record = TimeRecord::with('logs.status')->findOrFail($id);
 
         return view('admin.time.change-logs', compact('record'));
@@ -342,20 +351,20 @@ class TimeController extends Controller
         if (is_array($payload)) {
             foreach ($payload as $logData) {
                 // Update existing log
-                if (!empty($logData['id'])) {
+                if (! empty($logData['id'])) {
                     $log = TimeLog::find($logData['id']);
                     if ($log) {
-                        if (!empty($logData['delete']) && $logData['delete'] === 'true') {
+                        if (! empty($logData['delete']) && $logData['delete'] === 'true') {
                             $log->delete();
                         } else {
                             $log->update([
                                 'start_time' => $logData['start_time'] ?? $log->start_time,
-                                'end_time'   => $logData['end_time'] ?? $log->end_time,
+                                'end_time' => $logData['end_time'] ?? $log->end_time,
                                 'machine_status_id' => $logData['status_id'] ?? $log->machine_status_id,
                             ]);
                         }
                     }
-                } 
+                }
                 // Create new log
                 else {
                     TimeLog::create([
@@ -368,12 +377,12 @@ class TimeController extends Controller
             }
         }
 
-        if (!empty($request->record_start_time) || !empty($request->record_end_time)) {
+        if (! empty($request->record_start_time) || ! empty($request->record_end_time)) {
             $record = TimeRecord::find($id);
             if ($record) {
                 $record->update([
-                    'start_time'=> $request->record_start_time,
-                    'end_time'=> $request->record_end_time,
+                    'start_time' => $request->record_start_time,
+                    'end_time' => $request->record_end_time,
                 ]);
             }
         }
@@ -387,7 +396,7 @@ class TimeController extends Controller
         $record = TimeRecord::with(['user', 'project', 'machine', 'logs.status'])->findOrFail($id);
 
         // Get all statuses for the status-switching buttons
-        $statuses = MachineStatus::where('active',true)->get();
+        $statuses = MachineStatus::where('active', true)->get();
 
         // Find current log (the one still open)
         $currentLog = $record->logs()->whereNull('end_time')->latest()->first();
@@ -435,10 +444,11 @@ class TimeController extends Controller
 
         // Redirect back to the same record page
         return redirect()->route('admin.time.show', $log->time_record_id)
-                         ->with('success', 'Status switched successfully.');
+            ->with('success', 'Status switched successfully.');
     }
 
-    public function compare(Request $request) {
+    public function compare(Request $request)
+    {
 
         $comparison = [];
 
@@ -453,7 +463,7 @@ class TimeController extends Controller
             $weekNumber = $weekStart->format('oW');
 
             $weeks[] = [
-                'label' => 'KW ' . $weekStart->format('W') . ' / ' . $weekStart->format('o'),
+                'label' => 'KW '.$weekStart->format('W').' / '.$weekStart->format('o'),
                 'value' => $weekNumber,
             ];
 
@@ -475,7 +485,7 @@ class TimeController extends Controller
         $week = substr($selectedWeek, 4, 2);
 
         $fromDate = Carbon::now()->setISODate($year, $week)->startOfWeek();
-        $toDate   = Carbon::now()->setISODate($year, $week)->endOfWeek();
+        $toDate = Carbon::now()->setISODate($year, $week)->endOfWeek();
 
         $processTotals = DB::table('processes as pr')
             ->leftJoin('process_pauses as pp', 'pp.process_id', '=', 'pr.id')
@@ -487,7 +497,7 @@ class TimeController extends Controller
 
                 DB::raw('SUM(TIMESTAMPDIFF(SECOND, pr.start_time, pr.end_time)) as process_seconds'),
 
-                DB::raw("
+                DB::raw('
                     COALESCE(SUM(
                         GREATEST(
                             0,
@@ -498,41 +508,41 @@ class TimeController extends Controller
                             )
                         )
                     ), 0) as pause_seconds
-                "),
+                '),
 
-                DB::raw('COUNT(pr.id) as process_count')
+                DB::raw('COUNT(pr.id) as process_count'),
             ])
             ->whereNotNull('pr.end_time')
             ->whereBetween('pr.start_time', [$fromDate, $toDate])
-            ->groupBy('pr.project_id','pr.position_id','pr.machine_id');
+            ->groupBy('pr.project_id', 'pr.position_id', 'pr.machine_id');
 
         $logTotals = DB::table('time_logs as tl')
             ->join('time_records as tr', 'tr.id', '=', 'tl.time_record_id')
-        
+
             ->select([
                 'tr.user_id',
                 'tr.project_id',
                 'tr.position_id',
                 'tr.machine_id',
-        
-                DB::raw('SUM(TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time)) as log_seconds')
+
+                DB::raw('SUM(TIMESTAMPDIFF(SECOND, tl.start_time, tl.end_time)) as log_seconds'),
             ])
             ->whereNotNull('tl.end_time')
             ->whereBetween('tl.start_time', [$fromDate, $toDate])
-            ->groupBy('tr.user_id','tr.project_id','tr.position_id','tr.machine_id');    
-            
-        $groups = DB::query()
-            ->fromSub($logTotals,'lt')
+            ->groupBy('tr.user_id', 'tr.project_id', 'tr.position_id', 'tr.machine_id');
 
-            ->leftJoinSub($processTotals,'pt', function($join){
-                $join->on('pt.project_id','=','lt.project_id')
-                    ->on('pt.position_id','=','lt.position_id')
-                    ->on('pt.machine_id','=','lt.machine_id');
+        $groups = DB::query()
+            ->fromSub($logTotals, 'lt')
+
+            ->leftJoinSub($processTotals, 'pt', function ($join) {
+                $join->on('pt.project_id', '=', 'lt.project_id')
+                    ->on('pt.position_id', '=', 'lt.position_id')
+                    ->on('pt.machine_id', '=', 'lt.machine_id');
             })
-            ->join('users as u','u.id','=','lt.user_id')
-            ->join('projects as p','p.id','=','lt.project_id')
-            ->join('positions as pos','pos.id','=','lt.position_id')
-            ->join('machines as m','m.id','=','lt.machine_id')
+            ->join('users as u', 'u.id', '=', 'lt.user_id')
+            ->join('projects as p', 'p.id', '=', 'lt.project_id')
+            ->join('positions as pos', 'pos.id', '=', 'lt.position_id')
+            ->join('machines as m', 'm.id', '=', 'lt.machine_id')
 
             ->select([
                 'lt.user_id',
@@ -547,65 +557,63 @@ class TimeController extends Controller
                 'u.name as user_name',
                 'p.project_name',
                 'pos.name as position_name',
-                'm.name as machine_name'
+                'm.name as machine_name',
             ])
             ->get();
 
         $processRows = DB::table('processes')
-            ->select('id','project_id','position_id','machine_id',
-                    'name','start_time','end_time')
-            ->whereBetween('start_time', [$fromDate,$toDate])
+            ->select('id', 'project_id', 'position_id', 'machine_id',
+                'name', 'start_time', 'end_time')
+            ->whereBetween('start_time', [$fromDate, $toDate])
             ->whereNotNull('end_time')
             ->get()
-            ->groupBy(fn($r) =>
-                "$r->project_id-$r->position_id-$r->machine_id"
+            ->groupBy(fn ($r) => "$r->project_id-$r->position_id-$r->machine_id"
             );
 
         $logRows = DB::table('time_logs as tl')
-            ->join('time_records as tr','tr.id','=','tl.time_record_id')
-            ->join('machine_statuses as ms','ms.id','=','tl.machine_status_id')
-        
+            ->join('time_records as tr', 'tr.id', '=', 'tl.time_record_id')
+            ->join('machine_statuses as ms', 'ms.id', '=', 'tl.machine_status_id')
+
             ->select(
-                'tr.user_id','tr.project_id','tr.position_id','tr.machine_id',
+                'tr.user_id', 'tr.project_id', 'tr.position_id', 'tr.machine_id',
                 'ms.name as status',
-                'tl.start_time','tl.end_time'
+                'tl.start_time', 'tl.end_time'
             )
-            ->whereBetween('tl.start_time', [$fromDate,$toDate])
+            ->whereBetween('tl.start_time', [$fromDate, $toDate])
             ->whereNotNull('tl.end_time')
             ->get()
-            ->groupBy(fn($r) =>
-                "$r->user_id-$r->project_id-$r->position_id-$r->machine_id"
+            ->groupBy(fn ($r) => "$r->user_id-$r->project_id-$r->position_id-$r->machine_id"
             );
 
         foreach ($groups as $g) {
 
             $procKey = "$g->project_id-$g->position_id-$g->machine_id";
-            $logKey  = "$g->user_id-$g->project_id-$g->position_id-$g->machine_id";
-    
+            $logKey = "$g->user_id-$g->project_id-$g->position_id-$g->machine_id";
+
             $comparison[] = [
-                'record' => (object)[
-                    'user' => (object)['name'=>$g->user_name],
-                    'project' => (object)['project_name'=>$g->project_name],
-                    'Position' => (object)['name'=>$g->position_name],
-                    'machine' => (object)['name'=>$g->machine_name],
+                'record' => (object) [
+                    'user' => (object) ['name' => $g->user_name],
+                    'project' => (object) ['project_name' => $g->project_name],
+                    'Position' => (object) ['name' => $g->position_name],
+                    'machine' => (object) ['name' => $g->machine_name],
                 ],
-        
-                'total_user_time'    => $this->hms($g->user_seconds),
+
+                'total_user_time' => $this->hms($g->user_seconds),
                 'total_machine_time' => $this->hms($g->machine_seconds),
-                'process_count'      => $g->process_count,
-        
+                'process_count' => $g->process_count,
+
                 'processes' => ($processRows[$procKey] ?? collect())
-                    ->map(fn($p)=>[
-                        'process_name'=>$p->name,
-                        'start_time'=>$p->start_time,
-                        'end_time'=>$p->end_time
+                    ->map(fn ($p) => [
+                        'process_name' => $p->name,
+                        'start_time' => $p->start_time,
+                        'end_time' => $p->end_time,
                     ])->values()->all(),
-        
+
                 'logs' => ($logRows[$logKey] ?? collect())
-                    ->map(fn($l)=>[
-                        'status'=>$l->status,
-                        'start_time'=>$l->start_time,
-                        'end_time'=>$l->end_time
+                    ->map(fn ($l) => [
+                        'status' => $l->status,
+                        'start_time' => $l->start_time,
+                        'end_time' => $l->end_time,
                     ])->values()->all(),
             ];
         }
@@ -615,7 +623,7 @@ class TimeController extends Controller
 
     private function hms($sec)
     {
-        return gmdate('H:i:s', (int)$sec);
+        return gmdate('H:i:s', (int) $sec);
     }
 
     public function machineLogs(Request $request)
@@ -631,7 +639,7 @@ class TimeController extends Controller
             $weekNumber = $weekStart->format('oW');
 
             $weeks[] = [
-                'label' => 'KW ' . $weekStart->format('W') . ' / ' . $weekStart->format('o'),
+                'label' => 'KW '.$weekStart->format('W').' / '.$weekStart->format('o'),
                 'value' => $weekNumber,
             ];
 
@@ -655,7 +663,7 @@ class TimeController extends Controller
         $week = substr($selectedWeek, 4, 2);
 
         $fromDate = Carbon::now()->setISODate($year, $week)->startOfWeek();
-        $toDate   = Carbon::now()->setISODate($year, $week)->endOfWeek();
+        $toDate = Carbon::now()->setISODate($year, $week)->endOfWeek();
 
         /* ================= MACHINE WEEKLY RECORDS ================= */
 
@@ -674,9 +682,9 @@ class TimeController extends Controller
                 // Company (derived from project)
                 DB::raw('MAX(m.company) as company'),
 
-                DB::raw("
+                DB::raw('
                     MAX(COALESCE(p.auftragsnummer_zf, p.auftragsnummer_zt)) as auftragsnummer
-                "),
+                '),
 
                 DB::raw('COALESCE(po.name, \'\') as position_name'),
 
@@ -686,7 +694,7 @@ class TimeController extends Controller
                 DB::raw('SUM(TIMESTAMPDIFF(SECOND, pr.start_time, pr.end_time)) as process_seconds'),
 
                 // TOTAL PAUSE TIME
-                DB::raw("
+                DB::raw('
                     SUM(
                         GREATEST(
                             0,
@@ -700,7 +708,7 @@ class TimeController extends Controller
                             )
                         )
                     ) as pause_seconds
-                "),
+                '),
             ])
 
             ->groupBy([
@@ -721,6 +729,7 @@ class TimeController extends Controller
     public function machineLogsOld(Request $request)
     {
         $data = $this->getMachineLogs($request);
+
         return view('admin.time.logs_old', $data);
     }
 
@@ -742,13 +751,13 @@ class TimeController extends Controller
     private function copyNetworkFile($source, $destination)
     {
         try {
-            if (!copy($source, $destination)) {
+            if (! copy($source, $destination)) {
                 throw new \Exception("Failed to copy file from $source to $destination");
             }
         } catch (\Exception $e) {
             dd($e);
             // Handle error (log it, notify someone, etc.)
-            \Log::error("Error copying network file: " . $e->getMessage());
+            \Log::error('Error copying network file: '.$e->getMessage());
         }
     }
 
@@ -770,38 +779,38 @@ class TimeController extends Controller
         if (is_array($payload)) {
             foreach ($payload as $logData) {
                 // Update existing log
-                if (!empty($logData['id'])) {
+                if (! empty($logData['id'])) {
                     $log = TimeLog::find($logData['id']);
                     if ($log) {
-                        if(!empty($logData['delete']) && $logData['delete'] === 'true'){
+                        if (! empty($logData['delete']) && $logData['delete'] === 'true') {
                             $log->delete();
                         } else {
                             $log->update([
                                 'start_time' => $logData['start_time'] ?? $log->start_time,
-                                'end_time'   => $logData['end_time'] ?? $log->end_time,
-                                'machine_status_id'  => $logData['status_id'] ?? $log->machine_status_id,
+                                'end_time' => $logData['end_time'] ?? $log->end_time,
+                                'machine_status_id' => $logData['status_id'] ?? $log->machine_status_id,
                             ]);
                         }
                     }
-                } 
+                }
                 // Create new log
                 else {
                     TimeLog::create([
                         'time_record_id' => $changeRequest->time_record_id,
-                        'start_time'     => $logData['start_time'] ?? null,
-                        'end_time'       => $logData['end_time'] ?? null,
-                        'machine_status_id'      => $logData['status_id'] ?? null,
+                        'start_time' => $logData['start_time'] ?? null,
+                        'end_time' => $logData['end_time'] ?? null,
+                        'machine_status_id' => $logData['status_id'] ?? null,
                     ]);
                 }
             }
         }
 
-        if (!empty($changeRequest->record_start_time) || !empty($changeRequest->record_end_time)) {
+        if (! empty($changeRequest->record_start_time) || ! empty($changeRequest->record_end_time)) {
             $record = TimeRecord::find($changeRequest->time_record_id);
             if ($record) {
                 $record->update([
-                    'start_time'=> $changeRequest->record_start_time,
-                    'end_time'=> $changeRequest->record_end_time,
+                    'start_time' => $changeRequest->record_start_time,
+                    'end_time' => $changeRequest->record_end_time,
                 ]);
             }
         }

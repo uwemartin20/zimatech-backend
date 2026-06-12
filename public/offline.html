@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - ZiMaTec GmbH</title>
+    <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/bootstrap/icons/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .offline-card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(0, 39, 82, 0.05);
+        }
+        .brand-logo {
+            max-height: 50px;
+            margin-bottom: 30px;
+        }
+        .icon-wrapper {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .title {
+            color: #002752;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .description {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .btn-retry {
+            background-color: #002752;
+            color: #ffffff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-retry:hover {
+            background-color: #001a3d;
+            color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 39, 82, 0.2);
+        }
+        .btn-retry:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-card">
+        <img src="/images/logo-team-zimmermann.png" alt="ZiMaTec Team Logo" class="brand-logo">
+        <div class="icon-wrapper">
+            <i class="bi bi-wifi-off"></i>
+        </div>
+        <h3 class="title">Keine Internetverbindung</h3>
+        <p class="description">
+            Sie sind derzeit offline. Bitte überprüfen Sie Ihre Internetverbindung, um auf das ZiMaTec Portalsystem zuzugreifen.
+        </p>
+        <button onclick="window.location.reload();" class="btn btn-retry shadow-sm">
+            <i class="bi bi-arrow-clockwise me-1"></i> Erneut versuchen
+        </button>
+    </div>
+</body>
+</html>

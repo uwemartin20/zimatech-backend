@@ -53,7 +53,7 @@ return new class extends Migration
             $table->enum('status', ['open', 'closed'])->default('open');
 
             $table->foreignId('created_by')->constrained('users');
-            
+
             $table->timestamps();
         });
     }

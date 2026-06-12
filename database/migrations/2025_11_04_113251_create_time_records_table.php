@@ -21,7 +21,7 @@ return new class extends Migration
 
             // Time tracking
             $table->dateTime('start_time');
-            $table->dateTime('end_time')->nullable();  
+            $table->dateTime('end_time')->nullable();
 
             $table->timestamps();
         });

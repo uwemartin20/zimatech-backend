@@ -12,11 +12,17 @@ class DailyRecordsTable extends Component
      * Create a new component instance.
      */
     public $index;
+
     public $week;
+
     public $auftragsnummer;
+
     public $positionId;
+
     public $machineId;
+
     public $autoLoad;
+
     public function __construct($index = null, $week = null, $auftragsnummer = null, $positionId = null, $machineId = null, $autoLoad = false)
     {
         $this->index = $index;

@@ -9,5 +9,6 @@ return [
     'suppliers' => true,
     'settings' => true,
     'feedback' => true,
-    'tablar'    => true,
+    'tablar' => true,
+    'scheduler' => true,
 ];

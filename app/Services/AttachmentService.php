@@ -79,18 +79,18 @@ class AttachmentService
         $processed = $this->imageProcessor->process($file);
 
         $directory = $this->directory($problem, 'images');
-        $filePath  = $directory . '/' . $this->uniqueName($processed['file_name']);
+        $filePath = $directory.'/'.$this->uniqueName($processed['file_name']);
 
         // Write WebP binary directly to local storage
         Storage::disk('local')->put($filePath, $processed['contents']);
 
         return PrinterProblemAttachment::create([
-            'problem_id'  => $problem->id,
-            'type'        => AttachmentType::Image->value,
-            'file_name'   => $processed['file_name'],
-            'file_path'   => $filePath,
-            'mime_type'   => $processed['mime_type'],
-            'file_size'   => $processed['file_size'],
+            'problem_id' => $problem->id,
+            'type' => AttachmentType::Image->value,
+            'file_name' => $processed['file_name'],
+            'file_path' => $filePath,
+            'mime_type' => $processed['mime_type'],
+            'file_size' => $processed['file_size'],
             'uploaded_by' => Auth::id(),
         ]);
     }
@@ -98,18 +98,18 @@ class AttachmentService
     private function storePdf(PrinterProblem $problem, UploadedFile $file): PrinterProblemAttachment
     {
         $directory = $this->directory($problem, 'pdfs');
-        $fileName  = $this->uniqueName($file->getClientOriginalName());
-        $filePath  = $directory . '/' . $fileName;
+        $fileName = $this->uniqueName($file->getClientOriginalName());
+        $filePath = $directory.'/'.$fileName;
 
         Storage::disk('local')->put($filePath, file_get_contents($file->getRealPath()));
 
         return PrinterProblemAttachment::create([
-            'problem_id'  => $problem->id,
-            'type'        => AttachmentType::Pdf->value,
-            'file_name'   => $file->getClientOriginalName(),
-            'file_path'   => $filePath,
-            'mime_type'   => $file->getMimeType() ?? 'application/pdf',
-            'file_size'   => $file->getSize(),
+            'problem_id' => $problem->id,
+            'type' => AttachmentType::Pdf->value,
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $filePath,
+            'mime_type' => $file->getMimeType() ?? 'application/pdf',
+            'file_size' => $file->getSize(),
             'uploaded_by' => Auth::id(),
         ]);
     }
@@ -120,7 +120,7 @@ class AttachmentService
      */
     private function directory(PrinterProblem $problem, string $type): string
     {
-        return 'problems/' . $problem->problem_uid . '/attachments/' . $type;
+        return 'problems/'.$problem->problem_uid.'/attachments/'.$type;
     }
 
     /**
@@ -128,7 +128,7 @@ class AttachmentService
      */
     private function uniqueName(string $originalName): string
     {
-        return Str::substr(Str::uuid(), 0, 8) . '_' . $originalName;
+        return Str::substr(Str::uuid(), 0, 8).'_'.$originalName;
     }
 
     private function isImage(UploadedFile $file): bool

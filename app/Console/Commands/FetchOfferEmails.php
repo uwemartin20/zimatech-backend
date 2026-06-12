@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\OfferEmail;
+use App\Models\ProjectOffer;
 use Illuminate\Console\Command;
 use Webklex\IMAP\Facades\Client;
-use App\Models\ProjectOffer;
-use App\Models\OfferEmail;
 
 class FetchOfferEmails extends Command
 {

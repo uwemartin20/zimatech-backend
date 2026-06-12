@@ -21,7 +21,7 @@ return new class extends Migration
             $table->enum('email_type', [
                 'ai_draft',
                 'user_edited',
-                'manufacturer_reply'
+                'manufacturer_reply',
             ]);
 
             $table->string('subject')->nullable();

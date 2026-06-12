@@ -26,12 +26,12 @@ class TestScheduler extends Command
      */
     public function handle()
     {
-        Log::info('Scheduler is running at ' . now());
+        Log::info('Scheduler is running at '.now());
 
         // Also write to a file you can easily inspect
         file_put_contents(
             storage_path('logs/scheduler_test.log'),
-            'Scheduler ran at ' . now() . PHP_EOL,
+            'Scheduler ran at '.now().PHP_EOL,
             FILE_APPEND
         );
 

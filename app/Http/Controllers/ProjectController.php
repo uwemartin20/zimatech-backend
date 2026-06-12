@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use Illuminate\Http\Request;
 use App\Traits\HandleMachineLogs;
+use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
@@ -17,14 +17,14 @@ class ProjectController extends Controller
      */
     public function __construct()
     {
-        // 
+        //
     }
 
     public function index()
     {
         $projects = Project::all();
 
-        return view("user.projects.index", compact("projects"));
+        return view('user.projects.index', compact('projects'));
 
     }
 
@@ -41,5 +41,4 @@ class ProjectController extends Controller
 
         return $this->parseMachineLogs($file);
     }
-
 }

@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('positions', function (Blueprint $table) {
             $table->id();
-            
+
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
 
             $table->string('name');
 
             $table->foreignId('project_service_id')->nullable()->constrained('project_services')->nullOnDelete();
-            
+
             $table->timestamps();
         });
     }

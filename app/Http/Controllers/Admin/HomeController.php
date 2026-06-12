@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Project;
 use App\Models\User;
 use Carbon\Carbon;
-use App\Models\Notification;
+use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
@@ -25,17 +25,17 @@ class HomeController extends Controller
 
         $hour = Carbon::now()->hour;
         switch (time()) {
-        case (time() >= strtotime('05:00') && time() < strtotime('12:00')):
-            $greeting = 'Guten Morgen';
-            break;
-        case (time() >= strtotime('12:00') && time() < strtotime('18:00')):
-            $greeting = 'Guten Tag';
-            break;
-        case (time() >= strtotime('18:00') && time() < strtotime('22:00')):
-            $greeting = 'Guten Abend';
-            break;
-        default:
-            $greeting = 'Willkommen zurück';
+            case time() >= strtotime('05:00') && time() < strtotime('12:00'):
+                $greeting = 'Guten Morgen';
+                break;
+            case time() >= strtotime('12:00') && time() < strtotime('18:00'):
+                $greeting = 'Guten Tag';
+                break;
+            case time() >= strtotime('18:00') && time() < strtotime('22:00'):
+                $greeting = 'Guten Abend';
+                break;
+            default:
+                $greeting = 'Willkommen zurück';
         }
 
         // --- Recent Projects (last 5) ---
@@ -43,7 +43,7 @@ class HomeController extends Controller
             ->take(5)
             ->get()
             ->map(function ($project) {
-                return (object)[
+                return (object) [
                     'project_name' => $project->project_name,
                     'start_time' => $project->start_time,
                     'end_time' => $project->end_time,
@@ -105,7 +105,7 @@ class HomeController extends Controller
         $notification->delete();
 
         return response()->json([
-            'success' => true
+            'success' => true,
         ]);
     }
 
@@ -123,8 +123,8 @@ class HomeController extends Controller
             })
             ->get();
         // $results = Post::where('title', 'LIKE', "%{$keyword}%")
-                    //    ->orWhere('content', 'LIKE', "%{$keyword}%")
-                    //    ->get();
+        //    ->orWhere('content', 'LIKE', "%{$keyword}%")
+        //    ->get();
 
         // Return the view with results and the keyword used
         return view('admin.home.search', compact('results', 'keyword'));

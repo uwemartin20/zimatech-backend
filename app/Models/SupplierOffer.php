@@ -8,7 +8,7 @@ class SupplierOffer extends Model
 {
     protected $fillable = [
         'date', 'price', 'parent_offer_id', 'supplier_id', 'project_service_id',
-        'bauteil_id', 'offer_number', 'description', 'duration', 'pieces_to_develop'
+        'bauteil_id', 'offer_number', 'description', 'duration', 'pieces_to_develop',
     ];
 
     public function supplier()

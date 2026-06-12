@@ -16,13 +16,13 @@ return new class extends Migration
 
             // Foreign key for materials table
             $table->foreignId('material_id')
-                    ->constrained()
-                    ->onDelete('cascade');
-                
+                ->constrained()
+                ->onDelete('cascade');
+
             // Foreign key for suppliers table
             $table->foreignId('supplier_id')
-                    ->constrained()
-                    ->onDelete('cascade');
+                ->constrained()
+                ->onDelete('cascade');
 
             // Optional: Prevents duplicate combinations of the same material and supplier
             $table->unique(['material_id', 'supplier_id']);

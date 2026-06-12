@@ -10,7 +10,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class PrinterProblemService
 {
-
     private AiAssistantService $aiAssistantService;
 
     public function __construct(
@@ -29,7 +28,7 @@ class PrinterProblemService
     {
         $problem = $this->repository->findById($id);
 
-        if (!$problem) {
+        if (! $problem) {
             abort(404, 'Problem nicht gefunden.');
         }
 
@@ -62,11 +61,11 @@ class PrinterProblemService
         $problem->update([
             'issue_type' => $result['issue_type'] ?? null,
 
-            'ai_troubleshooting' => !empty($result['troubleshooting_steps'])
+            'ai_troubleshooting' => ! empty($result['troubleshooting_steps'])
                 ? implode("\n", $result['troubleshooting_steps'])
                 : null,
 
-            'ai_next_steps' => !empty($result['next_steps'])
+            'ai_next_steps' => ! empty($result['next_steps'])
                 ? implode("\n", $result['next_steps'])
                 : null,
         ]);

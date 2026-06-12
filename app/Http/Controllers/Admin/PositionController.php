@@ -3,22 +3,24 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Position;
 use App\Models\Project;
 use App\Models\ProjectService;
+use Illuminate\Http\Request;
 
 class PositionController extends Controller
 {
     public function index(Project $project)
     {
         $positions = $project->positions()->with('projectService')->get();
+
         return view('admin.projects.positions.index', compact('project', 'positions'));
     }
 
     public function create(Project $project)
     {
         $services = ProjectService::all();
+
         return view('admin.projects.positions.create', compact('project', 'services'));
     }
 
@@ -39,6 +41,7 @@ class PositionController extends Controller
     public function edit(Project $project, Position $position)
     {
         $services = ProjectService::all();
+
         return view('admin.projects.positions.edit', compact('project', 'position', 'services'));
     }
 

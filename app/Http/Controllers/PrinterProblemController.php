@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\PrinterProblemService;
 use App\Domains\PrinterProblems\DTOs\CreateProblemDTO;
 use App\Domains\PrinterProblems\DTOs\UpdateProblemDTO;
 use App\Domains\PrinterProblems\Enums\ProblemStatus;
 use App\Http\Requests\StorePrinterProblemRequest;
 use App\Http\Requests\UpdatePrinterProblemRequest;
+use App\Services\PrinterProblemService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,7 +22,7 @@ class PrinterProblemController extends Controller
     // -------------------------------------------------------------------------
     public function index(Request $request)
     {
-        $filters  = $request->only(['search', 'problem_uid', 'machine_error_id', 'material', 'status']);
+        $filters = $request->only(['search', 'problem_uid', 'machine_error_id', 'material', 'status']);
         $problems = $this->service->list($filters);
         $statuses = ProblemStatus::cases();
 
@@ -42,7 +42,7 @@ class PrinterProblemController extends Controller
     // -------------------------------------------------------------------------
     public function store(StorePrinterProblemRequest $request)
     {
-        $dto     = CreateProblemDTO::fromArray($request->validated(), Auth::id());
+        $dto = CreateProblemDTO::fromArray($request->validated(), Auth::id());
         $problem = $this->service->create($dto);
 
         return redirect()
@@ -60,8 +60,8 @@ class PrinterProblemController extends Controller
         $aiSuggestions = null;
 
         if (
-            !$problem->issue_type ||
-            !$problem->ai_troubleshooting
+            ! $problem->issue_type ||
+            ! $problem->ai_troubleshooting
         ) {
             $aiSuggestions = $this->service
                 ->generateAiRecommendations($problem);
@@ -75,7 +75,7 @@ class PrinterProblemController extends Controller
     // -------------------------------------------------------------------------
     public function edit(int $id)
     {
-        $problem  = $this->service->findOrFail($id);
+        $problem = $this->service->findOrFail($id);
         $statuses = ProblemStatus::cases();
 
         return view('user.printer-problems.edit', compact('problem', 'statuses'));
@@ -87,7 +87,7 @@ class PrinterProblemController extends Controller
     public function update(UpdatePrinterProblemRequest $request, int $id)
     {
         $problem = $this->service->findOrFail($id);
-        $dto     = UpdateProblemDTO::fromArray($request->validated());
+        $dto = UpdateProblemDTO::fromArray($request->validated());
         $this->service->update($problem, $dto);
 
         return redirect()
@@ -101,7 +101,7 @@ class PrinterProblemController extends Controller
     public function destroy(int $id)
     {
         $problem = $this->service->findOrFail($id);
-        $uid     = $problem->problem_uid;
+        $uid = $problem->problem_uid;
         $this->service->delete($problem);
 
         return redirect()

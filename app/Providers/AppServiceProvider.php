@@ -2,11 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Notification;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use App\Models\Notification;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Filesystem\Filesystem;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton('files', function ($app) {
-            return new Filesystem();
+            return new Filesystem;
         });
     }
 

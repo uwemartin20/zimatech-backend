@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class MachineStatus extends Model
 {
-    protected $fillable = ['name', 'color', 'active'] ;
+    protected $fillable = ['name', 'color', 'active'];
 
-    public function logs() 
-    { 
-        return $this->hasMany(TimeLog::class); 
+    public function logs()
+    {
+        return $this->hasMany(TimeLog::class);
     }
 }

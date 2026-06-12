@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Material;
-use Illuminate\Support\Facades\DB;
-use App\Models\Notification;
 use App\Models\MaterialConsumption;
+use App\Models\Notification;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TablarController extends Controller
 {
@@ -14,11 +14,11 @@ class TablarController extends Controller
     {
         $materials = Material::orderBy('tablar')->orderBy('name')->get();
 
-        $flatList = $materials->map(fn($m) => [
-            'id'        => $m->id,
-            'name'      => $m->name,
-            'quantity'  => $m->quantity,
-            'shelf'     => $m->tablar,
+        $flatList = $materials->map(fn ($m) => [
+            'id' => $m->id,
+            'name' => $m->name,
+            'quantity' => $m->quantity,
+            'shelf' => $m->tablar,
             'threshold' => $m->threshold,
         ])->values();
 
@@ -59,16 +59,16 @@ class TablarController extends Controller
 
                 // Optional: prevent duplicate spam notifications
                 $alreadyExists = Notification::where('type', 'low_stock')
-                    ->where('message', 'like', '%' . $material->name . '%')
+                    ->where('message', 'like', '%'.$material->name.'%')
                     ->whereDate('created_at', now()->toDateString())
                     ->exists();
 
-                if (!$alreadyExists) {
+                if (! $alreadyExists) {
                     Notification::create([
                         'user_id' => null,
-                        'type'    => 'low_stock',
+                        'type' => 'low_stock',
                         'message' => "{$material->name} ist im Lager fast leer. Bitte nachbestellen.",
-                        'url'     => route('admin.tablar.index'), // adjust if needed
+                        'url' => route('admin.tablar.index'), // adjust if needed
                     ]);
                 }
             }

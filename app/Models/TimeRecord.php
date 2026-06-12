@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class TimeRecord extends Model
 {
     protected $fillable = ['user_id', 'project_id', 'position_id', 'machine_id', 'start_time', 'end_time'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -33,18 +34,17 @@ class TimeRecord extends Model
         return $this->hasMany(Process::class);
     }
 
-    public function logs() 
-    { 
-        return $this->hasMany(TimeLog::class); 
+    public function logs()
+    {
+        return $this->hasMany(TimeLog::class);
     }
 
     public function getTotalDurationAttribute()
     {
-        if (!$this->end_time) {
+        if (! $this->end_time) {
             return 0;
         }
 
         return Carbon::parse($this->end_time)->diffInMinutes($this->start_time);
     }
-
 }

@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('subject');
             $table->text('description');
             $table->enum('template_type', [
-                'project_offers', 
-                'inquiry', 
-                'support', 
-                'help', 
-                'supplier_offers'
+                'project_offers',
+                'inquiry',
+                'support',
+                'help',
+                'supplier_offers',
             ])->default('project_offers');
             $table->text('note')->nullable();
             $table->boolean('active')->default(true);

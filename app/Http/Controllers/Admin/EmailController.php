@@ -3,19 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\GraphService;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 
 class EmailController extends Controller
 {
-    public function emails(GraphService $graphService) 
+    public function emails(GraphService $graphService)
     {
         $user = env('IMAP_USERNAME');
         $messages = $graphService->getUserMessages($user, 'incoming');
 
         // Map emails for easier Blade consumption
-        $emails = collect($messages['value'])->map(function($msg) {
+        $emails = collect($messages['value'])->map(function ($msg) {
             return [
                 'id' => $msg['id'],
                 'sender' => $msg['from']['emailAddress']['name'] ?? 'Unknown',
@@ -30,13 +30,13 @@ class EmailController extends Controller
         return view('admin.emails.index', compact('emails'));
     }
 
-    public function emailsSent(GraphService $graphService) 
+    public function emailsSent(GraphService $graphService)
     {
         $user = env('IMAP_USERNAME');
         $messages = $graphService->getUserMessages($user, 'outgoing');
 
         // Map emails for easier Blade consumption
-        $emails = collect($messages['value'])->map(function($msg) {
+        $emails = collect($messages['value'])->map(function ($msg) {
             return [
                 'id' => $msg['id'],
                 'sender' => $msg['from']['emailAddress']['name'] ?? 'Unknown',

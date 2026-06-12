@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\AttachmentService;
-use App\Services\PrinterProblemService;
 use App\Http\Requests\StoreAttachmentRequest;
 use App\Models\PrinterProblemAttachment;
+use App\Services\AttachmentService;
+use App\Services\PrinterProblemService;
 use Illuminate\Support\Facades\Response;
 
 class PrinterProblemAttachmentController extends Controller
 {
     public function __construct(
         private readonly PrinterProblemService $problemService,
-        private readonly AttachmentService     $attachmentService,
+        private readonly AttachmentService $attachmentService,
     ) {}
 
     // -------------------------------------------------------------------------

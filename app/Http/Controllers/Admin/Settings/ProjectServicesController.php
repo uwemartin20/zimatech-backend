@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use Illuminate\Http\Request;
-use App\Models\ProjectService;
 use App\Http\Controllers\Controller;
+use App\Models\ProjectService;
+use Illuminate\Http\Request;
 
 class ProjectServicesController extends Controller
 {
@@ -14,15 +14,17 @@ class ProjectServicesController extends Controller
     public function projectService()
     {
         $services = ProjectService::orderBy('parent_id')->orderBy('name')->get();
+
         return view('admin.settings.project-service', compact('services'));
     }
 
     public function projectServiceShow($id = null)
     {
-        $service = $id ? ProjectService::findOrFail($id) : new ProjectService();
+        $service = $id ? ProjectService::findOrFail($id) : new ProjectService;
         $parentServices = ProjectService::where('id', '!=', $id)
             ->orderBy('name')
             ->get();
+
         return view('admin.settings.project-service-show', compact('service', 'parentServices'));
     }
 
@@ -33,8 +35,8 @@ class ProjectServicesController extends Controller
     {
 
         $validated = $request->validate([
-            'name'   => 'required|string|max:255',
-            'color'  => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'color' => 'nullable|string|max:20',
             'parent_id' => 'nullable|integer|exists:project_services,id',
             'active' => 'nullable',
         ]);
@@ -47,8 +49,8 @@ class ProjectServicesController extends Controller
             // Update existing
             $service = ProjectService::findOrFail($id);
             $service->update([
-                'name'   => $validated['name'],
-                'color'  => $validated['color'] ?? null,
+                'name' => $validated['name'],
+                'color' => $validated['color'] ?? null,
                 'active' => $request->has('active'),
                 'parent_id' => $validated['parent_id'] ?? null,
             ]);
@@ -56,8 +58,8 @@ class ProjectServicesController extends Controller
         } else {
             // Create new
             $service = ProjectService::create([
-                'name'   => $validated['name'],
-                'color'  => $validated['color'] ?? null,
+                'name' => $validated['name'],
+                'color' => $validated['color'] ?? null,
                 'active' => $request->has('active'),
                 'parent_id' => $validated['parent_id'] ?? null,
             ]);
@@ -65,7 +67,7 @@ class ProjectServicesController extends Controller
         }
 
         return redirect()->route('admin.settings.project-service')
-                         ->with('success', $message);
+            ->with('success', $message);
     }
 
     /**
@@ -74,7 +76,7 @@ class ProjectServicesController extends Controller
     public function toggleProjectService(Request $request, $id)
     {
         $service = ProjectService::findOrFail($id);
-        $service->active = !$service->active;
+        $service->active = ! $service->active;
         $service->save();
 
         return response()->json(['success' => true, 'active' => $service->active]);
@@ -86,6 +88,7 @@ class ProjectServicesController extends Controller
     public function deleteProjectService($id)
     {
         ProjectService::findOrFail($id)->delete();
+
         return back()->with('success', 'Project service deleted successfully.');
     }
 }

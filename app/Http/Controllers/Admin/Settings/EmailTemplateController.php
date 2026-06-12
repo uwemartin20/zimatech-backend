@@ -14,6 +14,7 @@ class EmailTemplateController extends Controller
     public function index()
     {
         $templates = EmailTemplate::latest()->paginate(10);
+
         return view('admin.settings.email_templates.index', compact('templates'));
     }
 
@@ -41,7 +42,7 @@ class EmailTemplateController extends Controller
         EmailTemplate::create($validated);
 
         return redirect()->route('admin.settings.email_templates.index')
-                         ->with('success', 'Email Template created successfully.');
+            ->with('success', 'Email Template created successfully.');
     }
 
     /**
@@ -80,7 +81,7 @@ class EmailTemplateController extends Controller
         $emailTemplate->update($validated);
 
         return redirect()->route('admin.settings.email_templates.index')
-                         ->with('success', 'Email Template updated successfully.');
+            ->with('success', 'Email Template updated successfully.');
     }
 
     /**
@@ -93,6 +94,6 @@ class EmailTemplateController extends Controller
         $emailTemplate->delete();
 
         return redirect()->route('admin.settings.email_templates.index')
-                         ->with('success', 'Email Template deleted successfully.');
+            ->with('success', 'Email Template deleted successfully.');
     }
 }

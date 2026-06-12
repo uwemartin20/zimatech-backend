@@ -20,7 +20,7 @@ return new class extends Migration
             $table->dateTime('start_time')->nullable();
             $table->dateTime('end_time')->nullable();
             $table->string('source_file')->nullable();
-            $table->integer('total_seconds')->default(0); 
+            $table->integer('total_seconds')->default(0);
             $table->timestamps();
 
             $table->index(['name']);

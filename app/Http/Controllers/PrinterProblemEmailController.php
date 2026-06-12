@@ -12,7 +12,7 @@ use Illuminate\Http\JsonResponse;
 class PrinterProblemEmailController extends Controller
 {
     public function __construct(
-        private readonly PrinterProblemService      $problemService,
+        private readonly PrinterProblemService $problemService,
         private readonly PrinterProblemEmailService $emailService,
     ) {}
 
@@ -23,17 +23,17 @@ class PrinterProblemEmailController extends Controller
     public function index(int $problem): JsonResponse
     {
         $printerProblem = $this->problemService->findOrFail($problem);
-        $emails         = $this->emailService->getEmailThread($printerProblem);
+        $emails = $this->emailService->getEmailThread($printerProblem);
 
         return response()->json([
             'emails' => $emails->map(fn ($e) => [
-                'id'           => $e->id,
-                'direction'    => $e->direction,
-                'email_type'   => $e->email_type,
-                'subject'      => $e->subject,
-                'body'         => $e->body,
+                'id' => $e->id,
+                'direction' => $e->direction,
+                'email_type' => $e->email_type,
+                'subject' => $e->subject,
+                'body' => $e->body,
                 'ai_generated' => $e->ai_generated,
-                'created_at'   => $e->created_at->format('d.m.Y H:i'),
+                'created_at' => $e->created_at->format('d.m.Y H:i'),
             ]),
         ]);
     }
@@ -51,15 +51,15 @@ class PrinterProblemEmailController extends Controller
 
             return response()->json([
                 'success' => true,
-                'email'   => [
+                'email' => [
                     'subject' => $draft['subject'],
-                    'body'    => $draft['body'],
+                    'body' => $draft['body'],
                 ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'KI-Generierung fehlgeschlagen: ' . $e->getMessage(),
+                'message' => 'KI-Generierung fehlgeschlagen: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -80,15 +80,15 @@ class PrinterProblemEmailController extends Controller
 
             return response()->json([
                 'success' => true,
-                'email'   => [
+                'email' => [
                     'subject' => $draft['subject'],
-                    'body'    => $draft['body'],
+                    'body' => $draft['body'],
                 ],
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Umschreiben fehlgeschlagen: ' . $e->getMessage(),
+                'message' => 'Umschreiben fehlgeschlagen: '.$e->getMessage(),
             ], 500);
         }
     }

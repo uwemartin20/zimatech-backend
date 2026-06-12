@@ -6,13 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class SaveEmailDraftRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         return [
             'subject' => ['nullable', 'string', 'max:255'],
-            'body'    => ['required', 'string', 'min:10'],
+            'body' => ['required', 'string', 'min:10'],
         ];
     }
 
@@ -20,7 +23,7 @@ class SaveEmailDraftRequest extends FormRequest
     {
         return [
             'subject' => 'Betreff',
-            'body'    => 'Nachricht',
+            'body' => 'Nachricht',
         ];
     }
 }

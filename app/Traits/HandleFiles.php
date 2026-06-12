@@ -2,28 +2,29 @@
 
 namespace App\Traits;
 
+use PhpOffice\PhpPresentation\IOFactory;
+use PhpOffice\PhpPresentation\PhpPresentation;
+use PhpOffice\PhpPresentation\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpPresentation\PhpPresentation;
-use PhpOffice\PhpPresentation\IOFactory;
-use PhpOffice\PhpPresentation\Style\Alignment;
 
 trait HandleFiles
 {
-    public function createNewFile($filename, $type, $data=null) {
-        $fullname = $filename .'.'. $type;
+    public function createNewFile($filename, $type, $data = null)
+    {
+        $fullname = $filename.'.'.$type;
         switch ($type) {
-            case "txt":
-                file_put_contents($fullname, "");
+            case 'txt':
+                file_put_contents($fullname, '');
                 break;
-            case "xlsx":
-                $spreadsheet = new Spreadsheet();
+            case 'xlsx':
+                $spreadsheet = new Spreadsheet;
                 $sheet = $spreadsheet->getActiveSheet();
                 $writer = new Xlsx($spreadsheet);
                 $writer->save($fullname);
                 break;
-            case "ppt":
-                $ppt = new PhpPresentation();
+            case 'ppt':
+                $ppt = new PhpPresentation;
                 $slide = $ppt->getActiveSlide();
                 $shape = $slide->createRichTextShape()
                     ->setHeight(50)

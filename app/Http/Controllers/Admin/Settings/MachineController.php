@@ -14,6 +14,7 @@ class MachineController extends Controller
     public function index()
     {
         $machines = Machine::latest()->get();
+
         return view('admin.settings.machines.index', compact('machines'));
     }
 
@@ -22,7 +23,8 @@ class MachineController extends Controller
      */
     public function show($id = null)
     {
-        $machine = $id ? Machine::findOrFail($id) : new Machine();
+        $machine = $id ? Machine::findOrFail($id) : new Machine;
+
         return view('admin.settings.machines.show', compact('machine'));
     }
 
@@ -32,26 +34,26 @@ class MachineController extends Controller
     public function update(Request $request, $id = null)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'company'     => 'required|string|in:ZF,ZT',
+            'company' => 'required|string|in:ZF,ZT',
         ]);
 
         if ($id) {
             $machine = Machine::findOrFail($id);
             $machine->update([
-                'name'        => $validated['name'],
+                'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
-                'active'      => $request->has('active'),
-                'company'     => $validated['company'],
+                'active' => $request->has('active'),
+                'company' => $validated['company'],
             ]);
             $message = 'Machine updated successfully!';
         } else {
             $machine = Machine::create([
-                'name'        => $validated['name'],
+                'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
-                'active'      => $request->has('active'),
-                'company'     => $validated['company'],
+                'active' => $request->has('active'),
+                'company' => $validated['company'],
             ]);
             $message = 'New machine created successfully!';
         }
@@ -67,12 +69,12 @@ class MachineController extends Controller
     public function toggle($id)
     {
         $machine = Machine::findOrFail($id);
-        $machine->active = !$machine->active;
+        $machine->active = ! $machine->active;
         $machine->save();
 
         return response()->json([
             'success' => true,
-            'active'  => $machine->active
+            'active' => $machine->active,
         ]);
     }
 
@@ -82,6 +84,7 @@ class MachineController extends Controller
     public function delete($id)
     {
         Machine::findOrFail($id)->delete();
+
         return back()->with('success', 'Machine deleted successfully.');
     }
 }

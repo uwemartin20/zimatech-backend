@@ -10,7 +10,7 @@ class OfferFile extends Model
     use HasFactory;
 
     protected $fillable = [
-        'project_offer_id', 'offer_email_id', 'file_name', 'file_path', 'description', 'uploaded_by'
+        'project_offer_id', 'offer_email_id', 'file_name', 'file_path', 'description', 'uploaded_by',
     ];
 
     public function offer()

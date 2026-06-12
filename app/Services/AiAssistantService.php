@@ -1,54 +1,56 @@
 <?php
+
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
 use app\Models\PrinterProblem;
 use App\Models\PrinterProblemEmail;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 
 class AiAssistantService
 {
-
     private string $backendUrl;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->backendUrl = rtrim(config('services.ai_backend.url', env('AI_BACKEND_URL', 'http://127.0.0.1:8001')), '/');
     }
+
     public function generateProblemRecommendations(
         PrinterProblem $problem
     ): array {
 
         $context = [
-            'problem_uid'            => $problem->problem_uid,
+            'problem_uid' => $problem->problem_uid,
 
-            'order_number'           => $problem->order_number,
-            'designation'            => $problem->designation,
-            'version_number'         => $problem->version_number,
+            'order_number' => $problem->order_number,
+            'designation' => $problem->designation,
+            'version_number' => $problem->version_number,
 
             'design_nozzle_diameter' => $problem->design_nozzle_diameter,
-            'tool_nozzle_diameter'   => $problem->tool_nozzle_diameter,
+            'tool_nozzle_diameter' => $problem->tool_nozzle_diameter,
 
-            'material'               => $problem->material,
+            'material' => $problem->material,
 
-            'print_temperature'      => $problem->print_temperature,
-            'bed_temperature'        => $problem->bed_temperature,
+            'print_temperature' => $problem->print_temperature,
+            'bed_temperature' => $problem->bed_temperature,
 
-            'nozzle_height'          => $problem->nozzle_height,
+            'nozzle_height' => $problem->nozzle_height,
 
-            'offset_x'               => $problem->offset_x,
-            'offset_y'               => $problem->offset_y,
-            'offset_z'               => $problem->offset_z,
+            'offset_x' => $problem->offset_x,
+            'offset_y' => $problem->offset_y,
+            'offset_z' => $problem->offset_z,
 
-            'maintenance_completed'  => $problem->maintenance_completed,
+            'maintenance_completed' => $problem->maintenance_completed,
 
-            'machine_error_id'       => $problem->machine_error_id,
+            'machine_error_id' => $problem->machine_error_id,
 
-            'short_description'      => $problem->short_description,
-            'operator_explanation'   => $problem->operator_explanation,
+            'short_description' => $problem->short_description,
+            'operator_explanation' => $problem->operator_explanation,
         ];
 
         $payload = [
-            'system_prompt' => <<<PROMPT
+            'system_prompt' => <<<'PROMPT'
 You are an industrial 3D printing troubleshooting assistant.
 
 Your job:
@@ -85,7 +87,7 @@ PROMPT,
 
         $response = Http::timeout(120)
             ->withHeaders([
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
             ])
             ->post(
                 "{$this->backendUrl}/ai/assist",
@@ -96,7 +98,7 @@ PROMPT,
         $data = $response->json();
 
         return [
-            'result'   => $data['result'] ?? [],
+            'result' => $data['result'] ?? [],
             'raw_text' => $data['raw_text'] ?? null,
         ];
     }
@@ -114,7 +116,7 @@ PROMPT,
         $context = $this->buildProblemContext($problem);
 
         $payload = [
-            'system_prompt' => <<<PROMPT
+            'system_prompt' => <<<'PROMPT'
 You are a technical writer for an industrial manufacturing company.
 
 Your job is to write a professional email to the machine manufacturer
@@ -132,7 +134,7 @@ PROMPT,
             'history' => [],
             'output_structure' => [
                 'subject' => 'string',
-                'body'    => 'string',
+                'body' => 'string',
             ],
         ];
 
@@ -144,7 +146,7 @@ PROMPT,
         $data = $response->json();
 
         return [
-            'result'   => $data['result']   ?? [],
+            'result' => $data['result'] ?? [],
             'raw_text' => $data['raw_text'] ?? null,
         ];
     }
@@ -170,7 +172,7 @@ PROMPT,
         $history = $this->buildEmailHistory($emails);
 
         $payload = [
-            'system_prompt' => <<<PROMPT
+            'system_prompt' => <<<'PROMPT'
 You are a technical writer for an industrial manufacturing company.
 
 You previously wrote a manufacturer email about a 3D printer issue.
@@ -188,7 +190,7 @@ PROMPT,
             'message' => "Please rewrite the email based on these remarks: {$remarks}",
             'output_structure' => [
                 'subject' => 'string',
-                'body'    => 'string',
+                'body' => 'string',
             ],
         ];
 
@@ -200,7 +202,7 @@ PROMPT,
         $data = $response->json();
 
         return [
-            'result'   => $data['result']   ?? [],
+            'result' => $data['result'] ?? [],
             'raw_text' => $data['raw_text'] ?? null,
         ];
     }
@@ -212,25 +214,25 @@ PROMPT,
     private function buildProblemContext(PrinterProblem $problem): array
     {
         return [
-            'problem_uid'          => $problem->problem_uid,
-            'order_number'         => $problem->order_number,
-            'designation'          => $problem->designation,
-            'version_number'       => $problem->version_number,
-            'nozzle_design'        => $problem->nozzle_design,
-            'nozzle_tool'          => $problem->nozzle_tool,
-            'material'             => $problem->material,
-            'print_temperature'    => $problem->print_temperature,
-            'bed_temperature'      => $problem->bed_temperature,
-            'nozzle_height'        => $problem->nozzle_height,
-            'path_offset_x'        => $problem->path_offset_x,
-            'path_offset_y'        => $problem->path_offset_y,
-            'path_offset_z'        => $problem->path_offset_z,
-            'maintenance_done'     => $problem->maintenance_done,
-            'error_id'             => $problem->error_id,
-            'short_description'    => $problem->short_description,
+            'problem_uid' => $problem->problem_uid,
+            'order_number' => $problem->order_number,
+            'designation' => $problem->designation,
+            'version_number' => $problem->version_number,
+            'nozzle_design' => $problem->nozzle_design,
+            'nozzle_tool' => $problem->nozzle_tool,
+            'material' => $problem->material,
+            'print_temperature' => $problem->print_temperature,
+            'bed_temperature' => $problem->bed_temperature,
+            'nozzle_height' => $problem->nozzle_height,
+            'path_offset_x' => $problem->path_offset_x,
+            'path_offset_y' => $problem->path_offset_y,
+            'path_offset_z' => $problem->path_offset_z,
+            'maintenance_done' => $problem->maintenance_done,
+            'error_id' => $problem->error_id,
+            'short_description' => $problem->short_description,
             'operator_explanation' => $problem->operator_explanation,
-            'issue_type'           => $problem->issue_type,
-            'ai_troubleshooting'   => $problem->ai_troubleshooting,
+            'issue_type' => $problem->issue_type,
+            'ai_troubleshooting' => $problem->ai_troubleshooting,
         ];
     }
 

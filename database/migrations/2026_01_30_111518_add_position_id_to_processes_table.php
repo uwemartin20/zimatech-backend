@@ -15,11 +15,11 @@ return new class extends Migration
             $table->unsignedBigInteger('position_id')->nullable()->after('project_id');
         });
 
-        DB::statement("
+        DB::statement('
             UPDATE processes
             SET position_id = NULL
             WHERE position_id NOT IN (SELECT id FROM positions)
-        ");
+        ');
 
         Schema::table('processes', function (Blueprint $table) {
             $table

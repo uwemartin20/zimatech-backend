@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Bauteil extends Model
 {
@@ -76,9 +76,9 @@ class Bauteil extends Model
         return $this->hasManyThrough(
             SupplierProject::class,
             SupplierOffer::class,
-            'bauteil_id',          
-            'supplier_offer_id',   
-            'id',                  
+            'bauteil_id',
+            'supplier_offer_id',
+            'id',
             'id',
         );
     }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Feedback;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class FeedbackController extends Controller
@@ -15,30 +15,30 @@ class FeedbackController extends Controller
         // Base Query (filter-driven)
         // -----------------------------
         $baseQuery = Feedback::query();
-    
+
         // -----------------------------
         // Filters
         // -----------------------------
         if ($request->filled('machine')) {
             $baseQuery->whereIn('machine', (array) $request->machine);
         }
-    
+
         if ($request->filled('department')) {
             $baseQuery->whereIn('department', (array) $request->department);
         }
-    
+
         if ($request->filled('type')) {
             $baseQuery->whereIn('type', (array) $request->type);
         }
-    
+
         if ($request->filled('has_attachment')) {
             $baseQuery->whereNotNull('attachment');
         }
-    
+
         if ($request->filled('anonymous')) {
             $baseQuery->whereNull('name');
         }
-    
+
         // -----------------------------
         // Dataset (table feed)
         // -----------------------------
@@ -46,11 +46,11 @@ class FeedbackController extends Controller
             ->latest()
             ->limit(200) // safety for UI performance
             ->get();
-    
+
         // =========================================================
         // KPI METRICS (computed from filtered dataset)
         // =========================================================
-    
+
         $totals = (clone $baseQuery)
             ->selectRaw("
                 COUNT(*) as total,
@@ -60,7 +60,7 @@ class FeedbackController extends Controller
                 SUM(CASE WHEN attachment IS NOT NULL THEN 1 ELSE 0 END) as with_attachment
             ")
             ->first();
-    
+
         $kpi = [
             'total' => (int) $totals->total,
             'with_solution' => (int) $totals->with_solution,
@@ -68,39 +68,39 @@ class FeedbackController extends Controller
             'anonymous' => (int) $totals->anonymous,
             'with_attachment' => (int) $totals->with_attachment,
         ];
-    
+
         // =========================================================
         // CHART DATASETS
         // =========================================================
-    
+
         $byMachine = (clone $baseQuery)
             ->select('machine', DB::raw('COUNT(*) as count'))
             ->whereNotNull('machine')
             ->groupBy('machine')
             ->orderByDesc('count')
             ->get();
-    
+
         $byDepartment = (clone $baseQuery)
             ->select('department', DB::raw('COUNT(*) as count'))
             ->whereNotNull('department')
             ->groupBy('department')
             ->orderByDesc('count')
             ->get();
-    
+
         $byErrorCode = (clone $baseQuery)
             ->select('error_code', DB::raw('COUNT(*) as count'))
             ->whereNotNull('error_code')
             ->groupBy('error_code')
             ->orderByDesc('count')
             ->get();
-    
+
         $solutionStats = (clone $baseQuery)
             ->selectRaw("
                 SUM(CASE WHEN solution IS NULL OR solution = '' THEN 1 ELSE 0 END) as no_solution,
                 SUM(CASE WHEN solution IS NOT NULL AND solution != '' THEN 1 ELSE 0 END) as has_solution
             ")
             ->first();
-    
+
         return view('admin.feedback.index', [
             'feedbacks' => $feedbacks,
             'kpi' => $kpi,
@@ -110,6 +110,7 @@ class FeedbackController extends Controller
             'solutionStats' => $solutionStats,
         ]);
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -131,14 +132,14 @@ class FeedbackController extends Controller
         if ($validated['type'] === 'maschinen' && empty($validated['machine'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Machine is required for maschinen type'
+                'message' => 'Machine is required for maschinen type',
             ], 422);
         }
 
         if ($validated['type'] === 'bereiche' && empty($validated['department'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Department is required for bereiche type'
+                'message' => 'Department is required for bereiche type',
             ], 422);
         }
 
@@ -162,7 +163,7 @@ class FeedbackController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Feedback erfolgreich abgegeben',
-            'data' => $feedback
+            'data' => $feedback,
         ], 201);
     }
 }

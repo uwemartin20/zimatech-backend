@@ -50,7 +50,7 @@ return new class extends Migration
                 'pieces',
                 'total_cost',
                 'offer_cost',
-                'notes'
+                'notes',
             ]);
         });
     }

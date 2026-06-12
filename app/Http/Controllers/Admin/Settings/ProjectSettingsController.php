@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use Illuminate\Http\Request;
-use App\Models\ProjectStatus;
 use App\Http\Controllers\Controller;
+use App\Models\ProjectStatus;
+use Illuminate\Http\Request;
 
 class ProjectSettingsController extends Controller
 {
@@ -14,12 +14,14 @@ class ProjectSettingsController extends Controller
     public function projectStatus()
     {
         $statuses = ProjectStatus::all();
+
         return view('admin.settings.project-status', compact('statuses'));
     }
 
     public function projectStatusShow($id = null)
     {
-        $status = $id ? ProjectStatus::findOrFail($id) : new ProjectStatus();
+        $status = $id ? ProjectStatus::findOrFail($id) : new ProjectStatus;
+
         return view('admin.settings.project-status-show', compact('status'));
     }
 
@@ -30,31 +32,31 @@ class ProjectSettingsController extends Controller
     {
 
         $validated = $request->validate([
-            'name'   => 'required|string|max:255',
-            'color'  => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'color' => 'nullable|string|max:20',
         ]);
 
         if ($id) {
             // Update existing
             $status = ProjectStatus::findOrFail($id);
             $status->update([
-                'name'   => $validated['name'],
-                'color'  => $validated['color'] ?? null,
+                'name' => $validated['name'],
+                'color' => $validated['color'] ?? null,
                 'active' => $request->has('active'),
             ]);
             $message = 'Project status updated successfully!';
         } else {
             // Create new
             $status = ProjectStatus::create([
-                'name'   => $validated['name'],
-                'color'  => $validated['color'] ?? null,
+                'name' => $validated['name'],
+                'color' => $validated['color'] ?? null,
                 'active' => $request->has('active'),
             ]);
             $message = 'New project status created successfully!';
         }
 
         return redirect()->route('admin.settings.project-status.show', $status->id)
-                         ->with('success', $message);
+            ->with('success', $message);
     }
 
     /**
@@ -63,7 +65,7 @@ class ProjectSettingsController extends Controller
     public function toggleProjectStatus(Request $request, $id)
     {
         $status = ProjectStatus::findOrFail($id);
-        $status->active = !$status->active;
+        $status->active = ! $status->active;
         $status->save();
 
         return response()->json(['success' => true, 'active' => $status->active]);
@@ -75,6 +77,7 @@ class ProjectSettingsController extends Controller
     public function deleteProjectStatus($id)
     {
         ProjectStatus::findOrFail($id)->delete();
+
         return back()->with('success', 'Project status deleted successfully.');
     }
 }

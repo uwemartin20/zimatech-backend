@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Supplier;
 use App\Models\ProjectService;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -16,8 +16,8 @@ class SupplierController extends Controller
         // ✅ Name or Company filter
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                ->orWhere('company', 'like', '%' . $request->search . '%');
+                $q->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('company', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -30,12 +30,14 @@ class SupplierController extends Controller
 
         $suppliers = $query->latest()->paginate(10)->appends($request->query());
         $services = ProjectService::all();
+
         return view('admin.suppliers.index', compact('suppliers', 'services'));
     }
 
     public function getSuppliers()
     {
         $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
+
         return response()->json($suppliers);
     }
 
@@ -55,19 +57,20 @@ class SupplierController extends Controller
     public function create()
     {
         $services = ProjectService::all();
+
         return view('admin.suppliers.create', compact('services'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name'         => 'required|string|max:255',
-            'company'      => 'nullable|string|max:255',
-            'address'      => 'nullable|string|max:500',
+            'name' => 'required|string|max:255',
+            'company' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
             'phone_number' => 'nullable|string|max:30',
-            'email'        => 'nullable|email|max:255',
-            'website'      => 'nullable|url|max:255',
-            'services'     => 'nullable|array',
+            'email' => 'nullable|email|max:255',
+            'website' => 'nullable|url|max:255',
+            'services' => 'nullable|array',
         ]);
 
         $supplier = Supplier::create($request->all());
@@ -92,13 +95,13 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $request->validate([
-            'name'         => 'required|string|max:255',
-            'company'      => 'nullable|string|max:255',
-            'address'      => 'nullable|string|max:500',
+            'name' => 'required|string|max:255',
+            'company' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
             'phone_number' => 'nullable|string|max:30',
-            'email'        => 'nullable|email|max:255',
-            'website'      => 'nullable|url|max:255',
-            'services'     => 'nullable|array',
+            'email' => 'nullable|email|max:255',
+            'website' => 'nullable|url|max:255',
+            'services' => 'nullable|array',
         ]);
 
         $supplier->update($request->all());
@@ -124,5 +127,4 @@ class SupplierController extends Controller
 
         return view('admin.suppliers.show', compact('supplier'));
     }
-
 }

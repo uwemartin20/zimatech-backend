@@ -17,7 +17,7 @@ class ProjectFactory extends Factory
     public function definition(): array
     {
         return [
-            "auftragsnummer_zf" => $this->faker->numberBetween(20000, 49999),
+            'auftragsnummer_zf' => $this->faker->numberBetween(20000, 49999),
         ];
     }
 }

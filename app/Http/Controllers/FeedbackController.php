@@ -28,10 +28,10 @@ class FeedbackController extends Controller
     public function index(Request $request)
     {
         $prefill = [
-            'system_prompt'    => $request->query('system_prompt', 'You are a helpful assistant.'),
-            'context'          => $request->query('context', ''),
-            'message'          => $request->query('message', ''),
-            'history'          => [],           // history only comes from session / POST
+            'system_prompt' => $request->query('system_prompt', 'You are a helpful assistant.'),
+            'context' => $request->query('context', ''),
+            'message' => $request->query('message', ''),
+            'history' => [],           // history only comes from session / POST
             'output_structure' => $request->query('output_structure', ''),
         ];
 
@@ -48,11 +48,11 @@ class FeedbackController extends Controller
     public function ask(Request $request)
     {
         $validated = $request->validate([
-            'system_prompt'    => ['nullable', 'string', 'max:4000'],
-            'context'          => ['nullable', 'string', 'max:8000'],
-            'message'          => ['required', 'string', 'max:4000'],
+            'system_prompt' => ['nullable', 'string', 'max:4000'],
+            'context' => ['nullable', 'string', 'max:8000'],
+            'message' => ['required', 'string', 'max:4000'],
             'output_structure' => ['nullable', 'string'],   // JSON string from textarea
-            'clear_history'    => ['nullable', 'boolean'],
+            'clear_history' => ['nullable', 'boolean'],
         ]);
 
         // Allow the user to wipe the conversation
@@ -64,7 +64,7 @@ class FeedbackController extends Controller
 
         // Parse output_structure if provided
         $outputStructure = null;
-        if (!empty($validated['output_structure'])) {
+        if (! empty($validated['output_structure'])) {
             $outputStructure = json_decode($validated['output_structure'], true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 return back()
@@ -75,10 +75,10 @@ class FeedbackController extends Controller
 
         // Build payload for FastAPI
         $payload = [
-            'system_prompt'    => $validated['system_prompt'] ?? 'You are a helpful assistant.',
-            'context'          => $validated['context'] ?? null,
-            'message'          => $validated['message'],
-            'history'          => $history,
+            'system_prompt' => $validated['system_prompt'] ?? 'You are a helpful assistant.',
+            'context' => $validated['context'] ?? null,
+            'message' => $validated['message'],
+            'history' => $history,
             'output_structure' => $outputStructure,
         ];
 
@@ -90,7 +90,7 @@ class FeedbackController extends Controller
 
             $data = $response->json();
 
-            $result  = $data['result']   ?? null;
+            $result = $data['result'] ?? null;
             $rawText = $data['raw_text'] ?? '';
 
             // Append this exchange to the session history
@@ -104,14 +104,14 @@ class FeedbackController extends Controller
                 : $result;
 
             return back()->with([
-                'ai_result'  => $formattedResult,
+                'ai_result' => $formattedResult,
                 'ai_success' => true,
             ])->withInput();
 
         } catch (\Illuminate\Http\Client\RequestException $e) {
             Log::error('AI backend request failed', [
-                'status'  => $e->response?->status(),
-                'body'    => $e->response?->body(),
+                'status' => $e->response?->status(),
+                'body' => $e->response?->body(),
                 'message' => $e->getMessage(),
             ]);
 
@@ -137,6 +137,7 @@ class FeedbackController extends Controller
     public function clearHistory()
     {
         session()->forget('ai_history');
+
         return back()->with('ai_success', false);
     }
 }

@@ -6,7 +6,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\TimeRecord;
 
 class User extends Authenticatable
 {
@@ -62,6 +61,11 @@ class User extends Authenticatable
     public function timeRecords()
     {
         return $this->hasMany(TimeRecord::class);
+    }
+
+    public function productionSchedules()
+    {
+        return $this->hasMany(ProductionSchedule::class);
     }
 
     public function getCompanyName(): ?string

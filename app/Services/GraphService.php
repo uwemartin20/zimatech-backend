@@ -4,11 +4,14 @@ namespace App\Services;
 
 use GuzzleHttp\Client;
 
-class GraphService {
-
+class GraphService
+{
     private string $tenantId;
+
     private string $clientId;
+
     private string $clientSecret;
+
     private string $scope;
 
     public function __construct()
@@ -24,7 +27,7 @@ class GraphService {
      */
     public function getAccessToken(): string
     {
-        $client = new Client();
+        $client = new Client;
 
         $response = $client->post("https://login.microsoftonline.com/{$this->tenantId}/oauth2/v2.0/token", [
             'form_params' => [

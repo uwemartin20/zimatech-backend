@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bauteil;
-use App\Models\Project;
 use App\Models\BauteilMeasurement;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,6 +14,7 @@ class BauteilController extends Controller
     public function index()
     {
         $bauteile = Bauteil::with('children')->whereNull('parent_id')->get();
+
         return view('admin.bauteile.index', compact('bauteile'));
     }
 
@@ -39,6 +40,7 @@ class BauteilController extends Controller
     {
         $projects = Project::all();
         $bauteile = Bauteil::all();
+
         return view('admin.bauteile.create', compact('projects', 'bauteile'));
     }
 
@@ -50,7 +52,7 @@ class BauteilController extends Controller
             'is_werkzeug' => 'boolean',
             'is_baugruppe' => 'boolean',
             'in_house_production' => 'boolean',
-            'parent_id'=> 'nullable|exists:bauteile,id',
+            'parent_id' => 'nullable|exists:bauteile,id',
             'image' => 'nullable|image|max:2048',
             'height' => 'nullable|numeric',
             'width' => 'nullable|numeric',
@@ -68,7 +70,7 @@ class BauteilController extends Controller
         $Bauteil = Bauteil::create($validated);
 
         $measurement = BauteilMeasurement::create([
-            'bauteil_id'=> $Bauteil->id,
+            'bauteil_id' => $Bauteil->id,
             'height' => $request->height,
             'width' => $request->width,
             'weight' => $request->weight,
@@ -86,6 +88,7 @@ class BauteilController extends Controller
         $bauteil = Bauteil::findOrFail($bauteil);
         $projects = Project::all();
         $bauteile = Bauteil::where('id', '!=', $bauteil->id)->get();
+
         return view('admin.bauteile.edit', compact('bauteil', 'projects', 'bauteile'));
     }
 
@@ -141,6 +144,7 @@ class BauteilController extends Controller
             Storage::disk('public')->delete($bauteil->image);
         }
         $bauteil->delete();
+
         return redirect()->route('admin.bauteile.index')->with('success', 'Bauteil erfolgreich gelöscht.');
     }
 

@@ -18,12 +18,12 @@ class PrinterProblemEmailService
      */
     public function generateDraft(PrinterProblem $problem): array
     {
-        $ai     = $this->aiService->generateEmailDraft($problem);
+        $ai = $this->aiService->generateEmailDraft($problem);
         $result = $ai['result'] ?? [];
 
         return [
             'subject' => $result['subject'] ?? null,
-            'body'    => $result['body']    ?? $ai['raw_text'] ?? '',
+            'body' => $result['body'] ?? $ai['raw_text'] ?? '',
         ];
     }
 
@@ -35,12 +35,12 @@ class PrinterProblemEmailService
     {
         $emails = $problem->emails()->orderBy('created_at')->get();
 
-        $ai     = $this->aiService->rewriteEmailDraft($problem, $emails, $remarks);
+        $ai = $this->aiService->rewriteEmailDraft($problem, $emails, $remarks);
         $result = $ai['result'] ?? [];
 
         return [
             'subject' => $result['subject'] ?? null,
-            'body'    => $result['body']    ?? $ai['raw_text'] ?? '',
+            'body' => $result['body'] ?? $ai['raw_text'] ?? '',
         ];
     }
 
@@ -53,13 +53,13 @@ class PrinterProblemEmailService
         string $body
     ): PrinterProblemEmail {
         return PrinterProblemEmail::create([
-            'problem_id'   => $problem->id,
-            'direction'    => 'outgoing',
-            'email_type'   => 'user_edited',
-            'subject'      => $subject,
-            'body'         => $body,
+            'problem_id' => $problem->id,
+            'direction' => 'outgoing',
+            'email_type' => 'user_edited',
+            'subject' => $subject,
+            'body' => $body,
             'ai_generated' => false,
-            'created_by'   => Auth::id(),
+            'created_by' => Auth::id(),
         ]);
     }
 
@@ -72,13 +72,13 @@ class PrinterProblemEmailService
         ?string $subject = null
     ): PrinterProblemEmail {
         return PrinterProblemEmail::create([
-            'problem_id'   => $problem->id,
-            'direction'    => 'incoming',
-            'email_type'   => 'manufacturer_reply',
-            'subject'      => $subject,
-            'body'         => $body,
+            'problem_id' => $problem->id,
+            'direction' => 'incoming',
+            'email_type' => 'manufacturer_reply',
+            'subject' => $subject,
+            'body' => $body,
             'ai_generated' => false,
-            'created_by'   => Auth::id(),
+            'created_by' => Auth::id(),
         ]);
     }
 

@@ -14,7 +14,7 @@ class StoreAttachmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'files'   => ['required', 'array', 'min:1', 'max:10'],
+            'files' => ['required', 'array', 'min:1', 'max:10'],
             'files.*' => [
                 'required',
                 'file',
@@ -27,7 +27,7 @@ class StoreAttachmentRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'files'   => 'Dateien',
+            'files' => 'Dateien',
             'files.*' => 'Datei',
         ];
     }
@@ -36,8 +36,8 @@ class StoreAttachmentRequest extends FormRequest
     {
         return [
             'files.*.mimes' => 'Nur JPEG, PNG, WEBP und PDF Dateien sind erlaubt.',
-            'files.*.max'   => 'Jede Datei darf maximal 20 MB groß sein.',
-            'files.required'=> 'Bitte mindestens eine Datei auswählen.',
+            'files.*.max' => 'Jede Datei darf maximal 20 MB groß sein.',
+            'files.required' => 'Bitte mindestens eine Datei auswählen.',
         ];
     }
 }

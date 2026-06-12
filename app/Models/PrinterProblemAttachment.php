@@ -9,7 +9,7 @@ class PrinterProblemAttachment extends Model
     protected $table = 'printer_problem_attachments';
 
     protected $fillable = [
-        'problem_id', 'file_name', 'file_path', 'mime_type', 'file_size', 'type', 'uploaded_by'
+        'problem_id', 'file_name', 'file_path', 'mime_type', 'file_size', 'type', 'uploaded_by',
     ];
 
     public function problem()

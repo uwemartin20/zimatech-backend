@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Project;
 use App\Models\Machine;
-use App\Models\TimeRecord;
-use App\Models\TimeLog;
 use App\Models\MachineStatus;
-use Illuminate\Http\Request;
-use App\Models\TimeChangeRequest;
 use App\Models\Notification;
 use App\Models\Process;
+use App\Models\Project;
+use App\Models\TimeChangeRequest;
+use App\Models\TimeLog;
+use App\Models\TimeRecord;
+use App\Models\User;
 use Carbon\Carbon;
-use Laravel\Pail\ValueObjects\Origin\Console;
+use Illuminate\Http\Request;
 
 class TimeRecordController extends Controller
 {
@@ -94,6 +93,7 @@ class TimeRecordController extends Controller
             compact('users', 'projects', 'machines', 'statuses', 'selectedUser')
         );
     }
+
     /**
      * Store a new record (initial start)
      */
@@ -141,7 +141,7 @@ class TimeRecordController extends Controller
         ]);
 
         // Create manual process if requested
-        if (!empty($validated['manual_process']) && $validated['manual_process'] == 1) {
+        if (! empty($validated['manual_process']) && $validated['manual_process'] == 1) {
 
             Process::create([
                 'project_id' => $validated['project_id'],
@@ -167,7 +167,7 @@ class TimeRecordController extends Controller
         $record = TimeRecord::with(['user', 'project', 'position', 'machine', 'logs.status'])->findOrFail($id);
 
         // Get all statuses for the status-switching buttons
-        $statuses = MachineStatus::where('active',true)->get();
+        $statuses = MachineStatus::where('active', true)->get();
 
         // Find current log (the one still open)
         $currentLog = $record->logs()->whereNull('end_time')->latest()->first();
@@ -237,7 +237,7 @@ class TimeRecordController extends Controller
 
         // Redirect back to the same record page
         return redirect()->route('time-records.show', $log->time_record_id)
-                        ->with('success', 'Status erfolgreich umgeschaltet.');
+            ->with('success', 'Status erfolgreich umgeschaltet.');
     }
 
     public function changeAllOtherLogs($time_record_id)
@@ -267,7 +267,7 @@ class TimeRecordController extends Controller
                 if ($runningLog->machine_status_id != $ohneAufsichtStatusId) {
                     $runningLog->end_time = now();
                     $runningLog->save();
-    
+
                     // Create a new log for "ohne_aufsicht"
                     TimeLog::create([
                         'time_record_id' => $record->id,
@@ -316,8 +316,8 @@ class TimeRecordController extends Controller
         // ✅ Create admin notification
         Notification::create([
             'user_id' => $user_id,
-            'type'    => 'change_request',
-            'message' => 'New time change request submitted by ' . $user_name,
+            'type' => 'change_request',
+            'message' => 'New time change request submitted by '.$user_name,
             'url' => route('admin.time.change'),
         ]);
 
@@ -327,7 +327,7 @@ class TimeRecordController extends Controller
 
     public function endProcess(Process $process)
     {
-        if (!$process->end_time) {
+        if (! $process->end_time) {
 
             $end = now();
             $seconds = Carbon::parse($process->start_time)->diffInSeconds($end);
@@ -348,7 +348,7 @@ class TimeRecordController extends Controller
             ->latest()
             ->first();
 
-        if (!$runningProcess) {
+        if (! $runningProcess) {
             return;
         }
 
@@ -362,5 +362,4 @@ class TimeRecordController extends Controller
             'total_seconds' => $seconds,
         ]);
     }
-
 }

@@ -6,6 +6,16 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <!-- PWA Settings -->
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#002752">
+        
+        <!-- iOS support -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="ZiMaTec">
+        <link rel="apple-touch-icon" href="{{ asset('images/zimmermann-logo-192.png') }}">
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -273,5 +283,16 @@
         @if (Route::has('login'))
             <div class="h-14.5 hidden lg:block"></div>
         @endif
+
+        <!-- PWA Service Worker Registration -->
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(reg => console.log('Welcome SW registered successfully!', reg))
+                        .catch(err => console.error('Welcome SW registration failed:', err));
+                });
+            }
+        </script>
     </body>
 </html>

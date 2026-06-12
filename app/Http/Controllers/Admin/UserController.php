@@ -16,6 +16,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::latest()->paginate(10);
+
         return view('admin.users.index', compact('users'));
     }
 
@@ -33,19 +34,19 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role'     => 'required|string|in:admin,user',
-            'company'  => 'required|string|in:ZF,ZT',
+            'role' => 'required|string|in:admin,user',
+            'company' => 'required|string|in:ZF,ZT',
         ]);
 
         User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role'     => $request->role,
-            'company'  => $request->company,
+            'role' => $request->role,
+            'company' => $request->company,
         ]);
 
         return redirect()->route('admin.users')->with('success', 'User created successfully!');
@@ -65,17 +66,17 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'role'     => 'required|string|in:admin,user',
-            'company'  => 'required|string|in:ZF,ZT',
+            'role' => 'required|string|in:admin,user',
+            'company' => 'required|string|in:ZF,ZT',
         ]);
 
         $data = [
-            'name'    => $request->name,
-            'email'   => $request->email,
-            'role'    => $request->role,
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
             'company' => $request->company,
         ];
 
@@ -108,8 +109,9 @@ class UserController extends Controller
     public function toggleMachineUser(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $user->machine_user = !$user->machine_user;
+        $user->machine_user = ! $user->machine_user;
         $user->save();
+
         return response()->json(['success' => true, 'active' => $user->machine_user]);
     }
 
@@ -131,9 +133,9 @@ class UserController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'company'  => 'nullable|string|in:ZF,ZT',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'company' => 'nullable|string|in:ZF,ZT',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 

@@ -1,17 +1,19 @@
 <?php
 
 namespace App\Traits;
+
 use App\Models\Project;
 use Carbon\Carbon;
 
 trait HandleMachineLogs
 {
-    public function getMachineLogs($request) {
+    public function getMachineLogs($request)
+    {
         $query = Project::with(['procedures.processes', 'processes', 'bauteile.processes'])
             ->where(function ($q) {
                 $q->whereHas('processes')
-                ->orWhereHas('procedures.processes')
-                ->orWhereHas('bauteile.processes');
+                    ->orWhereHas('procedures.processes')
+                    ->orWhereHas('bauteile.processes');
             });
 
         if ($request->filled('project_id')) {
@@ -26,19 +28,19 @@ trait HandleMachineLogs
             $startOfWeek = Carbon::now()->setISODate($year, $week)->startOfWeek();
             $endOfWeek = Carbon::now()->setISODate($year, $week)->endOfWeek();
 
-            $query->where(function($q) use ($startOfWeek, $endOfWeek) {
-                $q->whereHas('processes', function($q2) use ($startOfWeek, $endOfWeek) {
+            $query->where(function ($q) use ($startOfWeek, $endOfWeek) {
+                $q->whereHas('processes', function ($q2) use ($startOfWeek, $endOfWeek) {
                     $q2->whereBetween('start_time', [$startOfWeek, $endOfWeek])
-                    ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
+                        ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
                 })
-                ->orWhereHas('procedures.processes', function($q3) use ($startOfWeek, $endOfWeek) {
-                    $q3->whereBetween('start_time', [$startOfWeek, $endOfWeek])
-                    ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
-                })
-                ->orWhereHas('bauteile.processes', function($q4) use ($startOfWeek, $endOfWeek) {
-                    $q4->whereBetween('start_time', [$startOfWeek, $endOfWeek])
-                    ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
-                });
+                    ->orWhereHas('procedures.processes', function ($q3) use ($startOfWeek, $endOfWeek) {
+                        $q3->whereBetween('start_time', [$startOfWeek, $endOfWeek])
+                            ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
+                    })
+                    ->orWhereHas('bauteile.processes', function ($q4) use ($startOfWeek, $endOfWeek) {
+                        $q4->whereBetween('start_time', [$startOfWeek, $endOfWeek])
+                            ->orWhereBetween('end_time', [$startOfWeek, $endOfWeek]);
+                    });
             });
         }
 
@@ -47,33 +49,33 @@ trait HandleMachineLogs
             $day = Carbon::parse($request->day)->toDateString();
 
             $query = Project::with([
-                'processes' => function($q) use ($day) {
+                'processes' => function ($q) use ($day) {
                     $q->whereDate('start_time', $day)
-                    ->orWhereDate('end_time', $day);
+                        ->orWhereDate('end_time', $day);
                 },
-                'procedures.processes' => function($q) use ($day) {
+                'procedures.processes' => function ($q) use ($day) {
                     $q->whereDate('start_time', $day)
-                    ->orWhereDate('end_time', $day);
+                        ->orWhereDate('end_time', $day);
                 },
-                'bauteile.processes' => function($q) use ($day) {
+                'bauteile.processes' => function ($q) use ($day) {
                     $q->whereDate('start_time', $day)
-                    ->orWhereDate('end_time', $day);
-                }
+                        ->orWhereDate('end_time', $day);
+                },
             ])
-            ->where(function($q) use ($day) {
-                $q->whereHas('processes', function($q2) use ($day) {
-                    $q2->whereDate('start_time', $day)
-                    ->orWhereDate('end_time', $day);
-                })
-                ->orWhereHas('procedures.processes', function($q3) use ($day) {
-                    $q3->whereDate('start_time', $day)
-                    ->orWhereDate('end_time', $day);
-                })
-                ->orWhereHas('bauteile.processes', function($q4) use ($day) {
-                    $q4->whereDate('start_time', $day)
-                    ->orWhereDate('end_time', $day);
+                ->where(function ($q) use ($day) {
+                    $q->whereHas('processes', function ($q2) use ($day) {
+                        $q2->whereDate('start_time', $day)
+                            ->orWhereDate('end_time', $day);
+                    })
+                        ->orWhereHas('procedures.processes', function ($q3) use ($day) {
+                            $q3->whereDate('start_time', $day)
+                                ->orWhereDate('end_time', $day);
+                        })
+                        ->orWhereHas('bauteile.processes', function ($q4) use ($day) {
+                            $q4->whereDate('start_time', $day)
+                                ->orWhereDate('end_time', $day);
+                        });
                 });
-            });
         }
 
         // Paginated projects
@@ -81,14 +83,14 @@ trait HandleMachineLogs
 
         // Filter out empty relations
         $projects->each(function ($project) {
-            $project->bauteile = $project->bauteile->filter(fn($b) => $b->processes->isNotEmpty());
-            $project->procedures = $project->procedures->filter(fn($p) => $p->processes->isNotEmpty());
+            $project->bauteile = $project->bauteile->filter(fn ($b) => $b->processes->isNotEmpty());
+            $project->procedures = $project->procedures->filter(fn ($p) => $p->processes->isNotEmpty());
         });
         $allProjects = Project::orderBy('project_name')
             ->where(function ($q) {
                 $q->whereHas('processes')
-                ->orWhereHas('procedures.processes')
-                ->orWhereHas('bauteile.processes');
+                    ->orWhereHas('procedures.processes')
+                    ->orWhereHas('bauteile.processes');
             })
             ->get();
 
@@ -96,9 +98,10 @@ trait HandleMachineLogs
         return compact('projects', 'allProjects');
     }
 
-    public function parseMachineLogs($logFile = null) {
+    public function parseMachineLogs($logFile = null)
+    {
 
-        if (!file_exists($logFile)) {
+        if (! file_exists($logFile)) {
             $sourceFile = '\\\\10.0.0.35\\fz37\\FIDIA\\Program\\LOGFILE.OLD';
             copy($sourceFile, $logFile);
         }
@@ -115,7 +118,9 @@ trait HandleMachineLogs
         $output = stream_get_contents($pipes[1]);
         $error = stream_get_contents($pipes[2]);
 
-        foreach ($pipes as $pipe) { fclose($pipe); }
+        foreach ($pipes as $pipe) {
+            fclose($pipe);
+        }
 
         $status = proc_close($process);
 

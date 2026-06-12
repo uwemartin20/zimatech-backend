@@ -6,13 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreManufacturerReplyRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         return [
             'subject' => ['nullable', 'string', 'max:255'],
-            'body'    => ['required', 'string', 'min:5'],
+            'body' => ['required', 'string', 'min:5'],
         ];
     }
 
@@ -20,7 +23,7 @@ class StoreManufacturerReplyRequest extends FormRequest
     {
         return [
             'subject' => 'Betreff',
-            'body'    => 'Nachricht',
+            'body' => 'Nachricht',
         ];
     }
 }

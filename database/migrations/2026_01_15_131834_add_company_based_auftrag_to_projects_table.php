@@ -17,9 +17,9 @@ return new class extends Migration
 
             // Add new column
             $table->string('auftragsnummer_zf')
-                  ->nullable()
-                  ->after('auftragsnummer_zt')
-                  ->index();
+                ->nullable()
+                ->after('auftragsnummer_zt')
+                ->index();
         });
     }
 

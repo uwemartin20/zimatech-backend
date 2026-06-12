@@ -1,34 +1,35 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\Admin\ProjectController as AdminProject;
-use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Admin\BauteilController;
+use App\Http\Controllers\Admin\EmailController;
+use App\Http\Controllers\Admin\FeedbackController;
 use App\Http\Controllers\Admin\HomeController as AdminHome;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\TimeRecordController;
-use App\Http\Controllers\Admin\TimeController;
-use App\Http\Controllers\LanguageController;
-use App\Http\Controllers\Admin\Settings\MachineSettingsController;
+use App\Http\Controllers\Admin\PositionController;
+use App\Http\Controllers\Admin\ProjectController as AdminProject;
+use App\Http\Controllers\Admin\ProjectOfferController;
+use App\Http\Controllers\Admin\Settings\EmailTemplateController;
 use App\Http\Controllers\Admin\Settings\MachineController;
-use App\Http\Controllers\Admin\Settings\ProjectSettingsController;
+use App\Http\Controllers\Admin\Settings\MachineSettingsController;
 use App\Http\Controllers\Admin\Settings\ProjectServicesController;
+use App\Http\Controllers\Admin\Settings\ProjectSettingsController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\SupplierOfferController;
 use App\Http\Controllers\Admin\SupplierProjectController;
-use App\Http\Controllers\Admin\BauteilController;
-use App\Http\Controllers\Admin\ProjectOfferController;
-use App\Http\Controllers\Admin\Settings\EmailTemplateController;
-use App\Http\Controllers\Admin\EmailController;
-use App\Http\Controllers\Admin\PositionController;
-use App\Http\Controllers\Admin\FeedbackController;
-use App\Http\Controllers\TablarController;
 use App\Http\Controllers\Admin\TablarController as AdminTablarController;
+use App\Http\Controllers\Admin\TimeController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\FeedbackController as PublicFeedbackController;
-use App\Http\Controllers\PrinterProblemController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\PrinterProblemAttachmentController;
+use App\Http\Controllers\PrinterProblemController;
 use App\Http\Controllers\PrinterProblemEmailController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SchedulerController;
+use App\Http\Controllers\TablarController;
+use App\Http\Controllers\TimeRecordController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
@@ -42,59 +43,69 @@ Route::get('/parse-log', [ProjectController::class, 'parseLog'])->name('parse.lo
 
 // Feedback routes
 Route::prefix('feedback')->controller(PublicFeedbackController::class)->name('feedback.')->group(function () {
-    Route::get('/',        'index')        ->name('index');
-    Route::post('/',       'ask')          ->name('ask');
-    Route::post('/clear', 'clearHistory') ->name('clear');
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'ask')->name('ask');
 });
+
+// Scheduler routes (publicly accessible in workshop)
+if (config('modules.scheduler')) {
+    Route::prefix('scheduler')->name('scheduler.')->group(function () {
+        Route::get('/', [SchedulerController::class, 'index'])->name('index');
+        Route::get('/events', [SchedulerController::class, 'getEvents'])->name('events');
+        Route::post('/', [SchedulerController::class, 'store'])->name('store');
+        Route::put('/{id}', [SchedulerController::class, 'update'])->name('update');
+        Route::delete('/{id}', [SchedulerController::class, 'destroy'])->name('destroy');
+    });
+}
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('printer-problems', PrinterProblemController::class);
 
     // Attachment routes nested under a problem
     Route::prefix('printer-problems/{problem}/attachments')
-            ->name('printer-problems.attachments.')
-            ->group(function () {
+        ->name('printer-problems.attachments.')
+        ->group(function () {
 
-        // POST   /printer-problems/{problem}/attachments
-        Route::post('/',
-            [PrinterProblemAttachmentController::class, 'store']
-        )->name('store');
+            // POST   /printer-problems/{problem}/attachments
+            Route::post('/',
+                [PrinterProblemAttachmentController::class, 'store']
+            )->name('store');
 
-        // GET    /printer-problems/{problem}/attachments/{attachment}/download
-        Route::get('/{attachment}/download',
-            [PrinterProblemAttachmentController::class, 'download']
-        )->name('download');
+            // GET    /printer-problems/{problem}/attachments/{attachment}/download
+            Route::get('/{attachment}/download',
+                [PrinterProblemAttachmentController::class, 'download']
+            )->name('download');
 
-        // DELETE /printer-problems/{problem}/attachments/{attachment}
-        Route::delete('/{attachment}',
-            [PrinterProblemAttachmentController::class, 'destroy']
-        )->name('destroy');
+            // DELETE /printer-problems/{problem}/attachments/{attachment}
+            Route::delete('/{attachment}',
+                [PrinterProblemAttachmentController::class, 'destroy']
+            )->name('destroy');
 
-    });
+        });
 
     Route::prefix('printer-problems/{problem}/emails')
         ->name('printer-problems.emails.')
         ->group(function () {
-    
-        // GET    — full thread (JSON, consumed by modal)
-        Route::get('/',         [PrinterProblemEmailController::class, 'index'])    ->name('index');
-    
-        // POST   — generate first AI draft
-        Route::post('/generate',[PrinterProblemEmailController::class, 'generate']) ->name('generate');
-    
-        // POST   — rewrite with remarks
-        Route::post('/rewrite', [PrinterProblemEmailController::class, 'rewrite'])  ->name('rewrite');
-    
-        // POST   — save approved draft
-        Route::post('/save',    [PrinterProblemEmailController::class, 'save'])     ->name('save');
-    
-        // POST   — store manufacturer reply
-        Route::post('/reply',   [PrinterProblemEmailController::class, 'storeReply'])->name('reply');
-    });
+
+            // GET    — full thread (JSON, consumed by modal)
+            Route::get('/', [PrinterProblemEmailController::class, 'index'])->name('index');
+
+            // POST   — generate first AI draft
+            Route::post('/generate', [PrinterProblemEmailController::class, 'generate'])->name('generate');
+
+            // POST   — rewrite with remarks
+            Route::post('/rewrite', [PrinterProblemEmailController::class, 'rewrite'])->name('rewrite');
+
+            // POST   — save approved draft
+            Route::post('/save', [PrinterProblemEmailController::class, 'save'])->name('save');
+
+            // POST   — store manufacturer reply
+            Route::post('/reply', [PrinterProblemEmailController::class, 'storeReply'])->name('reply');
+        });
 });
 
 // Time Recording Routes
-Route::prefix('time-records')->name('time-records.')->group(function() {
+Route::prefix('time-records')->name('time-records.')->group(function () {
     Route::get('/', [TimeRecordController::class, 'index'])->name('list');
     Route::get('/create', [TimeRecordController::class, 'create'])->name('create');
     Route::get('/show/{id}', [TimeRecordController::class, 'show'])->name('show');
@@ -113,9 +124,9 @@ Route::post('/tablar/consume', [TablarController::class, 'consume'])->name('tabl
 Route::get('/language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
 
 // Admin Routes
-Route::middleware(['auth', 'role:admin']) 
-    ->prefix('admin') 
-    ->name('admin.') 
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
     ->group(function () {
         // Admin Home Views
         Route::get('/emails', [AdminHome::class, 'emails'])->name('emails');
@@ -133,7 +144,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::post('/emails/send', [EmailController::class, 'send'])->name('emails.send');
         }
 
-        
         // Projects Routes
         if (config('modules.projects')) {
             Route::get('/projects', [AdminProject::class, 'index'])->name('projects');
@@ -153,7 +163,7 @@ Route::middleware(['auth', 'role:admin'])
                 Route::get('{project}/positions/{position}/edit', [PositionController::class, 'edit'])->name('positions.edit');
                 Route::put('{project}/positions/{position}', [PositionController::class, 'update'])->name('positions.update');
                 Route::delete('{project}/positions/{position}', [PositionController::class, 'destroy'])->name('positions.destroy');
-                
+
                 // Supplier offers routes
                 Route::get('/offers', [SupplierOfferController::class, 'index'])->name('offers');
                 Route::get('/offers/create', [SupplierOfferController::class, 'create'])->name('offers.create');
@@ -176,7 +186,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Project offers
         if (config('modules.project_offers')) {
-            Route::prefix('project_offers')->name('project_offers.')->group(function() {
+            Route::prefix('project_offers')->name('project_offers.')->group(function () {
                 Route::resource('', ProjectOfferController::class)->parameters(['' => 'project_offer']);
                 // Accept Offer
                 Route::get('/{offer}/accept', [ProjectOfferController::class, 'acceptOffer'])->name('accept');
@@ -184,7 +194,6 @@ Route::middleware(['auth', 'role:admin'])
                 Route::get('/{offer}/email-templates', [ProjectOfferController::class, 'emailTemplates'])->name('email-templates');
                 Route::get('/{offer}/email-preview/{template?}', [ProjectOfferController::class, 'emailPreview'])->name('email_preview');
                 Route::post('/{offer}/send-email', [ProjectOfferController::class, 'sendEmail'])->name('send_email');
-
 
                 Route::post('/{offer}/add-calculation', [ProjectOfferController::class, 'addCalculation'])->name('add_calculation');
                 Route::delete('/{offer}/file/{file}/destroy', [ProjectOfferController::class, 'destroyFile'])->name('files.destroy');
@@ -273,7 +282,6 @@ Route::middleware(['auth', 'role:admin'])
             Route::delete('/tablar/{material}/suppliers/{supplier}', [AdminTablarController::class, 'detach'])->name('tablar.suppliers.detach');
         }
 
-
         if (config('modules.settings')) {
             Route::prefix('settings')->name('settings.')->group(function () {
 
@@ -302,7 +310,7 @@ Route::middleware(['auth', 'role:admin'])
 
                 Route::post('/machines/update/{id?}', [MachineController::class, 'update'])
                     ->name('machines.update');
-                
+
                 Route::put('/machines/update/{id}', [MachineController::class, 'update']);
 
                 Route::patch('/machines/toggle/{id}', [MachineController::class, 'toggle'])
@@ -310,7 +318,6 @@ Route::middleware(['auth', 'role:admin'])
 
                 Route::delete('/machines/{id}', [MachineController::class, 'delete'])
                     ->name('machines.delete');
-
 
                 // Project status
                 Route::get('/project-status', [ProjectSettingsController::class, 'projectStatus'])->name('project-status');
@@ -335,4 +342,4 @@ Route::middleware(['auth', 'role:admin'])
         if (config('modules.feedback')) {
             Route::get('feedback', [FeedbackController::class, 'index'])->name('feedback.index');
         }
-});
+    });

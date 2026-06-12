@@ -1,13 +1,14 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Process extends Model
 {
     use HasFactory;
+
     protected $fillable = ['project_id', 'position_id', 'procedure_id', 'bauteil_id', 'machine_id', 'time_record_id', 'name', 'start_time', 'end_time', 'count', 'source_file', 'total_seconds'];
 
     public function project()
@@ -42,9 +43,10 @@ class Process extends Model
 
     public function getDurationSecondsAttribute()
     {
-        if (!$this->start_time || !$this->end_time) {
+        if (! $this->start_time || ! $this->end_time) {
             return null;
         }
+
         return strtotime($this->end_time) - strtotime($this->start_time);
     }
 

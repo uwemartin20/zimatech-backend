@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignId('assigned_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->enum('status', [
-                'pending', 'in_calculation', 'awaiting_supplier', 'offer_sent', 'accepted', 'rejected'
+                'pending', 'in_calculation', 'awaiting_supplier', 'offer_sent', 'accepted', 'rejected',
             ])->default('pending');
             $table->timestamps();
         });

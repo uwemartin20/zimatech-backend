@@ -29,7 +29,7 @@ class OfferCalculation extends Model
     {
         return $this->hasMany(OfferCalculationItem::class);
     }
-    
+
     public function offer()
     {
         return $this->belongsTo(ProjectOffer::class, 'project_offer_id');
@@ -45,12 +45,14 @@ class OfferCalculation extends Model
     {
         $pieces = $this->pieces ?: 1;
         $base = ($this->total_cost ?? 0);
+
         return $base * $pieces;
     }
 
     public function getGesamtAngebotAttribute()
     {
         $pieces = $this->pieces ?: 1;
+
         return ($this->offer_cost ?? 0) * $pieces;
     }
 }

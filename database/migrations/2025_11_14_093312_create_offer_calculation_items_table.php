@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('offer_calculation_id')->constrained('offer_calculations')->cascadeOnDelete();
             $table->foreignId('project_service_id')->constrained('project_services')->cascadeOnDelete();
-            $table->decimal('hours', 10, 2)->nullable(); 
+            $table->decimal('hours', 10, 2)->nullable();
             $table->decimal('price_per_hour', 12, 2)->nullable();
             $table->decimal('pieces', 10, 2)->nullable();
             $table->decimal('price_per_unit', 12, 2)->nullable();

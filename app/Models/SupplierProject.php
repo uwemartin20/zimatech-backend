@@ -9,7 +9,7 @@ class SupplierProject extends Model
     protected $fillable = [
         'name', 'supplier_offer_id', 'project_status_id',
         'start_date', 'checkup_date', 'end_date',
-        'extra_note', 'additional_expense'
+        'extra_note', 'additional_expense',
     ];
 
     public function offer()
@@ -26,7 +26,7 @@ class SupplierProject extends Model
     {
         $offer = $this->offer;
 
-        if (!$offer) {
+        if (! $offer) {
             return 0;
         }
 

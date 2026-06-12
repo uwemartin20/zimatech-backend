@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SupplierProject;
-use App\Models\SupplierOffer;
+use App\Models\Bauteil;
 use App\Models\ProjectStatus;
 use App\Models\Supplier;
-use App\Models\Bauteil;
+use App\Models\SupplierOffer;
+use App\Models\SupplierProject;
 use Illuminate\Http\Request;
 
 class SupplierProjectController extends Controller
@@ -53,6 +53,7 @@ class SupplierProjectController extends Controller
         if ($request->filled('price_min') || $request->filled('price_max')) {
             $projects = $query->get()->filter(function ($p) use ($request) {
                 $total = $p->gesamtpreis;
+
                 return (! $request->filled('price_min') || $total >= $request->price_min)
                     && (! $request->filled('price_max') || $total <= $request->price_max);
             });
@@ -79,14 +80,14 @@ class SupplierProjectController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'              => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'supplier_offer_id' => 'required|exists:supplier_offers,id',
             'project_status_id' => 'required|exists:project_statuses,id',
-            'start_date'        => 'nullable|date',
-            'checkup_date'      => 'nullable|date',
-            'end_date'          => 'nullable|date',
-            'extra_note'        => 'nullable|string',
-            'additional_expense'=> 'nullable|numeric',
+            'start_date' => 'nullable|date',
+            'checkup_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'extra_note' => 'nullable|string',
+            'additional_expense' => 'nullable|numeric',
         ]);
 
         SupplierProject::create($request->all());
@@ -113,14 +114,14 @@ class SupplierProjectController extends Controller
     public function update(Request $request, SupplierProject $project)
     {
         $request->validate([
-            'name'              => 'required|string|max:255',
+            'name' => 'required|string|max:255',
             'supplier_offer_id' => 'required|exists:supplier_offers,id',
             'project_status_id' => 'required|exists:project_statuses,id',
-            'start_date'        => 'nullable|date',
-            'checkup_date'      => 'nullable|date',
-            'end_date'          => 'nullable|date',
-            'extra_note'        => 'nullable|string',
-            'additional_expense'=> 'nullable|numeric',
+            'start_date' => 'nullable|date',
+            'checkup_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'extra_note' => 'nullable|string',
+            'additional_expense' => 'nullable|numeric',
         ]);
 
         $project->update($request->all());

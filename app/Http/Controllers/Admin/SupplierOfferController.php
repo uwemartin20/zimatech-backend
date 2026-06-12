@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProjectService;
-use App\Models\SupplierOffer;
-use App\Models\Supplier;
 use App\Models\Bauteil;
+use App\Models\ProjectService;
+use App\Models\Supplier;
+use App\Models\SupplierOffer;
 use Illuminate\Http\Request;
 
 class SupplierOfferController extends Controller
@@ -51,7 +51,7 @@ class SupplierOfferController extends Controller
     public function create()
     {
         $suppliers = Supplier::all();
-        $bauteile  = Bauteil::all();
+        $bauteile = Bauteil::all();
         $offers = SupplierOffer::all();
         $services = ProjectService::all();
 
@@ -61,22 +61,22 @@ class SupplierOfferController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'supplier_id'        => 'required|exists:suppliers,id',
-            'bauteil_id'         => 'required|exists:bauteile,id',
-            'parent_offer_id'    => 'nullable|exists:supplier_offers,id',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'bauteil_id' => 'required|exists:bauteile,id',
+            'parent_offer_id' => 'nullable|exists:supplier_offers,id',
             'project_service_id' => 'nullable|exists:project_services,id',
-            'date'               => 'required|date',
-            'price'              => 'required|numeric',
-            'description'        => 'nullable|string',
-            'duration'           => 'nullable|integer',
-            'pieces_to_develop'  => 'nullable|integer',
+            'date' => 'required|date',
+            'price' => 'required|numeric',
+            'description' => 'nullable|string',
+            'duration' => 'nullable|integer',
+            'pieces_to_develop' => 'nullable|integer',
         ]);
 
         // Get last offer number for this supplier & bauteil
         $lastOffer = SupplierOffer::where('supplier_id', $request->supplier_id)
-                        ->where('bauteil_id', $request->bauteil_id)
-                        ->orderByDesc('offer_number') // assuming numeric part only
-                        ->first();
+            ->where('bauteil_id', $request->bauteil_id)
+            ->orderByDesc('offer_number') // assuming numeric part only
+            ->first();
 
         if ($lastOffer) {
             $lastOfferNumber = $lastOffer->offer_number;
@@ -87,19 +87,19 @@ class SupplierOfferController extends Controller
             $newNumber = 1;
         }
 
-        $offerNumber = $request->supplier_id . '-' . $request->bauteil_id . '-' . str_pad($newNumber, 2, '0', STR_PAD_LEFT);
+        $offerNumber = $request->supplier_id.'-'.$request->bauteil_id.'-'.str_pad($newNumber, 2, '0', STR_PAD_LEFT);
 
         SupplierOffer::create([
-            'supplier_id'        => $request->supplier_id,
-            'bauteil_id'         => $request->bauteil_id,
-            'parent_offer_id'    => $request->parent_offer_id,
+            'supplier_id' => $request->supplier_id,
+            'bauteil_id' => $request->bauteil_id,
+            'parent_offer_id' => $request->parent_offer_id,
             'project_service_id' => $request->project_service_id,
-            'date'               => $request->date,
-            'price'              => $request->price,
-            'offer_number'       => $offerNumber,
-            'description'        => $request->description,
-            'duration'           => $request->duration,
-            'pieces_to_develop'  => $request->pieces_to_develop,
+            'date' => $request->date,
+            'price' => $request->price,
+            'offer_number' => $offerNumber,
+            'description' => $request->description,
+            'duration' => $request->duration,
+            'pieces_to_develop' => $request->pieces_to_develop,
         ]);
 
         return redirect()->route('admin.projects.offers')->with('success', 'Lieferantenangebot erfolgreich erstellt.');
@@ -115,7 +115,7 @@ class SupplierOfferController extends Controller
     public function edit(SupplierOffer $offer)
     {
         $suppliers = Supplier::all();
-        $bauteile  = Bauteil::all();
+        $bauteile = Bauteil::all();
         $offers = SupplierOffer::where('id', '!=', $offer->id)->get();
         $services = ProjectService::all();
 
@@ -125,15 +125,15 @@ class SupplierOfferController extends Controller
     public function update(Request $request, SupplierOffer $offer)
     {
         $request->validate([
-            'supplier_id'        => 'required|exists:suppliers,id',
-            'bauteil_id'         => 'required|exists:bauteile,id',
-            'parent_offer_id'    => 'nullable|exists:supplier_offers,id',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'bauteil_id' => 'required|exists:bauteile,id',
+            'parent_offer_id' => 'nullable|exists:supplier_offers,id',
             'project_service_id' => 'nullable|exists:project_services,id',
-            'date'               => 'required|date',
-            'price'              => 'required|numeric',
-            'description'        => 'nullable|string',
-            'duration'           => 'nullable|integer',
-            'pieces_to_develop'  => 'nullable|integer',
+            'date' => 'required|date',
+            'price' => 'required|numeric',
+            'description' => 'nullable|string',
+            'duration' => 'nullable|integer',
+            'pieces_to_develop' => 'nullable|integer',
         ]);
 
         $offer->update($request->all());

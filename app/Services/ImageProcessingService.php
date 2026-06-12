@@ -3,15 +3,16 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class ImageProcessingService
 {
     /**
      * Max dimensions as per spec.
      */
-    private const MAX_WIDTH  = 1920;
+    private const MAX_WIDTH = 1920;
+
     private const MAX_HEIGHT = 1920;
 
     /**
@@ -25,7 +26,7 @@ class ImageProcessingService
     public function __construct()
     {
         // Uses GD driver. Swap to ImagickDriver::class if Imagick is available.
-        $this->manager = new ImageManager(new Driver());
+        $this->manager = new ImageManager(new Driver);
     }
 
     /**
@@ -53,14 +54,14 @@ class ImageProcessingService
             $image->scaleDown(self::MAX_WIDTH, self::MAX_HEIGHT);
         }
 
-        $encoded  = $image->toWebp(self::WEBP_QUALITY);
+        $encoded = $image->toWebp(self::WEBP_QUALITY);
         $contents = (string) $encoded;
 
         $baseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $fileName = $baseName . '.webp';
+        $fileName = $baseName.'.webp';
 
         return [
-            'contents'  => $contents,
+            'contents' => $contents,
             'file_name' => $fileName,
             'mime_type' => 'image/webp',
             'file_size' => strlen($contents),

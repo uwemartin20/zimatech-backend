@@ -30,16 +30,16 @@ class ProjectService extends Model
 
         while ($current) {
             $siblings = self::where('parent_id', $current->parent_id)
-                            ->orderBy('name')
-                            ->get()
-                            ->map(function ($sibling) use ($current) {
-                                return [
-                                    'id' => $sibling->id,
-                                    'name' => $sibling->name,
-                                    'selected' => $sibling->id === $current->id,
-                                ];
-                            })
-                            ->toArray();
+                ->orderBy('name')
+                ->get()
+                ->map(function ($sibling) use ($current) {
+                    return [
+                        'id' => $sibling->id,
+                        'name' => $sibling->name,
+                        'selected' => $sibling->id === $current->id,
+                    ];
+                })
+                ->toArray();
 
             // prepend to build tree from root to child
             array_unshift($tree, $siblings);
