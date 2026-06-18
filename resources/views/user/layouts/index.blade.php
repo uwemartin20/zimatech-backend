@@ -43,23 +43,23 @@
 
             {{-- Navbar Links --}}
             <div class="collapse navbar-collapse" id="navbarMenu">
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav ms-auto w-100 justify-content-end text-start align-items-lg-center mt-3 mt-lg-0">
                     {{-- Home --}}
-                    <li class="nav-item mx-2">
+                    <li class="nav-item mx-2 my-1 my-lg-0">
                         <a href="{{ route('home') }}" class="nav-link {{ request()->routeIs('home') ? 'active fw-bold text-navitem' : '' }}">
                             <i class="bi bi-house-door-fill me-1"></i> Home
                         </a>
                     </li>
 
                     {{-- Mann Zeiten --}}
-                    <li class="nav-item mx-2">
+                    <li class="nav-item mx-2 my-1 my-lg-0">
                         <a href="{{ route('time-records.list') }}" class="nav-link {{ request()->routeIs('time-records.*') ? 'active fw-bold text-navitem' : '' }}">
                             <i class="bi bi-clock-history me-1"></i> Mann Zeiten
                         </a>
                     </li>
 
                     {{-- Machine Logs --}}
-                    <li class="nav-item mx-2">
+                    <li class="nav-item mx-2 my-1 my-lg-0">
                         <a href="{{ route('projects.logs') }}" class="nav-link {{ request()->routeIs('projects.*') ? 'active fw-bold text-navitem' : '' }}">
                             <i class="bi bi-cpu-fill me-1"></i> Machine Logs
                         </a>
@@ -67,7 +67,7 @@
 
                     @auth
                         @if(Auth::user()->role === 'admin')
-                            <li class="nav-item mx-2">
+                            <li class="nav-item mx-2 my-1 my-lg-0">
                                 <a href="{{ route('admin.dashboard') }}" class="nav-link">
                                     <i class="bi bi-speedometer me-1"></i> Admin
                                 </a>
@@ -75,12 +75,14 @@
                         @endif
                     @endauth
 
-                    {{-- Divider --}}
-                    <li class="nav-item mx-2 text-muted">|</li>
+                    {{-- Responsive Separator --}}
+                    <li class="nav-item mx-lg-3 my-2 my-lg-0 border-top border-lg-end border-secondary-subtle" style="height: 1px; min-height: 1px;">
+                        <div class="d-none d-lg-block" style="height: 24px; width: 1px;"></div>
+                    </li>
 
                     {{-- Auth --}}
                     @auth
-                        <li class="nav-item mx-2">
+                        <li class="nav-item mx-2 my-1 my-lg-0 d-inline-flex justify-content-start">
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-login btn-sm d-flex align-items-center">
@@ -91,7 +93,7 @@
                     @endauth
 
                     @guest
-                        <li class="nav-item mx-2">
+                        <li class="nav-item mx-2 my-1 my-lg-0">
                             <a href="{{ route('login') }}" class="btn btn-outline-login btn-sm d-flex align-items-center">
                                 <i class="bi bi-box-arrow-in-right me-1"></i> Login
                             </a>
@@ -149,6 +151,8 @@
     <main class="flex-grow-1">
         @yield('content')
     </main>
+
+    <x-assistant-chat />
 
     {{-- ========== FOOTER ========== --}}
     <footer class="bg-dark text-white text-center py-3">

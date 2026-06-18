@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Machine;
 use App\Models\Notification;
 use App\Models\Project;
+use App\Models\TimeRecord;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -77,6 +80,16 @@ class HomeController extends Controller
             $userData[] = User::whereDate('created_at', $date)->count();
         }
 
+        // --- Activity Summary (last 10 days) ---
+        $endDate = Carbon::today();
+        $startDate = $endDate->copy()->subDays(9);
+
+        // Most active machine
+        $mostActiveMachine = $this->getMostActiveMachine($startDate, $endDate);
+
+        // Most active user
+        $mostActiveUser = $this->getMostActiveUser($startDate, $endDate);
+
         return view('admin.home.index', compact(
             'projectsCount',
             'usersCount',
@@ -86,8 +99,112 @@ class HomeController extends Controller
             'projectData',
             'userLabels',
             'userData',
-            'greeting'
+            'greeting',
+            'mostActiveMachine',
+            'mostActiveUser'
         ));
+    }
+
+    /**
+     * Get the most active machine in the last N days
+     */
+    private function getMostActiveMachine($startDate, $endDate)
+    {
+        $records = TimeRecord::with('machine')
+            ->where('machine_id', '!=', null)
+            ->whereBetween('start_time', [$startDate->startOfDay(), $endDate->endOfDay()])
+            ->get();
+
+        $machineHours = [];
+        foreach ($records as $record) {
+            $machine = $record->machine;
+            if (!$machine) continue;
+
+            $machineId = $machine->id;
+            $machineName = $machine->name;
+
+            if (!isset($machineHours[$machineId])) {
+                $machineHours[$machineId] = [
+                    'machine' => $machine,
+                    'hours' => 0,
+                ];
+            }
+
+            $duration = $this->calculateDuration($record->start_time, $record->end_time);
+            $machineHours[$machineId]['hours'] += $duration;
+        }
+
+        if (empty($machineHours)) {
+            return null;
+        }
+
+        uasort($machineHours, function ($a, $b) {
+            return $b['hours'] <=> $a['hours'];
+        });
+
+        $topMachine = reset($machineHours);
+        return (object) [
+            'machine' => $topMachine['machine'],
+            'hours' => $topMachine['hours'],
+        ];
+    }
+
+    /**
+     * Get the most active user in the last N days
+     */
+    private function getMostActiveUser($startDate, $endDate)
+    {
+        $records = TimeRecord::with('user')
+            ->whereNotNull('user_id')
+            ->whereBetween('start_time', [$startDate->startOfDay(), $endDate->endOfDay()])
+            ->get();
+
+        $userHours = [];
+        foreach ($records as $record) {
+            $user = $record->user;
+            if (!$user) continue;
+
+            $userId = $user->id;
+
+            if (!isset($userHours[$userId])) {
+                $userHours[$userId] = [
+                    'user' => $user,
+                    'hours' => 0,
+                ];
+            }
+
+            $duration = $this->calculateDuration($record->start_time, $record->end_time);
+            $userHours[$userId]['hours'] += $duration;
+        }
+
+        if (empty($userHours)) {
+            return null;
+        }
+
+        uasort($userHours, function ($a, $b) {
+            return $b['hours'] <=> $a['hours'];
+        });
+
+        $topUser = reset($userHours);
+        return (object) [
+            'user' => $topUser['user'],
+            'hours' => $topUser['hours'],
+        ];
+    }
+
+    /**
+     * Calculate duration in hours
+     */
+    private function calculateDuration($startTime, $endTime)
+    {
+        if (!$endTime) {
+            return 0;
+        }
+
+        $start = Carbon::parse($startTime);
+        $end = Carbon::parse($endTime);
+
+        return $start->diffInMinutes($end) / 60;
     }
 
     public function markRead($id)

@@ -149,8 +149,7 @@ class TablarController extends Controller
 
         $recentLogs = MaterialConsumption::with('material')
             ->orderByDesc('created_at')
-            ->take(20)
-            ->get();
+            ->paginate(10, ['*'], 'audit_page');
 
         // =========================
         // DISTRIBUTION BY SLOTS (TABLAR USAGE)

@@ -5,30 +5,38 @@
 @section('content')
     
     {{-- === Hero Section === --}}
-    <div class="hero-section text-white d-flex align-items-center mb-5 shadow">
-        <div class="container text-center text-md-start">
-            <div class="row align-items-center py-5">
-                <div class="col-lg-7">
-                    <h1 class="display-3 fw-bold mb-3">
+    <div class="hero-section position-relative overflow-hidden mb-5 rounded-4 shadow-sm">
+        <div class="abstract-blur"></div>
+        
+        <div class="container position-relative z-index-2 py-5">
+            <div class="row align-items-center py-4">
+                <div class="col-lg-8 text-center text-md-start">
+                    <span class="badge bg-white bg-opacity-10 text-cyan mb-3 px-3 py-2 rounded-pill border border-white border-opacity-10 tracking-wider text-uppercase fs-7">
+                        <i class="bi bi-cpu me-1"></i> Central Workspace
+                    </span>
+                    
+                    <h1 class="display-4 fw-black text-white mb-3 tracking-tight">
                         {{ __('Exzellenz in jedem Arbeitsschritt') }}
                     </h1>
-                    <p class="lead mb-4 opacity-75">
+                    
+                    <p class="lead text-white-50 mb-4 max-w-xl">
                         {{ __('Willkommen in Ihrem zentralen Arbeitsportal. Gemeinsam setzen wir modernste Mess- und CAD-Systeme ein, um präzise Lösungen für unsere Kunden zu schaffen.') }}
                     </p>
-                    <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+                    
+                    <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start align-items-center">
                         @guest
-                            <a href="{{ route('login') }}" class="btn btn-primary btn-lg px-5 shadow-sm">
-                                <i class="bi bi-box-arrow-in-right me-1"></i> Anmelden
+                            <a href="{{ route('login') }}" class="btn btn-modern-primary px-4 py-2-5 shadow-sm">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Anmelden
                             </a>
-                            <a href="{{ route('register') }}" class="btn btn-outline-light btn-lg px-5">
-                                <i class="bi bi-person-plus me-1"></i> Registrieren
+                            <a href="{{ route('register') }}" class="btn btn-modern-outline px-4 py-2-5">
+                                <i class="bi bi-person-plus me-2"></i>Registrieren
                             </a>
                         @else
-                            <a href="{{ route('projects.logs') }}" class="btn btn-success btn-lg px-5 shadow-sm">
-                                <i class="bi bi-speedometer2 me-1"></i> {{ __('Projekte Anzeigen') }}
+                            <a href="{{ route('projects.logs') }}" class="btn btn-modern-primary px-4 py-2-5 shadow-sm">
+                                <i class="bi bi-grid-1x2-fill me-2"></i>{{ __('Projekte Anzeigen') }}
                             </a>
-                            <a href="{{ route('printer-problems.index') }}" class="btn btn-light btn-lg px-5 text-navitem shadow-sm">
-                                <i class="bi bi-printer me-1"></i> {{ __('Druckprobleme') }}
+                            <a href="{{ route('printer-problems.index') }}" class="btn btn-modern-secondary px-4 py-2-5">
+                                <i class="bi bi-printer-fill me-2"></i>{{ __('Druckprobleme melden') }}
                             </a>
                         @endguest
                     </div>
@@ -41,7 +49,7 @@
     <div class="container py-5">
         <div class="text-center mb-5">
             <h2 class="fw-bold text-title display-6">{{ __('Unsere Leistungen') }}</h2>
-            <div class="mx-auto bg-primary rounded-pill" style="width: 60px; height: 4px;"></div>
+            <div class="mx-auto rounded-pill" style="width: 60px; height: 4px; background-color: #002752;"></div>
             <p class="text-muted mt-3">{{ __('Effiziente Werkzeuge für Ihren Arbeitsalltag') }}</p>
         </div>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
@@ -153,11 +161,84 @@
 
 @push('styles')
 <style>
+    :root {
+        --brand-dark: #0a192f;
+        --brand-accent: #00f2fe;
+        --brand-purple: #4facfe;
+    }
+
     .hero-section {
-        background: linear-gradient(rgba(0, 39, 82, 0.9), rgba(0, 39, 82, 0.8)), 
-                    url('/images/hero-bg.jpg') center/cover no-repeat;
-        background-color: #002752; /* Fallback */
-        min-height: 450px;
+        /* Next-gen dark tech gradient instead of a heavy image overlay */
+        background: radial-gradient(circle at top right, rgba(79, 172, 254, 0.15), transparent 50%),
+                    linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        min-height: 400px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Futuristic background glow effect */
+    .abstract-blur {
+        position: absolute;
+        top: -20%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
+        background: linear-gradient(45deg, var(--brand-purple), var(--brand-accent));
+        filter: blur(120px);
+        opacity: 0.25;
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    /* Typography refinements */
+    .fw-black { font-weight: 850; }
+    .tracking-tight { letter-spacing: -0.03em; }
+    .tracking-wider { letter-spacing: 0.08em; font-size: 0.75rem; }
+    .text-cyan { color: #22d3ee; }
+    .max-w-xl { max-width: 600px; }
+    .z-index-2 { z-index: 2; }
+
+    /* Modern Button UI (Moving away from default Bootstrap colors) */
+    .btn-modern-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: #fff;
+        border: none;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    .btn-modern-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+        color: #fff;
+    }
+
+    .btn-modern-secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: #f8fafc;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: 600;
+        border-radius: 8px;
+        backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+    }
+    .btn-modern-secondary:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-modern-outline {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid #334155;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    .btn-modern-outline:hover {
+        color: #fff;
+        border-color: #64748b;
+        background: rgba(255, 255, 255, 0.02);
     }
     
     .text-title {

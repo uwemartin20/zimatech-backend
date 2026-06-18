@@ -37,15 +37,25 @@
                     <img src="{{ asset('images/logo-team-zimmermann.png') }}" alt="ZiMaTec Logo" height="60" class="mb-3">
                     <h2 class="fw-bold text-title">{{ __('Registrierung') }}</h2>
                 </div>
+
+                <div class="text-center p-6">
+                    <h2 class="text-2xl font-bold mb-4">Registrierung deaktiviert</h2>
+                    <p class="text-gray-600">
+                        Eine Selbstregistrierung ist nicht möglich. Bitte **beim Admin melden**, um einen Zugang zu erhalten.
+                    </p>
+                    <a href="{{ route('login') }}" class="underline text-sm text-gray-600 hover:text-gray-900 mt-4 inline-block">
+                        Zurück zum Login
+                    </a>
+                </div>
                 
-                <h2 class="fw-bold text-title mb-2 d-none d-lg-block">{{ __('Konto erstellen') }}</h2>
+                {{-- <h2 class="fw-bold text-title mb-2 d-none d-lg-block">{{ __('Konto erstellen') }}</h2>
                 <p class="text-muted mb-4 d-none d-lg-block">{{ __('Füllen Sie die Felder aus, um sich zu registrieren.') }}</p>
 
-                <form method="POST" action="{{ route('register') }}" class="mt-4">
+                <form method="POST" action="{{ route('register') }}" class="mt-4"> --}}
                     @csrf
 
                     {{-- Name Field --}}
-                    <div class="form-floating mb-3">
+                    {{-- <div class="form-floating mb-3">
                         <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" 
                                name="name" value="{{ old('name') }}" placeholder="Ihr Name" 
                                required autocomplete="name" autofocus>
@@ -55,10 +65,10 @@
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     {{-- Email Field --}}
-                    <div class="form-floating mb-3">
+                    {{-- <div class="form-floating mb-3">
                         <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" 
                                name="email" value="{{ old('email') }}" placeholder="name@example.com" 
                                required autocomplete="email">
@@ -68,10 +78,10 @@
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     {{-- Password Field --}}
-                    <div class="form-floating mb-3">
+                    {{-- <div class="form-floating mb-3">
                         <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" 
                                name="password" placeholder="Passwort" required autocomplete="new-password">
                         <label for="password">{{ __('Passwort') }}</label>
@@ -80,25 +90,25 @@
                                 <strong>{{ $message }}</strong>
                             </span>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     {{-- Confirm Password Field --}}
-                    <div class="form-floating mb-4">
+                    {{-- <div class="form-floating mb-4">
                         <input id="password-confirm" type="password" class="form-control" 
                                name="password_confirmation" placeholder="Passwort bestätigen" 
                                required autocomplete="new-password">
                         <label for="password-confirm">{{ __('Passwort bestätigen') }}</label>
-                    </div>
+                    </div> --}}
 
                     {{-- Register Button --}}
-                    <div class="d-grid gap-2 mb-4">
+                    {{-- <div class="d-grid gap-2 mb-4">
                         <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold shadow-sm">
                             {{ __('Registrieren') }}
                         </button>
-                    </div>
+                    </div> --}}
 
                     {{-- Login Link --}}
-                    <div class="text-center mt-4 pt-2 border-top">
+                    {{-- <div class="text-center mt-4 pt-2 border-top">
                         <p class="text-muted small mb-0">
                             {{ __('Bereits ein Konto?') }} 
                             <a href="{{ route('login') }}" class="fw-bold text-decoration-none text-primary ms-1">
@@ -106,7 +116,7 @@
                             </a>
                         </p>
                     </div>
-                </form>
+                </form> --}}
             </div>
         </div>
     </div>

@@ -69,6 +69,65 @@
             </div>
         </div>
 
+        {{-- Activity Summary Cards (Last 10 Days) --}}
+        <div class="row g-4 mb-4">
+            {{-- Most Active Machine --}}
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title mb-2">
+                                    <i class="bi bi-speedometer2 text-info me-2"></i>Most Active Machine
+                                </h5>
+                                @if($mostActiveMachine)
+                                    <h4 class="fw-bold mb-1">{{ $mostActiveMachine->machine->name ?? 'N/A' }}</h4>
+                                    <p class="text-muted mb-0">
+                                        <span class="badge bg-light text-dark">
+                                            {{ number_format($mostActiveMachine->hours, 2) }} hours (last 10 days)
+                                        </span>
+                                    </p>
+                                @else
+                                    <p class="text-muted mb-0">No activity yet</p>
+                                @endif
+                            </div>
+                            <a href="{{ route('admin.activity-timeline') }}" class="btn btn-sm btn-outline-info" title="View Timeline">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Most Active User --}}
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title mb-2">
+                                    <i class="bi bi-person-check text-success me-2"></i>Most Active User
+                                </h5>
+                                @if($mostActiveUser)
+                                    <h4 class="fw-bold mb-1">{{ $mostActiveUser->user->name ?? 'N/A' }}</h4>
+                                    <p class="text-muted mb-0">
+                                        <span class="badge bg-light text-dark">
+                                            {{ number_format($mostActiveUser->hours, 2) }} hours (last 10 days)
+                                        </span>
+                                    </p>
+                                @else
+                                    <p class="text-muted mb-0">No activity yet</p>
+                                @endif
+                            </div>
+                            <a href="{{ route('admin.activity-timeline') }}" class="btn btn-sm btn-outline-success" title="View Timeline">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Charts --}}
         <div class="row g-4">
             <div class="col-lg-6">

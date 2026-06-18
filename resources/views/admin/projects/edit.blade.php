@@ -34,11 +34,12 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="auftragsnummer_zt" class="form-label fw-bold">Auftragsnummer <span class="text-muted">(Nur ein oder beide eingeben)</span> *</label>
+                            <label for="auftragsnummer_zt" class="form-label fw-bold">Auftragsnummer *</label>
                             <input type="text" name="auftragsnummer_zt" id="auftragsnummer_zt" class="form-control" value="{{ old('auftragsnummer_zt', $project->auftragsnummer_zt) }}" placeholder="ZimaTech">
                         </div>
 
                         <div class="col-md-6">
+                            <label for="auftragsnummer_zf" class="form-label fw-bold"><span class="text-muted">(Nur ein oder beide eingeben)</span></label>
                             <input type="text" name="auftragsnummer_zf" id="auftragsnummer_zf" class="form-control" value="{{ old('auftragsnummer_zf', $project->auftragsnummer_zf) }}" placeholder="Zimmermann Formtechnik">
                         </div>
                     </div>

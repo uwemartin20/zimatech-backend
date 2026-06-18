@@ -90,10 +90,10 @@
                     {{-- Registration Link --}}
                     <div class="text-center mt-4 pt-2 border-top">
                         <p class="text-muted small mb-0">
-                            {{ __('Noch kein Konto?') }} 
-                            <a href="{{ route('register') }}" class="fw-bold text-decoration-none text-primary ms-1">
+                            {{ __('Noch kein Konto? - Bei Admin melden') }} 
+                            {{-- <a href="{{ route('register') }}" class="fw-bold text-decoration-none text-primary ms-1">
                                 {{ __('Jetzt registrieren') }}
-                            </a>
+                            </a> --}}
                         </p>
                     </div>
                 </form>

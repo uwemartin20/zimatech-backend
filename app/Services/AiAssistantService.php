@@ -103,6 +103,33 @@ PROMPT,
         ];
     }
 
+    /**
+     * Handles general user queries about ZimaTec.
+     */
+    public function askGeneralAssistant(string $message, string $systemPrompt, string $context = '', array $history = [], ?array $outputStructure = null): array
+    {
+        $payload = [
+            'system_prompt' => $systemPrompt,
+            'context' => $context,
+            'message' => $message,
+            'history' => $history,
+            'output_structure' => $outputStructure,
+        ];
+
+        $response = Http::timeout(60)
+            ->withHeaders(['Content-Type' => 'application/json'])
+            ->post("{$this->backendUrl}/ai/assist", $payload)
+            ->throw();
+
+        $data = $response->json();
+
+        // Assuming the general backend returns a string under 'raw_text' or standard output
+        return [
+            'result'   => $data['result'] ?? null,   // This contains the parsed JSON object
+            'raw_text' => $data['raw_text'] ?? '',   // This contains the plain text response
+        ];
+    }
+
     // -------------------------------------------------------------------------
     // NEW: generate first manufacturer email draft
     // -------------------------------------------------------------------------

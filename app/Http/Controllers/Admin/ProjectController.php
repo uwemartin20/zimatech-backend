@@ -23,11 +23,33 @@ class ProjectController extends Controller
         //
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Project::with('status')->get();
+        // 1. Build the base query with eager loading
+        $query = Project::with(['status', 'positions', 'bauteile']);
 
-        return view('admin.projects.index', compact('projects'));
+        // 2. Filter by Status if selected
+        if ($request->filled('status_id')) {
+            $query->where('project_status_id', $request->status_id);
+        }
+
+        // 3. Search by Name or Order Numbers (ZT / ZF)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('project_name', 'like', "%{$search}%")
+                ->orWhere('auftragsnummer_zt', 'like', "%{$search}%")
+                ->orWhere('auftragsnummer_zf', 'like', "%{$search}%");
+            });
+        }
+
+        // 4. Get the filtered projects
+        $projects = $query->latest()->get();
+
+        // 5. Fetch all statuses to populate the filter dropdown element
+        $statuses = ProjectStatus::all(); 
+
+        return view('admin.projects.index', compact('projects', 'statuses'));
 
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityTimelineController;
 use App\Http\Controllers\Admin\BauteilController;
 use App\Http\Controllers\Admin\EmailController;
 use App\Http\Controllers\Admin\FeedbackController;
@@ -35,6 +36,7 @@ Auth::routes();
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home', [HomeController::class, 'index']);
+Route::post('/assistant/ask-recommendations', [HomeController::class, 'askRecommendations'])->name('assistant.recommendations');
 
 // Project routes
 Route::get('/projects/index', [ProjectController::class, 'index'])->name('projects');
@@ -255,6 +257,10 @@ Route::middleware(['auth', 'role:admin'])
             Route::post('/time/change/reject/{id}', [TimeController::class, 'rejectChange'])->name('time.change.reject');
             Route::get('/time/project/positions', [TimeController::class, 'thisProjectPositions'])->name('time.project.positions');
         }
+
+        // Activity Timeline Routes
+        Route::get('/activity-timeline', [ActivityTimelineController::class, 'index'])->name('activity-timeline');
+        Route::get('/activity-timeline/data', [ActivityTimelineController::class, 'getActivityData'])->name('activity-timeline.data');
 
         // Supplier Routes
         if (config('modules.suppliers')) {

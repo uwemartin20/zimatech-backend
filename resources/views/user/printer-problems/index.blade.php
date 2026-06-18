@@ -93,7 +93,7 @@
                         <tr>
                             <td class="ps-3">
                                 <a href="{{ route('printer-problems.show', $problem->id) }}"
-                                   class="fw-medium text-decoration-none">
+                                    class="fw-medium text-decoration-none">
                                     {{ $problem->problem_uid }}
                                 </a>
                             </td>
@@ -109,11 +109,11 @@
                             <td class="text-muted small">{{ $problem->creator->name ?? '—' }}</td>
                             <td class="pe-3 text-end">
                                 <a href="{{ route('printer-problems.show', $problem->id) }}"
-                                   class="btn btn-sm btn-outline-primary py-0 px-2 me-1">
+                                    class="btn btn-sm btn-outline-primary py-0 px-2 me-1">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <a href="{{ route('printer-problems.edit', $problem->id) }}"
-                                   class="btn btn-sm btn-outline-secondary py-0 px-2">
+                                    class="btn btn-sm btn-outline-secondary py-0 px-2">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                             </td>

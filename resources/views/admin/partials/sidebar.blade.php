@@ -35,7 +35,7 @@
         aria-expanded="{{ $projectOffersActive ? 'true' : 'false' }}"
         aria-controls="projectsSubmenu"
         class="{{ $projectOffersActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> AngebotManagement
+            <i class="bi bi-file-earmark-text me-2"></i> AngebotManagement
         </a>
         <div class="collapse submenu {{ $projectOffersActive ? 'show' : '' }}" id="projectOffersSubmenu">
             <a href="{{ route('admin.project_offers.index') }}" class="{{ request()->is('admin/project_offers*') ? 'active' : '' }}">Alle ProjektAngebote</a>
@@ -52,7 +52,7 @@
         aria-expanded="{{ $projectsActive || $bauteileActive ? 'true' : 'false' }}"
         aria-controls="projectsSubmenu"
         class="{{ $projectsActive || $bauteileActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> Projektmanagement
+            <i class="bi bi-kanban me-2"></i> Projektmanagement
         </a>
         <div class="collapse submenu {{ $projectsActive || $bauteileActive ? 'show' : '' }}" id="projectsSubmenu">
             <a href="{{ route('admin.projects') }}" class="{{ request()->is('admin/projects') ? 'active' : '' }}">Alle Projekten</a>
@@ -71,7 +71,7 @@
         aria-expanded="{{ $timeActive ? 'true' : 'false' }}"
         aria-controls="timeSubmenu"
         class="{{ $timeActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> Zeit Management
+            <i class="bi bi-clock-history me-2"></i> Zeit Management
         </a>
         <div class="collapse submenu {{ $timeActive ? 'show' : '' }}" id="timeSubmenu">
             <a href="{{ route('admin.time.logs') }}" class="{{ request()->is('admin/time/logs') ? 'active' : '' }}">Machine Zeiten</a>
@@ -90,7 +90,7 @@
         aria-expanded="{{ $supplierActive ? 'true' : 'false' }}"
         aria-controls="supplierSubmenu"
         class="{{ $supplierActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> Lieferant Management
+            <i class="bi bi-truck me-2"></i> Lieferant Management
         </a>
         <div class="collapse submenu {{ $supplierActive ? 'show' : '' }}" id="supplierSubmenu">
             <a href="{{ route('admin.suppliers.index') }}" class="{{ request()->is('admin/suppliers') ? 'active' : '' }}">Alle Lieferanten</a>
@@ -106,7 +106,7 @@
         aria-expanded="{{ $emailActive ? 'true' : 'false' }}"
         aria-controls="emailSubmenu"
         class="{{ $emailActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> Email Management
+            <i class="bi bi-envelope-open me-2"></i> Email Management
         </a>
         <div class="collapse submenu {{ $emailActive ? 'show' : '' }}" id="emailSubmenu">
             <a href="{{ route('admin.emails') }}" class="{{ request()->is('admin/emails') ? 'active' : '' }}">Inbox</a>
@@ -123,7 +123,7 @@
         aria-expanded="{{ $feedbackActive ? 'true' : 'false' }}"
         aria-controls="feedbackSubmenu"
         class="{{ $feedbackActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> Feedback Management
+            <i class="bi bi-chat-left-text me-2"></i> Feedback Management
         </a>
         <div class="collapse submenu {{ $feedbackActive ? 'show' : '' }}" id="feedbackSubmenu">
             <a href="{{ route('admin.feedback.index') }}" class="{{ request()->is('admin/feedback') ? 'active' : '' }}">Feedbacks</a>
@@ -139,7 +139,7 @@
         aria-expanded="{{ $tablarActive ? 'true' : 'false' }}"
         aria-controls="tablarSubmenu"
         class="{{ $tablarActive ? 'active' : '' }}">
-            <i class="bi bi-folder2-open me-2"></i> Tablar Management
+            <i class="bi bi-boxes me-2"></i> Hochregal Management
         </a>
         <div class="collapse submenu {{ $tablarActive ? 'show' : '' }}" id="tablarSubmenu">
             <a href="{{ route('admin.tablar.overview') }}" class="{{ request()->is('admin/tablar/overview') ? 'active' : '' }}">Übersicht</a>
