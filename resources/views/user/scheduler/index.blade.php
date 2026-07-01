@@ -22,7 +22,7 @@
                     <i class="bi bi-calendar-week me-1"></i> Woche
                 </button>
             </div>
-            
+
             <button class="btn btn-primary shadow-sm" onclick="openCreateModal()">
                 <i class="bi bi-plus-circle me-1"></i> Neuer Termin
             </button>
@@ -68,27 +68,32 @@
 
     <!-- Timeline Board Wrapper -->
     <div class="timeline-board shadow-sm">
-        <!-- Timeline Grid Header -->
-        <div class="timeline-header" id="timelineHeaderRow">
-            <!-- Resource header col -->
-            <div class="timeline-header-cell resource-header">Maschine</div>
-            <!-- Time header cols will be rendered via JS -->
-            <div class="timeline-header-columns d-flex flex-grow-1" id="timelineHeaderTimeColumns"></div>
-        </div>
-
-        <!-- Timeline Grid Body -->
-        <div class="timeline-body" id="timelineBody">
-            @foreach($machines as $machine)
-                <div class="timeline-row" data-resource-type="machine" data-resource-id="{{ $machine->id }}" data-search-name="{{ strtolower($machine->name) }}">
-                    <div class="resource-title">
-                        <div class="fw-bold">{{ $machine->name }}</div>
-                        <div class="text-muted small">{{ $machine->company }}</div>
-                    </div>
-                    <div class="timeline-track flex-grow-1 position-relative" data-resource-type="machine" data-resource-id="{{ $machine->id }}">
-                        <!-- Event cards will be placed here -->
-                    </div>
+        <!-- Single scroll container holds BOTH header and body so columns can never drift apart -->
+        <div class="timeline-scroll" id="timelineScroll">
+            <div class="timeline-grid" id="timelineGrid">
+                <!-- Timeline Grid Header -->
+                <div class="timeline-header" id="timelineHeaderRow">
+                    <!-- Resource header col -->
+                    <div class="timeline-header-cell resource-header">Maschine</div>
+                    <!-- Time header cols will be rendered via JS -->
+                    <div class="timeline-header-columns" id="timelineHeaderTimeColumns"></div>
                 </div>
-            @endforeach
+
+                <!-- Timeline Grid Body -->
+                <div class="timeline-body" id="timelineBody">
+                    @foreach($machines as $machine)
+                        <div class="timeline-row" data-resource-type="machine" data-resource-id="{{ $machine->id }}" data-search-name="{{ strtolower($machine->name) }}">
+                            <div class="resource-title">
+                                <div class="fw-bold">{{ $machine->name }}</div>
+                                <div class="text-muted small">{{ $machine->company }}</div>
+                            </div>
+                            <div class="timeline-track" data-resource-type="machine" data-resource-id="{{ $machine->id }}">
+                                <!-- Event cards will be placed here -->
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -101,7 +106,7 @@
                 @csrf
                 <input type="hidden" id="eventId" name="id">
                 <input type="hidden" id="modalType" name="type" value="machine">
-                
+
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title" id="scheduleModalLabel">Termin planen</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -180,11 +185,13 @@
     :root {
         --timeline-row-height: 80px;
         --resource-col-width: 250px;
+        --time-col-width: 90px; /* fixed width per hour/day column, used by BOTH header and rows */
         --slate-100: #f1f5f9;
         --slate-200: #e2e8f0;
         --slate-700: #334155;
         --slate-800: #1e293b;
         --primary-soft: #eff6ff;
+        --num-slots: 16;
     }
 
     .btn-white {
@@ -216,7 +223,16 @@
         color: #fff;
     }
 
-    /* Timeline Container & Grid styling */
+    /* ============================================================
+       TIMELINE LAYOUT
+       Header and rows both use the SAME grid-template-columns
+       (resource col + N equal time columns) on the SAME element
+       width, inside ONE scroll container. This guarantees the
+       header hour labels always line up with the row cells below
+       them — there is no second layout system (e.g. background-size)
+       that can drift out of sync.
+       ============================================================ */
+
     .timeline-board {
         background: #fff;
         border-radius: 12px;
@@ -226,11 +242,35 @@
         flex-direction: column;
     }
 
+    /* The ONE scroll container: scrolls both horizontally (many hour
+       columns) and vertically (many machine rows). Header stays
+       pinned to the top via sticky, resource column stays pinned to
+       the left via sticky on its cells. */
+    .timeline-scroll {
+        max-height: calc(100vh - 320px);
+        min-height: 320px;
+        overflow: auto;
+    }
+
+    .timeline-grid {
+        display: inline-block;
+        min-width: 100%;
+    }
+
     .timeline-header {
-        display: flex;
+        display: grid;
+        grid-template-columns: var(--resource-col-width) repeat(var(--num-slots), minmax(var(--time-col-width), 1fr));
         background: #f8fafc;
         border-bottom: 2px solid var(--slate-200);
-        z-index: 5;
+        position: sticky;
+        top: 0;
+        z-index: 6;
+    }
+
+    .timeline-header-columns {
+        display: grid;
+        grid-template-columns: subgrid;
+        grid-column: 2 / -1;
     }
 
     .timeline-header-cell {
@@ -244,34 +284,29 @@
     }
 
     .resource-header {
-        width: var(--resource-col-width);
-        min-width: var(--resource-col-width);
-        border-right: 2px solid var(--slate-200);
         justify-content: flex-start;
         background: #f8fafc;
+        border-right: 2px solid var(--slate-200);
         position: sticky;
         left: 0;
-        z-index: 6;
+        z-index: 7;
     }
 
     .time-header-cell {
-        flex: 1;
         border-right: 1px solid var(--slate-200);
-        text-align: center;
-        min-width: 60px;
+        flex-direction: column;
         height: 50px;
     }
 
     .timeline-body {
-        max-height: calc(100vh - 350px);
-        overflow-y: auto;
+        display: block;
     }
 
     .timeline-row {
-        display: flex;
+        display: grid;
+        grid-template-columns: var(--resource-col-width) repeat(var(--num-slots), minmax(var(--time-col-width), 1fr));
         border-bottom: 1px solid var(--slate-100);
         min-height: var(--timeline-row-height);
-        position: relative;
         transition: background-color 0.15s ease;
     }
     .timeline-row:hover {
@@ -279,8 +314,6 @@
     }
 
     .resource-title {
-        width: var(--resource-col-width);
-        min-width: var(--resource-col-width);
         padding: 12px 16px;
         border-right: 2px solid var(--slate-200);
         background: #fff;
@@ -294,8 +327,10 @@
     }
 
     .timeline-track {
+        grid-column: 2 / -1;
+        position: relative;
         background-image: linear-gradient(to right, var(--slate-100) 1px, transparent 1px);
-        background-size: calc(100% / var(--num-slots, 16)) 100%;
+        background-size: calc(100% / var(--num-slots)) 100%;
         min-height: var(--timeline-row-height);
     }
 
@@ -399,7 +434,7 @@
     // System settings - Scheduler is public, so everyone is manager (isAdmin = true)
     const isAdmin = true;
     const currentUserId = null; // Public workshop dashboard
-    
+
     // State management
     let currentView = 'day'; // 'day' or 'week'
     let currentDate = new Date(); // Active viewing date
@@ -421,7 +456,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         scheduleModalInstance = new bootstrap.Modal(document.getElementById('scheduleModal'));
-        
+
         // Load initial data
         loadScheduler();
 
@@ -490,17 +525,17 @@
     // Main fetch & render function
     function loadScheduler() {
         const { start, end } = getDateRange();
-        
+
         // Update header UI display label
         updateHeaderDisplay(start, end);
-        
+
         // Generate X-Axis Column Headers
         renderTimelineHeaders(start);
 
         // Fetch events via AJAX
         const formattedStart = start.toISOString().split('T')[0] + ' 00:00:00';
         const formattedEnd = end.toISOString().split('T')[0] + ' 23:59:59';
-        
+
         fetch(`/scheduler/events?start=${encodeURIComponent(formattedStart)}&end=${encodeURIComponent(formattedEnd)}`)
             .then(res => res.json())
             .then(events => {
@@ -517,7 +552,7 @@
     function updateHeaderDisplay(start, end) {
         const display = document.getElementById('currentDateDisplay');
         const formatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        
+
         if (currentView === 'day') {
             display.innerText = currentDate.toLocaleDateString('de-DE', formatOptions);
         } else {
@@ -536,13 +571,17 @@
     }
 
     // Render X-Axis Time/Day Grid Columns
+    // IMPORTANT: --num-slots is set on the SAME grid (.timeline-grid) that both
+    // the header row and every body row read from, via grid-template-columns.
+    // This is the single source of truth for column count/alignment.
     function renderTimelineHeaders(weekStart) {
         const container = document.getElementById('timelineHeaderTimeColumns');
         container.innerHTML = '';
+        const gridEl = document.getElementById('timelineGrid');
 
         if (currentView === 'day') {
-            document.documentElement.style.setProperty('--num-slots', TOTAL_DAY_HOURS);
-            
+            gridEl.style.setProperty('--num-slots', TOTAL_DAY_HOURS);
+
             for (let i = DAY_START_HOUR; i < DAY_END_HOUR; i++) {
                 const hourHeader = document.createElement('div');
                 hourHeader.className = 'time-header-cell d-flex flex-column align-items-center justify-content-center';
@@ -550,11 +589,11 @@
                 container.appendChild(hourHeader);
             }
         } else {
-            document.documentElement.style.setProperty('--num-slots', 7);
-            
+            gridEl.style.setProperty('--num-slots', 7);
+
             const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
             const tempDate = new Date(weekStart);
-            
+
             for (let i = 0; i < 7; i++) {
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'time-header-cell d-flex flex-column align-items-center justify-content-center';
@@ -613,7 +652,7 @@
             card.className = 'event-card';
             card.style.left = `${leftPercent}%`;
             card.style.width = `${widthPercent}%`;
-            
+
             const projectColor = getProjectColor(event.project_id, event.project ? event.project.project_name : 'Allgemein');
             card.style.backgroundColor = projectColor;
             card.setAttribute('data-event-id', event.id);
@@ -659,18 +698,18 @@
                 if (track) track.appendChild(card);
             }
         });
-        
+
         applyFilters();
     }
 
     // Apply Search/Filter logic locally
     function applyFilters() {
         const searchVal = document.getElementById('resourceSearch').value.toLowerCase();
-        
+
         document.querySelectorAll('.timeline-row').forEach(row => {
             const name = row.getAttribute('data-search-name');
             if (name.includes(searchVal)) {
-                row.style.setProperty('display', 'flex', 'important');
+                row.style.removeProperty('display');
             } else {
                 row.style.setProperty('display', 'none', 'important');
             }
@@ -710,7 +749,7 @@
         } else if (dragType === 'resize-left') {
             let newLeft = dragStartLeft + deltaPercent;
             let newWidth = dragStartWidth - deltaPercent;
-            
+
             const minWidthPercent = (0.5 / (currentView === 'day' ? TOTAL_DAY_HOURS : 168)) * 100;
             if (newWidth > minWidthPercent && newLeft >= 0) {
                 dragElement.style.left = `${newLeft}%`;
@@ -718,7 +757,7 @@
             }
         } else if (dragType === 'resize-right') {
             let newWidth = dragStartWidth + deltaPercent;
-            
+
             const minWidthPercent = (0.5 / (currentView === 'day' ? TOTAL_DAY_HOURS : 168)) * 100;
             if (newWidth > minWidthPercent && (dragStartLeft + newWidth) <= 100) {
                 dragElement.style.width = `${newWidth}%`;
@@ -831,7 +870,7 @@
         document.getElementById('btnDeleteEvent').classList.add('d-none');
         document.getElementById('btnSaveEvent').classList.remove('d-none');
         document.getElementById('scheduleModalLabel').innerText = 'Neuen Termin planen';
-        
+
         const now = new Date();
         now.setMinutes(0, 0, 0);
         document.getElementById('modalStart').value = toLocalDatetimeString(now);
@@ -847,13 +886,13 @@
         document.getElementById('modalProject').value = event.project_id || '';
         document.getElementById('modalMachine').value = event.machine_id || '';
         document.getElementById('modalUser').value = event.user_id || '';
-        
+
         document.getElementById('modalStart').value = toLocalDatetimeString(new Date(event.start_time));
         document.getElementById('modalEnd').value = toLocalDatetimeString(new Date(event.end_time));
         document.getElementById('modalNotes').value = event.notes || '';
 
         document.getElementById('scheduleModalLabel').innerText = 'Termin bearbeiten';
-        
+
         document.getElementById('btnDeleteEvent').classList.remove('d-none');
         document.getElementById('btnSaveEvent').classList.remove('d-none');
 

@@ -93,30 +93,59 @@
             <table class="table table-hover align-middle border-top">
                 <thead class="table-light">
                     <tr class="text-secondary text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.05em;">
+                        <th></th>
                         <th>Name</th>
                         <th>Menge</th>
                         <th>Fach</th>
+                        <th>Status</th>
                         <th class="text-end">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($materials as $material)
                         <tr class="clickable-row
-                            @if(
-                                ($material->threshold && $material->quantity <= $material->threshold) ||
-                                (!$material->threshold && $material->quantity <= 20)
-                            ) table-danger
-                            @endif"
-                            data-id="{{ $material->id }}"
-                            data-name="{{ $material->name }}"
-                            data-quantity="{{ $material->quantity }}"
-                            data-tablar="{{ $material->tablar ?? '' }}"
-                            data-threshold="{{ $material->threshold ?? '' }}"
-                            data-type="{{ $material->type ?? '' }}"
-                            >
-                            <td class="fw-bold text-dark">{{ $material->name }}</td>
+                        @if(
+                            ($material->threshold && $material->quantity <= $material->threshold) ||
+                            (!$material->threshold && $material->quantity <= 20)
+                        ) table-danger
+                        @endif
+                        @if(!$material->is_active) text-muted @endif"
+                        data-id="{{ $material->id }}"
+                        data-name="{{ $material->name }}"
+                        data-quantity="{{ $material->quantity }}"
+                        data-tablar="{{ $material->tablar ?? '' }}"
+                        data-threshold="{{ $material->threshold ?? '' }}"
+                        data-type="{{ $material->type ?? '' }}"
+                        data-lager-id="{{ $material->lager_id ?? '' }}"
+                        data-order-status="{{ $material->order_status ?? '' }}"
+                        data-is-werkzeug="{{ $material->is_werkzeug ? '1' : '0' }}"
+                        data-is-active="{{ $material->is_active ? '1' : '0' }}"
+                        data-image="{{ $material->image ? asset('storage/'.$material->image) : '' }}"
+                        >
+                            <td>
+                                @if($material->image)
+                                    <img src="{{ asset('storage/'.$material->image) }}" alt="" width="40" height="40" class="rounded object-fit-cover">
+                                @else
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="fw-bold text-dark">
+                                {{ $material->name }}
+                                @if($material->is_werkzeug)
+                                    <span class="badge bg-secondary ms-1" title="Werkzeug"><i class="bi bi-wrench"></i></span>
+                                @endif
+                            </td>
                             <td><span class="badge rounded-pill bg-light text-dark border">{{ $material->quantity }} Stk.</span></td>
                             <td class="text-muted small">{{ $material->tablar }}</td>
+                            <td>
+                                @if($material->order_status)
+                                    <span class="badge bg-info-subtle text-info-emphasis">{{ $statusTranslations[$material->order_status] ?? ucfirst($material->order_status) }}</span>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td class="text-end">
                                 <button class="btn btn-outline-dark btn-sm me-1" onclick="openSupplierModal(this)">
                                     <i class="bi bi-info-circle"></i>
@@ -150,9 +179,15 @@
             </div>
 
             <div class="modal-body">
-                <form id="materialForm">
+                <form id="materialForm" enctype="multipart/form-data">
                     <input type="hidden" id="materialId">
-
+                
+                    <!-- IMAGE -->
+                    <div class="mb-3 text-center">
+                        <img id="imagePreview" class="d-none rounded mb-2 object-fit-cover" style="width:100px;height:100px;">
+                        <input type="file" id="image" class="form-control" accept="image/*" onchange="previewImage(this)">
+                    </div>
+                
                     <!-- NAME -->
                     <div class="mb-3">
                         <label class="form-label">
@@ -160,13 +195,13 @@
                         </label>
                         <input type="text" id="name" class="form-control" required>
                     </div>
-
+                
                     <!-- CURRENT QUANTITY (READ ONLY) -->
                     <div class="mb-2">
                         <label class="form-label">Aktueller Bestand</label>
                         <input type="number" id="currentQuantity" class="form-control bg-light" readonly>
                     </div>
-
+                
                     <!-- ADD STOCK -->
                     <div class="mb-3">
                         <label class="form-label">
@@ -174,7 +209,7 @@
                         </label>
                         <input type="number" id="addQuantity" class="form-control" min="0" value="0">
                     </div>
-
+                
                     <!-- TABLAR -->
                     <div class="mb-3">
                         <label class="form-label">
@@ -182,7 +217,7 @@
                         </label>
                         <input type="text" id="tablar" class="form-control">
                     </div>
-
+                
                     <!-- THRESHOLD -->
                     <div class="mb-3">
                         <label class="form-label">
@@ -190,13 +225,43 @@
                         </label>
                         <input type="number" id="threshold" class="form-control" min="0" placeholder="z.B. 50">
                     </div>
-
+                
                     <!-- TYPE -->
                     <div class="mb-3">
                         <label class="form-label">
                             Typ <span class="text-muted">(optional)</span>
                         </label>
                         <input type="text" id="type" class="form-control" placeholder="z.B. Schrauben, Kunststoff">
+                    </div>
+                
+                    <!-- LAGER -->
+                    <div class="mb-3">
+                        <label class="form-label">Lager</label>
+                        <input type="text" class="form-control bg-light" value="Hochregal" disabled>
+                    </div>
+                
+                    <!-- ORDER STATUS -->
+                    <div class="mb-3">
+                        <label class="form-label">Bestellstatus <span class="text-muted">(optional)</span></label>
+                        <select id="orderStatus" class="form-select">
+                            <option value="">— Normal —</option>
+                            <option value="notified">Bedarf gemeldet</option>
+                            <option value="ordered">Bestellt</option>
+                            <option value="blocked">Blockiert</option>
+                            <option value="delivered">Geliefert</option>
+                        </select>
+                    </div>
+                
+                    <!-- IS WERKZEUG -->
+                    <div class="form-check mb-2">
+                        <input type="checkbox" id="isWerkzeug" class="form-check-input">
+                        <label class="form-check-label" for="isWerkzeug">Werkzeug</label>
+                    </div>
+                
+                    <!-- IS ACTIVE -->
+                    <div class="form-check mb-3">
+                        <input type="checkbox" id="isActive" class="form-check-input" checked>
+                        <label class="form-check-label" for="isActive">Aktiv</label>
                     </div>
                 </form>
             </div>

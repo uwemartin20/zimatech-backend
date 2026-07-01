@@ -1,5 +1,6 @@
 // Full material list from PHP — flat, all shelves
 const allMaterials = window.tablarData.flatList;
+const storagePath = window.tablarData.storagePath ?? '/storage/';
 
 // Group by shelf for fast lookup: { "A1": [...], "B2": [...] }
 const byShelf = {};
@@ -14,6 +15,30 @@ let currentShelfMaterials = [];
 let selectedMaterial = null;
 
 const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// Helper function to build image markup
+function generateImageHtml(image, name) {
+    if (image) {
+        const fullSrc = `${storagePath}/${image}`.replace(/\/+/g, '/').replace(':/', '://');
+        return `<img src="${fullSrc}" alt="${name}" width="60" height="60" class="rounded border img-thumbnail-clickable me-3" onclick="maximizeImage(event, '${fullSrc}')">`;
+    }
+    return `
+        <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center me-3" style="width:60px; height:60px; min-width:60px;">
+            <i class="bi bi-box-seam"></i>
+        </div>`;
+}
+
+// Helper function to build order status or order button markup
+function generateOrderHtml(m) {
+    if (m.order_status) {
+        const statusText = window.tablarData.statusTranslations[m.order_status] ?? ucfirst(m.order_status);
+        return `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-clock-history me-1"></i>${statusText}</span>`;
+    }
+    return `
+        <button class="btn btn-sm btn-outline-primary ms-2" onclick="event.stopPropagation(); triggerOrder(${m.id})">
+            Bestellen
+        </button>`;
+}
 
 // ─── SHELF SELECTION ──────────────────────────────────────────────────────────
 
@@ -76,22 +101,35 @@ function renderMaterials(materials) {
             : m.quantity > threshold ? 'bg-success' : 'bg-danger';
         const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';
 
+        const imageTemplate = generateImageHtml(m.image, m.name);
+        const orderTemplate = generateOrderHtml(m);
+
         if (outOfStock) {
             return `
-            <div class="d-flex justify-content-between align-items-center
-                        p-3 mb-2 rounded border bg-light text-muted"
+            <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border bg-light text-muted"
                  style="cursor: not-allowed;"
                  onclick="Swal.fire('Nicht verfügbar', 'Bitte warten Sie auf Nachschub.', 'info')">
-                <span class="text-decoration-line-through">${m.name}</span>
+                <div class="d-flex align-items-center">
+                    ${imageTemplate}
+                    <div>
+                        <span class="text-decoration-line-through fw-semibold">${m.name}</span>
+                        <div class="mt-1">${orderTemplate}</div>
+                    </div>
+                </div>
                 <span class="badge ${badgeClass}">${badgeText}</span>
             </div>`;
         }
 
         return `
-        <div class="d-flex justify-content-between align-items-center
-                    p-3 mb-2 rounded border material-item"
+        <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border material-item"
              onclick="openMaterialModal(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf}')">
-            <span class="fw-semibold">${m.name}</span>
+            <div class="d-flex align-items-center">
+                ${imageTemplate}
+                <div>
+                    <span class="fw-semibold">${m.name}</span>
+                    <div class="mt-1">${orderTemplate}</div>
+                </div>
+            </div>
             <span class="badge ${badgeClass} fs-6">${badgeText}</span>
         </div>`;
     }).join('');
@@ -108,21 +146,21 @@ function openMaterialModal(id, name, quantity, shelf) {
 
     const input = document.getElementById('counterInput');
     input.value = 1;
-    input.max   = quantity;
+    // When returning, max configuration shouldn't block entering high amounts, so we remove programmatic max cap.
+    input.removeAttribute('max'); 
 
     new bootstrap.Modal(document.getElementById('materialModal')).show();
 }
 
 function validateManualInput(input) {
     let val = parseInt(input.value);
-    if (isNaN(val) || val < 1)                    input.value = 1;
-    if (val > selectedMaterial.quantity)           input.value = selectedMaterial.quantity;
+    if (isNaN(val) || val < 1) input.value = 1;
 }
 
 function increase() {
     const input = document.getElementById('counterInput');
     const val   = parseInt(input.value);
-    if (val < selectedMaterial.quantity) input.value = val + 1;
+    input.value = val + 1;
 }
 
 function decrease() {
@@ -137,7 +175,13 @@ async function confirmConsumption() {
     const amountTaken = parseInt(document.getElementById('counterInput').value);
     if (!selectedMaterial || isNaN(amountTaken)) return;
 
+    if (amountTaken > selectedMaterial.quantity) {
+        alert('Es kann nicht mehr entnommen werden als verfügbar ist!');
+        return;
+    }
+
     const btn = document.querySelector('#materialModal .btn-primary');
+    const originalContent = btn.innerHTML;
     btn.disabled    = true;
     btn.innerHTML   = `<span class="spinner-border spinner-border-sm me-2"></span> Wird gebucht...`;
 
@@ -152,16 +196,12 @@ async function confirmConsumption() {
 
         const data = await res.json();
 
-        // Update local data so re-renders are correct without a page reload
         const m = allMaterials.find(x => x.id === selectedMaterial.id);
         if (m) m.quantity = data.new_quantity;
 
-        // Re-render the current shelf list
         filterMaterials();
-
         bootstrap.Modal.getInstance(document.getElementById('materialModal')).hide();
 
-        // Refresh name search results if that tab is active
         if (!document.getElementById('nameStep').classList.contains('d-none')) {
             filterByName();
         }
@@ -170,7 +210,72 @@ async function confirmConsumption() {
         alert('Fehler beim Buchen: ' + e.message);
     } finally {
         btn.disabled  = false;
-        btn.innerHTML = '✅ Material entnommen';
+        btn.innerHTML = originalContent;
+    }
+}
+
+// ─── CONFIRM RETURN (EINLAGERN) ────────────────────────────────────────────────
+
+async function confirmReturn() {
+    const amountReturned = parseInt(document.getElementById('counterInput').value);
+    if (!selectedMaterial || isNaN(amountReturned)) return;
+
+    const btn = document.querySelector('#materialModal .btn-danger');
+    const originalContent = btn.innerHTML;
+    btn.disabled    = true;
+    btn.innerHTML   = `<span class="spinner-border spinner-border-sm me-2"></span> Lädt...`;
+
+    try {
+        const res = await fetch('/tablar/return', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+            body: JSON.stringify({ material_id: selectedMaterial.id, quantity: amountReturned })
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+
+        const m = allMaterials.find(x => x.id === selectedMaterial.id);
+        if (m) m.quantity = data.new_quantity;
+
+        filterMaterials();
+        bootstrap.Modal.getInstance(document.getElementById('materialModal')).hide();
+
+        if (!document.getElementById('nameStep').classList.contains('d-none')) {
+            filterByName();
+        }
+
+    } catch (e) {
+        alert('Fehler beim Einlagern: ' + e.message);
+    } finally {
+        btn.disabled  = false;
+        btn.innerHTML = originalContent;
+    }
+}
+
+// ─── ORDER TRIGGER PLUG ───────────────────────────────────────────────────────
+
+async function triggerOrder(materialId) {
+    try{
+        const res = await fetch(`/tablar/order-request/${materialId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token }
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+
+        const m = allMaterials.find(x => x.id === materialId);
+        if (m) m.order_status = data.order_status;
+
+        filterMaterials();
+        
+        alert('Admin hat Bestellung request gestellt. Bitte warten Sie auf Bestätigung.');
+
+    } catch (e) {
+        alert('Fehler beim mitteillen Admin: ' + e.message);
     }
 }
 
@@ -221,32 +326,40 @@ function filterByName() {
             : m.quantity > threshold ? 'bg-success' : 'bg-danger';
         const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';
 
-        // Show shelf as a hint — critical for misplaced materials
         const shelfHint = m.shelf
             ? `<span class="text-muted small ms-2"><i class="bi bi-geo-alt me-1"></i>${m.shelf}</span>`
             : '';
 
+        const imageTemplate = generateImageHtml(m.image, m.name);
+        const orderTemplate = generateOrderHtml(m);
+
         if (outOfStock) {
             return `
-            <div class="d-flex justify-content-between align-items-center
-                        p-3 mb-2 rounded border bg-light text-muted"
+            <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border bg-light text-muted"
                 style="cursor: not-allowed;"
                 onclick="Swal.fire('Nicht verfügbar', 'Bitte warten Sie auf Nachschub.', 'info')">
-                <div>
-                    <span class="text-decoration-line-through">${m.name}</span>
-                    ${shelfHint}
+                <div class="d-flex align-items-center">
+                    ${imageTemplate}
+                    <div>
+                        <span class="text-decoration-line-through fw-semibold">${m.name}</span>
+                        ${shelfHint}
+                        <div class="mt-1">${orderTemplate}</div>
+                    </div>
                 </div>
                 <span class="badge ${badgeClass}">${badgeText}</span>
             </div>`;
         }
 
         return `
-        <div class="d-flex justify-content-between align-items-center
-                    p-3 mb-2 rounded border material-item"
+        <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border material-item"
                 onclick="openMaterialModal(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf ?? ''}')">
-            <div>
-                <span class="fw-semibold">${m.name}</span>
-                ${shelfHint}
+            <div class="d-flex align-items-center">
+                ${imageTemplate}
+                <div>
+                    <span class="fw-semibold">${m.name}</span>
+                    ${shelfHint}
+                    <div class="mt-1">${orderTemplate}</div>
+                </div>
             </div>
             <span class="badge ${badgeClass} fs-6">${badgeText}</span>
         </div>`;
@@ -254,9 +367,6 @@ function filterByName() {
 }
 
 // ─── EXPOSE FUNCTIONS CALLED FROM HTML ATTRIBUTES ────────────────────────────
-// Vite bundles JS as a module — onclick="fn()" in HTML can't see module-scoped
-// functions unless they're explicitly attached to window.
-
 window.filterShelves       = filterShelves;
 window.selectShelf         = selectShelf;
 window.goBackToShelves     = goBackToShelves;
@@ -266,5 +376,7 @@ window.validateManualInput = validateManualInput;
 window.increase            = increase;
 window.decrease            = decrease;
 window.confirmConsumption  = confirmConsumption;
+window.confirmReturn       = confirmReturn;
+window.triggerOrder        = triggerOrder;
 window.switchMode          = switchMode;
 window.filterByName        = filterByName;

@@ -5,13 +5,11 @@
 @section('content')
 <div class="container py-4" style="max-width: 720px;">
 
-    <!-- HEADER -->
     <div class="text-center mb-4">
         <h1 class="fw-bold fs-2">🏭 Hochregal - Materialerfassung</h1>
         <p class="text-muted mb-0">Tablar wählen, oder Name suchen</p>
     </div>
 
-    <!-- MODE TABS -->
     <ul class="nav nav-pills nav-fill mb-4" id="searchModeTabs">
         <li class="nav-item">
             <button class="nav-link active" id="tabShelf" onclick="switchMode('shelf')">
@@ -25,7 +23,6 @@
         </li>
     </ul>
 
-    <!-- STEP 1: SHELF SELECTOR -->
     <div id="shelfStep">
         <p class="text-muted small text-uppercase fw-semibold mb-2 ms-1">Tablar wählen</p>
         <input
@@ -49,7 +46,6 @@
         </div>
     </div>
 
-    <!-- NAME SEARCH (hidden by default) -->
     <div id="nameStep" class="d-none">
         <p class="text-muted small text-uppercase fw-semibold mb-2 ms-1">Nach Materialname suchen</p>
         <input
@@ -64,10 +60,8 @@
     </div>
 
 
-    <!-- STEP 2: MATERIAL LIST (hidden until shelf selected) -->
     <div id="materialStep" class="d-none">
 
-        <!-- Back button + current shelf label -->
         <div class="d-flex align-items-center mb-3">
             <button class="btn btn-sm btn-outline-secondary me-3" onclick="goBackToShelves()">
                 ← Zurück
@@ -78,7 +72,6 @@
             </div>
         </div>
 
-        <!-- Search within shelf -->
         <input
             type="text"
             id="materialSearch"
@@ -88,14 +81,12 @@
             autofocus
         >
 
-        <!-- Material list -->
         <div id="materialList"></div>
 
     </div>
 
 </div>
 
-<!-- CONSUMPTION MODAL -->
 <div class="modal fade" id="materialModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content text-center p-4">
@@ -106,7 +97,6 @@
                 Verfügbar: <strong id="modalAvailable"></strong> Stk.
             </p>
 
-            <!-- COUNTER -->
             <div class="d-flex justify-content-center align-items-center mb-4">
                 <button class="btn btn-lg btn-outline-danger px-4" onclick="decrease()">−</button>
                 <input
@@ -121,9 +111,18 @@
                 <button class="btn btn-lg btn-outline-success px-4" onclick="increase()">+</button>
             </div>
 
-            <button class="btn btn-primary btn-lg w-100" onclick="confirmConsumption()">
-                ✅ Material entnommen
-            </button>
+            <div class="row g-2">
+                <div class="col-6">
+                    <button class="btn btn-danger btn-lg w-100" onclick="confirmReturn()">
+                        📥 Einlagern
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-primary btn-lg w-100" onclick="confirmConsumption()">
+                        ✅ Entnehmen
+                    </button>
+                </div>
+            </div>
 
             <button class="btn btn-link text-muted mt-2" data-bs-dismiss="modal">Abbrechen</button>
 
@@ -131,21 +130,59 @@
     </div>
 </div>
 
+<div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark text-white text-center p-2 position-relative">
+            <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="p-3">
+                <img id="lightboxImage" src="" alt="Maximized view" class="img-fluid rounded" style="max-height: 80vh; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     window.tablarData = {
-        flatList: @json($flatList)
+        flatList: @json($flatList),
+        storagePath: "{{ asset('storage/') }}",
+        statusTranslations: @json($statusTranslations),
     };
+
+    // Helper JavaScript function to open up the lightbox modal
+    function maximizeImage(event, src) {
+        event.stopPropagation(); // Prevents opening the material consumption modal when clicking the image
+        document.getElementById('lightboxImage').src = src;
+        const lightbox = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+        lightbox.show();
+    }
+
+    function maximizeImage(event, src) {
+        event.stopPropagation();
+        document.getElementById('lightboxImage').src = src;
+        const lightbox = new bootstrap.Modal(document.getElementById('imageLightboxModal'));
+        lightbox.show();
+    }
 </script>
 
 <script src="{{ asset('js/user/tablar/index.js') }}"></script>
 
 <style>
+.material-item-container {
+    max-height: 60px;
+}
 .material-item {
     cursor: pointer;
     transition: background-color 0.15s;
 }
 .material-item:hover {
     background-color: #f0f4ff;
+}
+.img-thumbnail-clickable {
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+.img-thumbnail-clickable:hover {
+    transform: scale(1.05);
 }
 </style>
 

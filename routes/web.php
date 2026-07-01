@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\SupplierProjectController;
 use App\Http\Controllers\Admin\TablarController as AdminTablarController;
 use App\Http\Controllers\Admin\TimeController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AdminLagerController;
 use App\Http\Controllers\FeedbackController as PublicFeedbackController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LanguageController;
@@ -121,6 +122,8 @@ Route::prefix('time-records')->name('time-records.')->group(function () {
 
 Route::get('/tablar', [TablarController::class, 'index'])->name('tablar.index');
 Route::post('/tablar/consume', [TablarController::class, 'consume'])->name('tablar.consume');
+Route::post('/tablar/return', [TablarController::class, 'return'])->name('tablar.return');
+Route::post('/tablar/order-request/{materialId}', [TablarController::class, 'orderRequest'])->name('tablar.order-request');
 
 // Language routes
 Route::get('/language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
@@ -286,6 +289,14 @@ Route::middleware(['auth', 'role:admin'])
             Route::get('/tablar/{id}/suppliers', [AdminTablarController::class, 'getSuppliers'])->name('tablar.suppliers');
             Route::post('/tablar/{material}/suppliers', [AdminTablarController::class, 'attach'])->name('tablar.suppliers.attach');
             Route::delete('/tablar/{material}/suppliers/{supplier}', [AdminTablarController::class, 'detach'])->name('tablar.suppliers.detach');
+
+            Route::get('/lager', [AdminLagerController::class, 'lager'])->name('lager.index');
+            Route::post('/lager', [AdminLagerController::class, 'storeLager'])->name('lager.store');
+            Route::get('/lager/create', [AdminLagerController::class, 'createLager'])->name('lager.create');
+            Route::get('/lager/{id}/edit', [AdminLagerController::class, 'editLager'])->name('lager.edit');
+            Route::put('/lager/{id}', [AdminLagerController::class, 'updateLager'])->name('lager.update');
+            Route::get('/lager/{id}', [AdminLagerController::class, 'showLager'])->name('lager.show');
+            Route::delete('/lager/{id}', [AdminLagerController::class, 'destroyLager'])->name('lager.destroy');
         }
 
         if (config('modules.settings')) {

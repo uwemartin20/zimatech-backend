@@ -133,8 +133,20 @@
     {{-- Tablar-übersicht --}}
     @if(config('modules.tablar'))
         @php
+            $lagerActive = request()->is('admin/lager*');
             $tablarActive = request()->is('admin/tablar*');
         @endphp
+        <a data-bs-toggle="collapse" href="#lagerSubmenu" role="button"
+        aria-expanded="{{ $lagerActive ? 'true' : 'false' }}"
+        aria-controls="lagerSubmenu"
+        class="{{ $lagerActive ? 'active' : '' }}">
+            <i class="bi bi-boxes me-2"></i> Lager Management
+        </a>
+        <div class="collapse submenu {{ $lagerActive ? 'show' : '' }}" id="lagerSubmenu">
+            <a href="{{ route('admin.lager.index') }}" class="{{ request()->is('admin/lager') ? 'active' : '' }}">Lager Übersicht</a>
+        </div>
+
+        
         <a data-bs-toggle="collapse" href="#tablarSubmenu" role="button"
         aria-expanded="{{ $tablarActive ? 'true' : 'false' }}"
         aria-controls="tablarSubmenu"

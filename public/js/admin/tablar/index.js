@@ -15,6 +15,8 @@ function openAddModal() {
 
     document.getElementById('modalTitle').innerText = "Neues Material";
     document.getElementById('materialForm').reset();
+    document.getElementById('imagePreview').classList.add('d-none');
+    document.getElementById('isActive').checked = true;
 
     new bootstrap.Modal(document.getElementById('materialModal')).show();
 }
@@ -34,6 +36,18 @@ function openEditModal(button) {
     document.getElementById('tablar').value            = row.getAttribute('data-tablar') ?? '';
     document.getElementById('threshold').value         = row.getAttribute('data-threshold') ?? '';
     document.getElementById('type').value              = row.getAttribute('data-type') ?? '';
+    document.getElementById('orderStatus').value        = row.getAttribute('data-order-status') ?? '';
+    document.getElementById('isWerkzeug').checked       = row.getAttribute('data-is-werkzeug') === '1';
+    document.getElementById('isActive').checked         = row.getAttribute('data-is-active') === '1';
+
+    const img = row.getAttribute('data-image');
+    const preview = document.getElementById('imagePreview');
+    if (img) {
+        preview.src = img;
+        preview.classList.remove('d-none');
+    } else {
+        preview.classList.add('d-none');
+    }
 
     new bootstrap.Modal(document.getElementById('materialModal')).show();
 }
@@ -46,16 +60,9 @@ async function saveMaterial() {
 
     const addQty     = parseInt(document.getElementById('addQuantity')?.value || 0);
     const currentQty = parseInt(document.getElementById('currentQuantity')?.value || 0);
+    const name       = document.getElementById('name').value;
 
-    const data = {
-        name:      document.getElementById('name').value,
-        quantity:  editMode ? (currentQty + addQty) : addQty,
-        tablar:    document.getElementById('tablar').value,
-        threshold: document.getElementById('threshold').value || null,
-        type:      document.getElementById('type').value || null
-    };
-
-    if (!data.name) {
+    if (!name) {
         showAlert("Bitte alle Felder korrekt ausfüllen");
         return;
     }
@@ -65,17 +72,35 @@ async function saveMaterial() {
         return;
     }
 
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('quantity', editMode ? (currentQty + addQty) : addQty);
+    formData.append('tablar', document.getElementById('tablar').value);
+    formData.append('threshold', document.getElementById('threshold').value || '');
+    formData.append('type', document.getElementById('type').value || '');
+    formData.append('order_status', document.getElementById('orderStatus').value || '');
+    formData.append('is_werkzeug', document.getElementById('isWerkzeug').checked ? '1' : '0');
+    formData.append('is_active', document.getElementById('isActive').checked ? '1' : '0');
+
+    const imageFile = document.getElementById('image').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
+    if (editMode) {
+        formData.append('_method', 'PUT');
+    }
+
     btn.disabled  = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Speichern...`;
 
-    const url    = editMode ? `/admin/tablar/${currentId}` : '/admin/tablar';
-    const method = editMode ? 'PUT' : 'POST';
+    const url = editMode ? `/admin/tablar/${currentId}` : '/admin/tablar';
 
     try {
         const res = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
-            body: JSON.stringify(data)
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': token },
+            body: formData
         });
 
         if (!res.ok) throw new Error();
@@ -106,6 +131,14 @@ async function deleteMaterial(id) {
 
     } catch {
         alert("Fehler beim Löschen");
+    }
+}
+
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    if (input.files && input.files[0]) {
+        preview.src = URL.createObjectURL(input.files[0]);
+        preview.classList.remove('d-none');
     }
 }
 
@@ -299,6 +332,7 @@ async function loadAttachedSuppliers() {
             <div>
                 <span class="fw-semibold">${s.name}</span>
                 ${s.company     ? `<span class="text-muted ms-2 small">${s.company}</span>` : ''}
+                ${s.is_current  ? `<span class="badge bg-success ms-2"><i class="bi bi-star-fill me-1"></i>Aktueller Lieferant</span>` : ''}
                 <div class="text-muted small mt-1">
                     ${s.email        ? `<i class="bi bi-envelope me-1"></i>${s.email}` : ''}
                     ${s.phone_number ? `<span class="ms-3"><i class="bi bi-telephone me-1"></i>${s.phone_number}</span>` : ''}
