@@ -10,11 +10,12 @@ use App\Models\Lager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use function Psy\debug;
 
 class TablarController extends Controller
 {
-    public $leger_id;
+    public $lager_id;
 
     public function __construct()
     {
@@ -28,6 +29,10 @@ class TablarController extends Controller
             $query->where('name', 'like', '%'.$request->name.'%');
         }
 
+        if ($request->filled('code')) {
+            $query->where('code', 'like', '%'.$request->code.'%');
+        }
+
         if ($request->filled('shelf')) {
             $query->where('tablar', 'like', '%'.$request->shelf.'%');
         }
@@ -36,9 +41,11 @@ class TablarController extends Controller
             $query->where('quantity', '<=', $request->max_qty);
         }
 
-        $materials = $query->paginate(5)->withQueryString();
+        $materials = $query->paginate(30)->withQueryString();
 
         $maxQuantity = Material::max('quantity') ?? 0;
+
+        $lager = Lager::find($this->lager_id);
 
         // German translation dictionary for database statuses
         $statusTranslations = [
@@ -48,13 +55,15 @@ class TablarController extends Controller
             'delivered' => 'Geliefert',
         ];
 
-        return view('admin.tablar.index', compact('materials', 'maxQuantity', 'statusTranslations'));
+        return view('admin.tablar.index', compact('materials', 'maxQuantity', 'statusTranslations', 'lager'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => ['nullable', 'string', 'max:64', Rule::unique('materials', 'code')->whereNotNull('code')],
+            'description' => 'nullable|string|max:2000',
             'quantity' => 'required|integer|min:0',
             'tablar' => 'nullable|string|max:50',
             'threshold' => 'nullable|integer|min:0',
@@ -84,6 +93,8 @@ class TablarController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => ['nullable', 'string', 'max:64', Rule::unique('materials', 'code')->ignore($material->id)->whereNotNull('code')],
+            'description' => 'nullable|string|max:2000',
             'quantity' => 'required|integer|min:0',
             'tablar' => 'nullable|string|max:50',
             'threshold' => 'nullable|integer|min:0',
@@ -157,7 +168,9 @@ class TablarController extends Controller
         $totalMaterials = Material::where('lager_id', $this->lager_id)->count();
 
         $lowStockMaterials = Material::where('lager_id', $this->lager_id)
-            ->whereColumn('quantity', '<=', DB::raw('COALESCE(threshold, 20)'))
+            ->whereNotNull('threshold')
+            ->where('threshold', '>', 0)
+            ->whereColumn('quantity', '<=', 'threshold')
             ->orderBy('quantity')
             ->get();
 
@@ -233,6 +246,8 @@ class TablarController extends Controller
         // RETURN VIEW
         // =========================
 
+        $lager = Lager::find($this->lager_id);
+
         return view('admin.tablar.overview', compact(
             'totalMaterials',
             'lowStockMaterials',
@@ -241,7 +256,8 @@ class TablarController extends Controller
             'topUsed10Days',
             'topUsed30Days',
             'recentLogs',
-            'shelfActivity'
+            'shelfActivity',
+            'lager'
         ));
     }
 }

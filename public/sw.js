@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zimatech-pwa-cache-v1';
+const CACHE_NAME = 'zimatech-pwa-cache-v2';
 const OFFLINE_URL = '/offline.html';
 
 const ASSETS_TO_CACHE = [
@@ -44,62 +44,40 @@ self.addEventListener('activate', event => {
 
 // Fetch Event: Implement caching strategies
 self.addEventListener('fetch', event => {
-    // Only handle GET requests originating from our domain
     if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
         return;
     }
 
     const url = new URL(event.request.url);
 
-    // Cache-First strategy for static assets
+    // ✅ Cache-first ONLY for static assets
     if (
         url.pathname.match(/\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|otf|eot)$/) ||
         url.pathname.includes('/bootstrap/')
     ) {
         event.respondWith(
             caches.match(event.request).then(cachedResponse => {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
+                if (cachedResponse) return cachedResponse;
                 return fetch(event.request).then(networkResponse => {
                     if (networkResponse && networkResponse.status === 200) {
                         const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
                     }
                     return networkResponse;
-                }).catch(() => {
-                    // Fail silently for non-essential static files
-                });
+                }).catch(() => {});
             })
         );
-    } else {
-        // Network-First strategy for HTML and web pages/routes
-        event.respondWith(
-            fetch(event.request)
-                .then(networkResponse => {
-                    // Cache the successful fresh page load
-                    if (networkResponse && networkResponse.status === 200) {
-                        const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then(cache => {
-                            cache.put(event.request, responseToCache);
-                        });
-                    }
-                    return networkResponse;
-                })
-                .catch(() => {
-                    // Try to fall back to cached version
-                    return caches.match(event.request).then(cachedResponse => {
-                        if (cachedResponse) {
-                            return cachedResponse;
-                        }
-                        // If navigating and offline, return the fallback page
-                        if (event.request.mode === 'navigate') {
-                            return caches.match(OFFLINE_URL);
-                        }
-                    });
-                })
-        );
+        return;
     }
+
+    // 🔥 HTML pages — NEVER cache, always network, fallback to offline page only
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+        );
+        return;
+    }
+
+    // Everything else — network only, no caching
+    event.respondWith(fetch(event.request));
 });

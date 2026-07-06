@@ -27,6 +27,7 @@
                     <div>
                         <span class="text-danger small fw-bold text-uppercase d-block mb-1">Geringer Bestand</span>
                         <h3 class="fw-bold mb-0 text-danger">{{ $lowStockMaterials->count() }}</h3>
+                        <small class="text-muted">Materialien ohne Mindestbestand werden nicht als kritisch gewertet.</small>
                     </div>
                 </div>
             </div>
@@ -91,7 +92,7 @@
                                         {{ $m->quantity }} Stk.
                                     </span>
                                 </td>
-                                <td class="text-center text-muted fw-semibold">{{ $m->threshold ?? 20 }} Stk.</td>
+                                <td class="text-center text-muted fw-semibold">{{ $m->threshold }} Stk.</td>
                                 <td class="pe-4">
                                     <div class="d-flex align-items-center justify-content-end gap-2">
                                         <div class="progress w-100" style="height: 6px;">

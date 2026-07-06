@@ -343,7 +343,7 @@ class ProjectOfferController extends Controller
     public function emailTemplates(ProjectOffer $offer)
     {
         // Get all active email templates with type 'project_offers'
-        $templates = \App\Models\EmailTemplate::where('template_type', 'project_offers')
+        $templates = EmailTemplate::where('template_type', 'project_offers')
             ->where('active', true)
             ->get();
 

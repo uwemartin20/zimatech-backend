@@ -8,6 +8,8 @@ class Material extends Model
 {
     protected $fillable = [
         'name',
+        'code',
+        'description',
         'quantity',
         'tablar',
         'threshold',
@@ -32,7 +34,7 @@ class Material extends Model
 
     public function getStatusAttribute()
     {
-        if (is_null($this->threshold)) {
+        if (is_null($this->threshold) || (int) $this->threshold <= 0) {
             return 'ok';
         }
 

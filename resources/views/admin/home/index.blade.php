@@ -160,7 +160,7 @@
                     <div class="card-header">
                         <h5 class="mb-0">Aktuelle Projekte</h5>
                     </div>
-                    <div class="card-body table-responsive">
+                    <div class="card-body table-responsive-wrapper">
                         <table class="table table-hover align-middle mb-0">
                             <thead>
                                 <tr>

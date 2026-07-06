@@ -84,76 +84,78 @@
                     </div>
                 </div>
             </form>
-            <table class="table table-striped align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Angebotsnr.</th>
-                        <th>Lieferant</th>
-                        <th>Bauteil</th>
-                        <th>Liefer.  Projekt</th>
-                        <th>Datum</th>
-                        <th>Leistung</th>
-                        <th>Preis (€)</th>
-                        <th>Dauer (Tage)</th>
-                        <th>Stück</th>
-                        <th class="text-end">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($offers as $offer)
+            <div class="table-responsive-wrapper">
+                <table class="table table-striped align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>{{ $offer->offer_number }}</td>
-                            <td>
-                                <a href="{{ route('admin.suppliers.show', $offer->supplier->id) }}" class="h6 text-decoration-none text-dark">
-                                    {{ $offer->supplier->name }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ route('admin.bauteile.show', $offer->bauteil->id) }}" class="h6 text-decoration-none text-dark">
-                                    {{ $offer->bauteil->name ?? '-' }}
-                                </a>
-                            </td>
-                            <td>
-                                @if($offer->project)
-                                    <a href="{{ route('admin.projects.projects.show', $offer->project->id) }}" class="h6 text-decoration-none text-dark">
-                                        {{ $offer->project->name }}
-                                    </a>
-                                @else
-                                    Kein
-                                @endif
-                            </td>
-                            <td>{{ \Carbon\Carbon::parse($offer->date)->format('d.m.Y') }}</td>
-                            <td>
-                                @if($offer->service)
-                                    <span class="badge" style="background-color: {{ $offer->service->color }};">{{ $offer->service->name }}</span>
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td>{{ number_format($offer->price, 2, ',', '.') }}</td>
-                            <td>{{ $offer->duration ?? '-' }}</td>
-                            <td>{{ $offer->pieces_to_develop ?? '-' }}</td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.projects.offers.show', $offer->id) }}" class="btn btn-sm btn-outline-secondary" title="Ansehen">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.projects.offers.edit', $offer->id) }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form action="{{ route('admin.projects.offers.destroy', $offer->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Dieses Angebot löschen?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
+                            <th>Angebotsnr.</th>
+                            <th>Lieferant</th>
+                            <th>Bauteil</th>
+                            <th>Liefer.  Projekt</th>
+                            <th>Datum</th>
+                            <th>Leistung</th>
+                            <th>Preis (€)</th>
+                            <th>Dauer (Tage)</th>
+                            <th>Stück</th>
+                            <th class="text-end">Aktionen</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="10" class="text-center text-muted">Keine Angebote gefunden.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($offers as $offer)
+                            <tr>
+                                <td>{{ $offer->offer_number }}</td>
+                                <td>
+                                    <a href="{{ route('admin.suppliers.show', $offer->supplier->id) }}" class="h6 text-decoration-none text-dark">
+                                        {{ $offer->supplier->name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.bauteile.show', $offer->bauteil->id) }}" class="h6 text-decoration-none text-dark">
+                                        {{ $offer->bauteil->name ?? '-' }}
+                                    </a>
+                                </td>
+                                <td>
+                                    @if($offer->project)
+                                        <a href="{{ route('admin.projects.projects.show', $offer->project->id) }}" class="h6 text-decoration-none text-dark">
+                                            {{ $offer->project->name }}
+                                        </a>
+                                    @else
+                                        Kein
+                                    @endif
+                                </td>
+                                <td>{{ \Carbon\Carbon::parse($offer->date)->format('d.m.Y') }}</td>
+                                <td>
+                                    @if($offer->service)
+                                        <span class="badge" style="background-color: {{ $offer->service->color }};">{{ $offer->service->name }}</span>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>{{ number_format($offer->price, 2, ',', '.') }}</td>
+                                <td>{{ $offer->duration ?? '-' }}</td>
+                                <td>{{ $offer->pieces_to_develop ?? '-' }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.projects.offers.show', $offer->id) }}" class="btn btn-sm btn-outline-secondary" title="Ansehen">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.projects.offers.edit', $offer->id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ route('admin.projects.offers.destroy', $offer->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Dieses Angebot löschen?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="10" class="text-center text-muted">Keine Angebote gefunden.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
             <div class="mt-3">
                 {{ $offers->links() }}

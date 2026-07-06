@@ -52,7 +52,7 @@
                 @if($projects->isEmpty())
                     <p class="text-muted text-center mb-0">Keine projekte gefunden.</p>
                 @else
-                    <div class="table-responsive">
+                    <div class="table-responsive-wrapper">
                         <table class="table table-striped align-middle">
                             <thead class="table-dark">
                                 <tr>

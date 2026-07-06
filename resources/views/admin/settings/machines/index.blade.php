@@ -13,50 +13,52 @@
         </div>
 
         <div class="card-body">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Active</th>
-                        <th>Company</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($machines as $machine)
+            <div class="table-responsive-wrapper">
+                <table class="table table-hover align-middle">
+                    <thead>
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $machine->name }}</td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input type="checkbox"
-                                           class="form-check-input toggle-active"
-                                           data-id="{{ $machine->id }}"
-                                           {{ $machine->active ? 'checked' : '' }}>
-                                </div>
-                            </td>
-                            <td>{{ $machine->company }}</td>
-                            <td>
-                                <a href="{{ route('admin.settings.machines.show', $machine->id) }}"
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-
-                                <form action="{{ route('admin.settings.machines.delete', $machine->id) }}"
-                                      method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger"
-                                            onclick="return confirm('Delete this machine?')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Active</th>
+                            <th>Company</th>
+                            <th>Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($machines as $machine)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $machine->name }}</td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox"
+                                            class="form-check-input toggle-active"
+                                            data-id="{{ $machine->id }}"
+                                            {{ $machine->active ? 'checked' : '' }}>
+                                    </div>
+                                </td>
+                                <td>{{ $machine->company }}</td>
+                                <td>
+                                    <a href="{{ route('admin.settings.machines.show', $machine->id) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+
+                                    <form action="{{ route('admin.settings.machines.delete', $machine->id) }}"
+                                        method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Delete this machine?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

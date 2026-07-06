@@ -7,6 +7,72 @@ let selectedSupplierId = null;
 let searchTimeout = null;
 let filterTimeout = null;
 
+// ─── CAMERA ──────────────────────────────────────────────────────────────────
+
+let cameraStream   = null;
+let cameraModalInst = null;
+
+async function openCamera() {
+    cameraModalInst = new bootstrap.Modal(document.getElementById('cameraModal'));
+    cameraModalInst.show();
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }   // rear cam on mobile
+        });
+        document.getElementById('cameraStream').srcObject = cameraStream;
+    } catch (err) {
+        closeCamera();
+        showAlert("Kamera konnte nicht geöffnet werden. Bitte Berechtigung prüfen.");
+    }
+}
+
+function closeCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+    }
+    cameraModalInst?.hide();
+}
+
+function capturePhoto() {
+    const video  = document.getElementById('cameraStream');
+    const canvas = document.getElementById('cameraCanvas');
+
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+    // Show preview
+    const preview = document.getElementById('imagePreview');
+    preview.src = dataUrl;
+    preview.classList.remove('d-none');
+
+    // Store base64 for upload; clear file input so it doesn't override
+    document.getElementById('imageCaptured').value = dataUrl;
+    document.getElementById('image').value = '';
+
+    closeCamera();
+}
+
+// ─── FILE INPUT PREVIEW (existing — keep as-is) ──────────────────────────────
+
+function previewImage(input) {
+    if (!input.files?.length) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const preview = document.getElementById('imagePreview');
+        preview.src = e.target.result;
+        preview.classList.remove('d-none');
+    };
+    reader.readAsDataURL(input.files[0]);
+
+    // Clear any previously captured camera image
+    document.getElementById('imageCaptured').value = '';
+}
+
 // ─── OPEN ADD MODAL ───────────────────────────────────────────────────────────
 
 function openAddModal() {
@@ -31,6 +97,8 @@ function openEditModal(button) {
 
     document.getElementById('modalTitle').innerText    = "Material bearbeiten";
     document.getElementById('name').value              = row.getAttribute('data-name');
+    document.getElementById('code').value              = row.getAttribute('data-code') ?? '';
+    document.getElementById('description').value      = row.getAttribute('data-description') ?? '';
     document.getElementById('currentQuantity').value   = row.getAttribute('data-quantity');
     document.getElementById('addQuantity').value       = 0;
     document.getElementById('tablar').value            = row.getAttribute('data-tablar') ?? '';
@@ -74,6 +142,8 @@ async function saveMaterial() {
 
     const formData = new FormData();
     formData.append('name', name);
+    formData.append('code', document.getElementById('code').value || '');
+    formData.append('description', document.getElementById('description').value || '');
     formData.append('quantity', editMode ? (currentQty + addQty) : addQty);
     formData.append('tablar', document.getElementById('tablar').value);
     formData.append('threshold', document.getElementById('threshold').value || '');
@@ -83,8 +153,16 @@ async function saveMaterial() {
     formData.append('is_active', document.getElementById('isActive').checked ? '1' : '0');
 
     const imageFile = document.getElementById('image').files[0];
+    const imageCaptured = document.getElementById('imageCaptured').value;
+
     if (imageFile) {
+        // Normal file-picker upload
         formData.append('image', imageFile);
+
+    } else if (imageCaptured) {
+        // Camera capture — convert base64 → Blob → File
+        const blob = await (await fetch(imageCaptured)).blob();
+        formData.append('image', new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
     }
 
     if (editMode) {
@@ -197,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── FILTERS ──────────────────────────────────────────────────────────────
 
     const filterName     = document.getElementById('filterName');
+    const filterCode     = document.getElementById('filterCode');
     const filterQuantity = document.getElementById('filterQuantity');
     const filterShelf    = document.getElementById('filterShelf');
     const qtyValue       = document.getElementById('qtyValue');
@@ -215,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterTimeout = setTimeout(() => filterForm.submit(), 1500);
     }
 
-    [filterName, filterShelf].forEach(input => {
+    [filterName, filterCode, filterShelf].forEach(input => {
         input.addEventListener('input', debounceSubmit);
 
         input.addEventListener('keydown', (e) => {

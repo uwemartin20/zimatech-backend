@@ -11,39 +11,41 @@
         </div>
 
         <div class="card-body">
-            <table class="table table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Sender</th>
-                        <th>Empfänger</th>
-                        <th>Betreff</th>
-                        <th>Body</th>
-                        <th>Anhänge</th>
-                        <th>Datum</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($emails as $email)
+            <div class="table-responsive-wrapper">
+                <table class="table table-striped">
+                    <thead class="table-dark">
                         <tr>
-                            <td>{{ $email['sender'] }}</td>
-                            <td>{{ $email['recipient'] }}</td>
-                            <td>
-                                <a href="{{ route('admin.emails.show', ['id' => $email['id']]) }}">
-                                    {{ $email['subject'] }}
-                                </a>
-                            </td>
-                            <td>{!! Str::limit(strip_tags($email['body']), 100) !!}</td>
-                            <td>{{ $email['attachments'] }}</td>
-                            <td>{{ $email['date'] }}</td>
+                            <th>Sender</th>
+                            <th>Empfänger</th>
+                            <th>Betreff</th>
+                            <th>Body</th>
+                            <th>Anhänge</th>
+                            <th>Datum</th>
                         </tr>
-                    @endforeach
-                    @if($emails->isEmpty())
-                        <tr>
-                            <td colspan="6" class="text-center">Keine E-Mails gefunden</td>
-                        </tr>
-                    @endif
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($emails as $email)
+                            <tr>
+                                <td>{{ $email['sender'] }}</td>
+                                <td>{{ $email['recipient'] }}</td>
+                                <td>
+                                    <a href="{{ route('admin.emails.show', ['id' => $email['id']]) }}">
+                                        {{ $email['subject'] }}
+                                    </a>
+                                </td>
+                                <td>{!! Str::limit(strip_tags($email['body']), 100) !!}</td>
+                                <td>{{ $email['attachments'] }}</td>
+                                <td>{{ $email['date'] }}</td>
+                            </tr>
+                        @endforeach
+                        @if($emails->isEmpty())
+                            <tr>
+                                <td colspan="6" class="text-center">Keine E-Mails gefunden</td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

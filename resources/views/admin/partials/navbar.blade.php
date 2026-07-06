@@ -1,9 +1,14 @@
 <nav class="navbar navbar-expand-lg navbar-light border-bottom shadow-sm px-3">
     <div class="container-fluid">
+
+        {{-- 🍔 Hamburger (mobile only) --}}
+        <button class="btn btn-light d-lg-none me-2" id="sidebarToggle" type="button">
+            <i class="bi bi-list fs-5"></i>
+        </button>
         {{-- Left Side --}}
 
-        {{-- 🔍 Search Bar --}}
-        <form class="d-flex justify-content-center w-100 position-relative" role="search" method="GET" action="{{ route('admin.search') }}">
+        {{-- 🔍 Search Bar (desktop) --}}
+        <form class="d-none d-lg-flex justify-content-center w-100 position-relative" role="search" method="GET" action="{{ route('admin.search') }}" id="desktopSearchForm">
             <div class="input-group" style="max-width: 600px; width: 100%;">
                 <input type="search" name="keyword" class="form-control form-control-sm rounded-start-pill bg-light border-0 ps-3"
                     placeholder="Search..." aria-label="Search">
@@ -13,8 +18,29 @@
             </div>
         </form>
 
+        {{-- 🔍 Mobile Search Toggle Button --}}
+        <button class="btn btn-light d-lg-none ms-auto" id="mobileSearchToggle" type="button">
+            <i class="bi bi-search fs-5"></i>
+        </button>
+
+        {{-- 🔍 Mobile Search Expandable Bar --}}
+        <div class="mobile-search-overlay d-lg-none" id="mobileSearchOverlay">
+            <form class="d-flex w-100" role="search" method="GET" action="{{ route('admin.search') }}">
+                <button type="button" class="btn btn-light me-2 flex-shrink-0" id="mobileSearchClose">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+                <div class="input-group">
+                    <input type="search" name="keyword" class="form-control form-control-sm bg-light border-0 ps-3"
+                        placeholder="Search..." aria-label="Search" id="mobileSearchInput">
+                    <button class="btn btn-top-search px-3" type="submit" style="border: none;">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Right side -->
-        <div class="d-flex align-items-center ms-auto gap-3">
+        <div class="d-flex align-items-center ms-auto gap-2 gap-lg-3">
 
             <!-- 🔔 Notifications -->
             <div class="dropdown">
@@ -36,7 +62,7 @@
                             <div class="dropdown-item notification-item d-flex justify-content-between align-items-start {{ $note->is_read ? '' : 'fw-semibold' }}"
                                 data-id="{{ $note->id }}"
                                 data-url="{{ $note->url }}">
-                       
+                    
                                 <!-- LEFT CONTENT (clickable) -->
                                 <div style="flex: 1; cursor: pointer;"
                                         onclick="handleNotificationClick(this)"
@@ -110,7 +136,7 @@
             <div class="dropdown">
                 <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle user-menu" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
-                    <span class="fw-semibold username-text">{{ Auth::user()->name ?? 'Admin' }}</span>
+                    <span class="fw-semibold username-text d-none d-lg-inline">{{ Auth::user()->name ?? 'Admin' }}</span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                     <li><a class="dropdown-item" href="{{ route('admin.profile') }}">Profil verwalten</a></li>

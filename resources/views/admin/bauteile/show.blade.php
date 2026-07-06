@@ -99,15 +99,17 @@
 
             <h6 class="fw-semibold mb-3 text-secondary">Maße</h6>
             @if ($bauteil->measurement)
-                <table class="table table-bordered">
-                    <tr><th>Höhe</th><td>{{ $bauteil->measurement->height ?? '—' }}</td></tr>
-                    <tr><th>Breite</th><td>{{ $bauteil->measurement->width ?? '—' }}</td></tr>
-                    <tr><th>Tiefe</th><td>{{ $bauteil->measurement->depth ?? '—' }}</td></tr>
-                    <tr><th>Dicke</th><td>{{ $bauteil->measurement->thickness ?? '—' }}</td></tr>
-                    <tr><th>Radius</th><td>{{ $bauteil->measurement->radius ?? '—' }}</td></tr>
-                    <tr><th>Gewicht</th><td>{{ $bauteil->measurement->weight ?? '—' }}</td></tr>
-                    <tr><th>Einheit</th><td>{{ $bauteil->measurement->unit ?? '—' }}</td></tr>
-                </table>
+                <div class="table-responsive-wrapper">
+                    <table class="table table-bordered">
+                        <tr><th>Höhe</th><td>{{ $bauteil->measurement->height ?? '—' }}</td></tr>
+                        <tr><th>Breite</th><td>{{ $bauteil->measurement->width ?? '—' }}</td></tr>
+                        <tr><th>Tiefe</th><td>{{ $bauteil->measurement->depth ?? '—' }}</td></tr>
+                        <tr><th>Dicke</th><td>{{ $bauteil->measurement->thickness ?? '—' }}</td></tr>
+                        <tr><th>Radius</th><td>{{ $bauteil->measurement->radius ?? '—' }}</td></tr>
+                        <tr><th>Gewicht</th><td>{{ $bauteil->measurement->weight ?? '—' }}</td></tr>
+                        <tr><th>Einheit</th><td>{{ $bauteil->measurement->unit ?? '—' }}</td></tr>
+                    </table>
+                </div>
             @else
                 <p class="text-muted">Keine Maße vorhanden.</p>
             @endif

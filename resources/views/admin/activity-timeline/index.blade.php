@@ -86,7 +86,7 @@
                         <h5 class="mb-0">Detailed Activity List</h5>
                     </div>
                     <div class="card-body">
-                        <div class="table-responsive">
+                        <div class="table-responsive-wrapper">
                             <table class="table table-hover align-middle mb-0" id="activityTable">
                                 <thead class="table-light">
                                     <tr>

@@ -108,58 +108,60 @@
                         </div>
                     </div>
                 </div>
-            </form>            
-            <table class="table table-striped align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Name</th>
-                        <th>Angebot</th>
-                        <th>Status</th>
-                        <th>Start</th>
-                        <th>Prüfung</th>
-                        <th>Ende</th>
-                        <th>Extra Kosten (€)</th>
-                        <th>Gesamtpreis (€)</th>
-                        <th class="text-end">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($projects as $project)
+            </form>        
+            <div class="table-responsive-wrapper">    
+                <table class="table table-striped align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>{{ $project->name }}</td>
-                            <td>
-                                <a href="{{ route('admin.projects.offers.show', $project->offer->id) }}" class="text-decoration-none text-dark">
-                                    {{ $project->offer->supplier->name ?? '-' }}
-                                    <small class="text-muted">({{ $project->offer->offer_number ?? '' }})</small>
-                                </a>
-                            </td>
-                            <td><span class="badge" style="background-color: {{ $project->status->color ?? 'gray' }}">{{ $project->status->name ?? '-' }}</span></td>
-                            <td>{{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('d.m.Y') : '-' }}</td>
-                            <td>{{ $project->checkup_date ? \Carbon\Carbon::parse($project->checkup_date)->format('d.m.Y') : '-' }}</td>
-                            <td>{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d.m.Y') : '-' }}</td>
-                            <td>{{ number_format($project->additional_expense, 2, ',', '.') ?? '-' }}</td>
-                            <td>{{ $project->gesamtpreis }}</td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.projects.projects.show', $project->id) }}" class="btn btn-sm btn-outline-secondary" title="Ansehen">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.projects.projects.edit', $project->id) }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form action="{{ route('admin.projects.projects.destroy', $project->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Projekt löschen?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
+                            <th>Name</th>
+                            <th>Angebot</th>
+                            <th>Status</th>
+                            <th>Start</th>
+                            <th>Prüfung</th>
+                            <th>Ende</th>
+                            <th>Extra Kosten (€)</th>
+                            <th>Gesamtpreis (€)</th>
+                            <th class="text-end">Aktionen</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="9" class="text-center text-muted">Keine Projekte gefunden.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse($projects as $project)
+                            <tr>
+                                <td>{{ $project->name }}</td>
+                                <td>
+                                    <a href="{{ route('admin.projects.offers.show', $project->offer->id) }}" class="text-decoration-none text-dark">
+                                        {{ $project->offer->supplier->name ?? '-' }}
+                                        <small class="text-muted">({{ $project->offer->offer_number ?? '' }})</small>
+                                    </a>
+                                </td>
+                                <td><span class="badge" style="background-color: {{ $project->status->color ?? 'gray' }}">{{ $project->status->name ?? '-' }}</span></td>
+                                <td>{{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('d.m.Y') : '-' }}</td>
+                                <td>{{ $project->checkup_date ? \Carbon\Carbon::parse($project->checkup_date)->format('d.m.Y') : '-' }}</td>
+                                <td>{{ $project->end_date ? \Carbon\Carbon::parse($project->end_date)->format('d.m.Y') : '-' }}</td>
+                                <td>{{ number_format($project->additional_expense, 2, ',', '.') ?? '-' }}</td>
+                                <td>{{ $project->gesamtpreis }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.projects.projects.show', $project->id) }}" class="btn btn-sm btn-outline-secondary" title="Ansehen">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.projects.projects.edit', $project->id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ route('admin.projects.projects.destroy', $project->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Projekt löschen?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="9" class="text-center text-muted">Keine Projekte gefunden.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
 
             @if ($projects instanceof \Illuminate\Pagination\AbstractPaginator && $projects->hasPages())
                 <div class="mt-3">{{ $projects->links() }}</div>

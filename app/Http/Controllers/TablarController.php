@@ -23,7 +23,9 @@ class TablarController extends Controller
 
         $flatList = $materials->map(fn ($m) => [
             'id' => $m->id,
+            'code' => $m->code,
             'name' => $m->name,
+            'description' => $m->description,
             'quantity' => $m->quantity,
             'shelf' => $m->tablar,
             'threshold' => $m->threshold,
@@ -72,11 +74,11 @@ class TablarController extends Controller
                 'consumption_time' => now(),
             ]);
 
-            // 🔥 Determine threshold
-            $threshold = $material->threshold ?? 20;
+            // 🔥 Determine threshold (0 / null = no warning)
+            $threshold = (int) ($material->threshold ?? 0);
 
-            // 🔥 Check low stock AFTER decrement
-            if ($material->quantity <= $threshold) {
+            // 🔥 Check low stock AFTER decrement — only if an explicit threshold > 0 is set
+            if ($threshold > 0 && $material->quantity <= $threshold) {
 
                 // Optional: prevent duplicate spam notifications
                 $alreadyExists = Notification::where('type', 'low_stock')
@@ -129,11 +131,11 @@ class TablarController extends Controller
                 'consumption_time' => now(),
             ]);
 
-            // 🔥 Determine threshold
-            $threshold = $material->threshold ?? 5;
+            // 🔥 Determine threshold (0 / null = no warning)
+            $threshold = (int) ($material->threshold ?? 0);
 
-            // 🔥 Check low stock AFTER decrement
-            if ($material->quantity <= $threshold) {
+            // 🔥 Check low stock AFTER decrement — only if an explicit threshold > 0 is set
+            if ($threshold > 0 && $material->quantity <= $threshold) {
 
                 // Optional: prevent duplicate spam notifications
                 $exists = Notification::where('type', 'low_stock')

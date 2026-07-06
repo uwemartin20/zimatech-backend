@@ -12,46 +12,48 @@
 
         <div class="card-body">
 
-            <table class="table table-striped align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Name</th>
-                        <th>description</th>
-                        <th>Active</th>
-                        <th>Status</th>
-                        <th class="text-end">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($lagers as $lager)
+            <div class="table-responsive-wrapper">
+                <table class="table table-striped align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <td>{{ $lager->name }}</td>
-                            <td>{{ $lager->description }}</td>
-                            <td>{{ $lager->is_active ? 'Ja' : 'Nein' }}</td>
-                            <td>{{ $lager->status }}</td>
-                            <td class="text-end">
-                                <a href="{{ route('admin.lager.show', $lager) }}" class="btn btn-outline-secondary btn-sm">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.lager.edit', $lager->id) }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-
-                                <form action="{{ route('admin.lager.destroy', $lager->id) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Diesen Lager wirklich löschen?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
+                            <th>Name</th>
+                            <th>description</th>
+                            <th>Active</th>
+                            <th>Status</th>
+                            <th class="text-end">Aktionen</th>
                         </tr>
-                    @empty
-                        <tr><td colspan="6" class="text-center text-muted">Keine Lager gefunden.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @forelse ($lagers as $lager)
+                            <tr>
+                                <td>{{ $lager->name }}</td>
+                                <td>{{ $lager->description }}</td>
+                                <td>{{ $lager->is_active ? 'Ja' : 'Nein' }}</td>
+                                <td>{{ $lager->status }}</td>
+                                <td class="text-end">
+                                    <a href="{{ route('admin.lager.show', $lager) }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.lager.edit', $lager->id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <form action="{{ route('admin.lager.destroy', $lager->id) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('Diesen Lager wirklich löschen?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="text-center text-muted">Keine Lager gefunden.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

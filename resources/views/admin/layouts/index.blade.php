@@ -33,6 +33,9 @@
     <!-- Sidebar -->
     @include('admin.partials.sidebar')
 
+    {{-- Mobile sidebar backdrop --}}
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
     <!-- Content -->
     <div class="content">
         @include('admin.partials.navbar')
@@ -71,6 +74,40 @@
                     .catch(err => console.error('Admin SW registration failed:', err));
             });
         }
+
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const backdrop = document.getElementById('sidebarBackdrop');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            backdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        sidebarToggle?.addEventListener('click', openSidebar);
+        backdrop?.addEventListener('click', closeSidebar);
+
+        // Mobile search
+        const mobileSearchToggle = document.getElementById('mobileSearchToggle');
+        const mobileSearchOverlay = document.getElementById('mobileSearchOverlay');
+        const mobileSearchClose = document.getElementById('mobileSearchClose');
+        const mobileSearchInput = document.getElementById('mobileSearchInput');
+
+        mobileSearchToggle?.addEventListener('click', () => {
+            mobileSearchOverlay.classList.add('active');
+            mobileSearchInput?.focus();
+        });
+
+        mobileSearchClose?.addEventListener('click', () => {
+            mobileSearchOverlay.classList.remove('active');
+        });
     </script>
 </body>
 </html>
