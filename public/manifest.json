@@ -4,7 +4,7 @@
   "description": "Zentrales Arbeitsportal der ZiMaTec GmbH",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#ffffff",
   "theme_color": "#002752",
   "icons": [
