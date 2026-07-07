@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lager;
 use App\Models\Material;
 use App\Models\MaterialConsumption;
 use App\Models\Notification;
@@ -10,16 +11,21 @@ use Illuminate\Support\Facades\DB;
 
 class TablarController extends Controller
 {
-    public $lager;
-
-    public function __construct()
+    public function lagerSelect()
     {
-        $this->lager = 2;
+        $lagers = Lager::withCount('materials')->orderBy('name')->get();
+
+        return view('user.tablar.lager-select', compact('lagers'));
     }
 
-    public function index()
+    public function index(int $lager_id)
     {
-        $materials = Material::where("lager_id", $this->lager)->orderBy('tablar')->orderBy('name')->get();
+        $lager = Lager::findOrFail($lager_id);
+
+        $materials = Material::where('lager_id', $lager_id)
+            ->orderBy('tablar')
+            ->orderBy('name')
+            ->get();
 
         $flatList = $materials->map(fn ($m) => [
             'id' => $m->id,
@@ -37,29 +43,32 @@ class TablarController extends Controller
 
         $shelves = $materials->pluck('tablar')->unique()->sort()->values();
 
-        // German translation dictionary for database statuses
         $statusTranslations = [
-            'notified'  => 'Bedarf gemeldet',
-            'ordered'   => 'Bestellt',
-            'blocked'   => 'Blockiert',
+            'notified' => 'Bedarf gemeldet',
+            'ordered' => 'Bestellt',
+            'blocked' => 'Blockiert',
             'delivered' => 'Geliefert',
         ];
 
-        return view('user.tablar.index', compact('flatList', 'shelves', 'statusTranslations'));
+        return view('user.tablar.index', compact('flatList', 'shelves', 'statusTranslations', 'lager'));
     }
 
     /**
      * Record material consumption (real-time, concurrency-safe)
      */
-    public function consume(Request $request)
+    public function consume(Request $request, int $lager_id)
     {
+        $lager = Lager::findOrFail($lager_id);
+
         $data = $request->validate([
             'material_id' => 'required|exists:materials,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $material = DB::transaction(function () use ($data) {
-            $material = Material::lockForUpdate()->findOrFail($data['material_id']);
+        $material = DB::transaction(function () use ($data, $lager_id) {
+            $material = Material::where('lager_id', $lager_id)
+                ->lockForUpdate()
+                ->findOrFail($data['material_id']);
 
             if ($material->quantity < $data['quantity']) {
                 abort(400, 'Nicht genügend Bestand');
@@ -74,13 +83,9 @@ class TablarController extends Controller
                 'consumption_time' => now(),
             ]);
 
-            // 🔥 Determine threshold (0 / null = no warning)
             $threshold = (int) ($material->threshold ?? 0);
 
-            // 🔥 Check low stock AFTER decrement — only if an explicit threshold > 0 is set
             if ($threshold > 0 && $material->quantity <= $threshold) {
-
-                // Optional: prevent duplicate spam notifications
                 $alreadyExists = Notification::where('type', 'low_stock')
                     ->where('message', 'like', '%'.$material->name.'%')
                     ->whereDate('created_at', now()->toDateString())
@@ -91,7 +96,7 @@ class TablarController extends Controller
                         'user_id' => null,
                         'type' => 'low_stock',
                         'message' => "{$material->name} ist im Lager fast leer. Bitte nachbestellen.",
-                        'url' => route('admin.tablar.index'), // adjust if needed
+                        'url' => route('admin.tablar.show', ['lager_id' => $lager_id, 'id' => $material->id]),
                     ]);
                 }
             }
@@ -99,28 +104,25 @@ class TablarController extends Controller
             return $material->fresh();
         });
 
-        return response()->json([
-            'success' => true,
-            'new_quantity' => $material->quantity,
-        ]);
+        return response()->json(['success' => true, 'new_quantity' => $material->quantity]);
     }
 
     /**
      * Record material return (real-time, concurrency-safe)
      */
-    public function return(Request $request)
+    public function return(Request $request, int $lager_id)
     {
+        Lager::findOrFail($lager_id);
+
         $data = $request->validate([
             'material_id' => 'required|exists:materials,id',
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $material = DB::transaction(function () use ($data) {
-            $material = Material::lockForUpdate()->findOrFail($data['material_id']);
-
-            if ($material->quantity < $data['quantity']) {
-                abort(400, 'Nicht genügend Bestand');
-            }
+        $material = DB::transaction(function () use ($data, $lager_id) {
+            $material = Material::where('lager_id', $lager_id)
+                ->lockForUpdate()
+                ->findOrFail($data['material_id']);
 
             $material->increment('quantity', $data['quantity']);
 
@@ -131,47 +133,53 @@ class TablarController extends Controller
                 'consumption_time' => now(),
             ]);
 
-            // 🔥 Determine threshold (0 / null = no warning)
             $threshold = (int) ($material->threshold ?? 0);
 
-            // 🔥 Check low stock AFTER decrement — only if an explicit threshold > 0 is set
-            if ($threshold > 0 && $material->quantity <= $threshold) {
-
-                // Optional: prevent duplicate spam notifications
-                $exists = Notification::where('type', 'low_stock')
+            if ($threshold > 0 && $material->quantity > $threshold) {
+                Notification::where('type', 'low_stock')
                     ->where('message', 'like', '%'.$material->name.'%')
                     ->whereDate('created_at', now()->toDateString())
-                    ->first();
-
-                if ($exists) {
-                    Notification::delete($exists->id);
-                }
+                    ->delete();
             }
 
             return $material->fresh();
         });
 
-        return response()->json([
-            'success' => true,
-            'new_quantity' => $material->quantity,
-        ]);
+        return response()->json(['success' => true, 'new_quantity' => $material->quantity]);
     }
 
-    /**
-     * Handle order request for a material
-     */
-    public function orderRequest($materialId)
+    // ─── ORDER REQUEST ───────────────────────────────────────────────────────
+
+    public function orderRequest(int $lager_id, $materialId)
     {
-        $material = Material::findOrFail($materialId);
+        $material = Material::where('lager_id', $lager_id)->findOrFail($materialId);
 
-        // update order_status as notified
-        if($material->order_status == null) {
-            $material->order_status = 'notified';
-            $material->save();
-
-            return response()->json(['message' => 'Bestellung angefragt.', 'order_status' => $material->order_status], 200);
-        } else {
+        if ($material->order_status !== null) {
             return response()->json(['message' => 'Bestellung bereits angefragt.'], 400);
         }
+
+        $material->order_status = 'notified';
+        $material->save();
+
+        // 2. Check if a notification for this specific order request already exists today
+        $alreadyExists = Notification::where('type', 'order_request')
+            ->where('message', 'like', '%'.$material->name.'%')
+            ->whereDate('created_at', now()->toDateString())
+            ->exists();
+
+        // 3. Create the notification if it doesn't exist
+        if (! $alreadyExists) {
+            Notification::create([
+                'user_id' => null,
+                'type' => 'order_request', // Custom type to distinguish it from 'low_stock'
+                'message' => "Bestellungsanfrage für {$material->name} im Lager wurde gestellt.",
+                'url' => route('admin.tablar.show', ['lager_id' => $lager_id, 'id' => $material->id]),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Bestellung angefragt.',
+            'order_status' => $material->order_status,
+        ]);
     }
 }

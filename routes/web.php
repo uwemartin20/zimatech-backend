@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityTimelineController;
+use App\Http\Controllers\Admin\AdminLagerController;
 use App\Http\Controllers\Admin\BauteilController;
 use App\Http\Controllers\Admin\EmailController;
 use App\Http\Controllers\Admin\FeedbackController;
@@ -19,7 +20,6 @@ use App\Http\Controllers\Admin\SupplierProjectController;
 use App\Http\Controllers\Admin\TablarController as AdminTablarController;
 use App\Http\Controllers\Admin\TimeController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\AdminLagerController;
 use App\Http\Controllers\FeedbackController as PublicFeedbackController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LanguageController;
@@ -30,6 +30,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SchedulerController;
 use App\Http\Controllers\TablarController;
 use App\Http\Controllers\TimeRecordController;
+use App\Http\Controllers\UserController as User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +63,10 @@ if (config('modules.scheduler')) {
 }
 
 Route::middleware(['auth'])->group(function () {
+
+    Route::get('/profile', [User::class, 'profile'])->name('profile');
+    Route::put('/profile', [User::class, 'updateProfile'])->name('profile.update');
+
     Route::resource('printer-problems', PrinterProblemController::class);
 
     // Attachment routes nested under a problem
@@ -120,10 +125,14 @@ Route::prefix('time-records')->name('time-records.')->group(function () {
     Route::post('/processes/{process}/end', [TimeRecordController::class, 'endProcess'])->name('processes.end');
 });
 
-Route::get('/tablar', [TablarController::class, 'index'])->name('tablar.index');
-Route::post('/tablar/consume', [TablarController::class, 'consume'])->name('tablar.consume');
-Route::post('/tablar/return', [TablarController::class, 'return'])->name('tablar.return');
-Route::post('/tablar/order-request/{materialId}', [TablarController::class, 'orderRequest'])->name('tablar.order-request');
+// Lager selection page (new)
+Route::get('/lager', [TablarController::class, 'lagerSelect'])->name('lager.select');
+
+// Lager-scoped material view
+Route::get('/lager/{lager_id}/tablar', [TablarController::class, 'index'])->name('tablar.index');
+Route::post('/lager/{lager_id}/tablar/consume', [TablarController::class, 'consume'])->name('tablar.consume');
+Route::post('/lager/{lager_id}/tablar/return', [TablarController::class, 'return'])->name('tablar.return');
+Route::post('/lager/{lager_id}/tablar/order-request/{materialId}', [TablarController::class, 'orderRequest'])->name('tablar.order-request');
 
 // Language routes
 Route::get('/language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
@@ -281,15 +290,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Projects Routes
         if (config('modules.tablar')) {
-            Route::get('/tablar', [AdminTablarController::class, 'index'])->name('tablar.index');
-            Route::post('/tablar', [AdminTablarController::class, 'store'])->name('tablar.store');
-            Route::put('/tablar/{id}', [AdminTablarController::class, 'update'])->name('tablar.update');
-            Route::delete('/tablar/{id}', [AdminTablarController::class, 'destroy'])->name('tablar.destroy');
-            Route::get('/tablar/overview', [AdminTablarController::class, 'overview'])->name('tablar.overview');
-            Route::get('/tablar/{id}/suppliers', [AdminTablarController::class, 'getSuppliers'])->name('tablar.suppliers');
-            Route::post('/tablar/{material}/suppliers', [AdminTablarController::class, 'attach'])->name('tablar.suppliers.attach');
-            Route::delete('/tablar/{material}/suppliers/{supplier}', [AdminTablarController::class, 'detach'])->name('tablar.suppliers.detach');
-
+            // Lager CRUD
             Route::get('/lager', [AdminLagerController::class, 'lager'])->name('lager.index');
             Route::post('/lager', [AdminLagerController::class, 'storeLager'])->name('lager.store');
             Route::get('/lager/create', [AdminLagerController::class, 'createLager'])->name('lager.create');
@@ -297,6 +298,19 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/lager/{id}', [AdminLagerController::class, 'updateLager'])->name('lager.update');
             Route::get('/lager/{id}', [AdminLagerController::class, 'showLager'])->name('lager.show');
             Route::delete('/lager/{id}', [AdminLagerController::class, 'destroyLager'])->name('lager.destroy');
+
+            // Tablar — all scoped under a lager
+            Route::prefix('/lager/{lager_id}/tablar')->name('tablar.')->group(function () {
+                Route::get('/', [AdminTablarController::class, 'index'])->name('index');
+                Route::get('/overview', [AdminTablarController::class, 'overview'])->name('overview');
+                Route::get('/{id}', [AdminTablarController::class, 'show'])->name('show');
+                Route::post('/', [AdminTablarController::class, 'store'])->name('store');
+                Route::put('/{id}', [AdminTablarController::class, 'update'])->name('update');
+                Route::delete('/{id}', [AdminTablarController::class, 'destroy'])->name('destroy');
+                Route::get('/{id}/suppliers', [AdminTablarController::class, 'getSuppliers'])->name('suppliers');
+                Route::post('/{material}/suppliers', [AdminTablarController::class, 'attach'])->name('suppliers.attach');
+                Route::delete('/{material}/suppliers/{supplier}', [AdminTablarController::class, 'detach'])->name('suppliers.detach');
+            });
         }
 
         if (config('modules.settings')) {

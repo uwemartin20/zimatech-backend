@@ -179,3 +179,35 @@ body {
         padding-right: 10px;
     }
 }
+
+/* Nested submenu — one level deeper than .submenu */
+.submenu-nested {
+    padding-left: 1.25rem;
+}
+
+.submenu-nested a {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.75rem;
+}
+
+/* The collapsible parent link inside a submenu */
+.submenu .submenu-parent {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: inherit;
+    text-decoration: none;
+}
+
+.submenu .submenu-parent::after {
+    content: '\F282'; /* bi-chevron-down */
+    font-family: 'bootstrap-icons';
+    margin-left: auto;
+    transition: transform 0.2s;
+}
+
+.submenu .submenu-parent[aria-expanded="true"]::after {
+    transform: rotate(-180deg);
+}

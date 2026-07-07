@@ -3,7 +3,7 @@
 @section('title', 'Druckerprobleme')
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container py-4">
 
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -101,7 +101,7 @@
                             <td>{{ Str::limit($problem->short_description, 60) }}</td>
                             <td class="text-muted small">{{ $problem->material ?? '—' }}</td>
                             <td>
-                                <span class="{{ $problem->status == 'open' ? 'badge bg-warning' : 'badge bg-success' }}">
+                                <span class="{{ $problem->status == 'open' ? 'badge bg-danger' : 'badge bg-success' }}">
                                     {{ $problem->status == 'open' ? 'Offen' : 'Geschlossen' }}
                                 </span>
                             </td>

@@ -19,7 +19,7 @@
 
             <div class="card-body">
                 <!-- FILTERS -->
-                <form id="filterForm" method="GET" action="{{ route('admin.tablar.index') }}">
+                <form id="filterForm" method="GET" action="{{ route('admin.tablar.index', $lager->id) }}">
                     <div class="card mb-4 shadow-sm">
                         <div class="card-body">
                             <div class="row g-3 align-items-end">
@@ -91,7 +91,7 @@
                             <!-- Active filters + reset -->
                             @if(request()->hasAny(['name', 'code', 'shelf', 'max_qty']))
                             <div class="mt-2">
-                                <a href="{{ route('admin.tablar.index') }}" class="btn btn-sm btn-outline-secondary">
+                                <a href="{{ route('admin.tablar.index', $lager->id) }}" class="btn btn-sm btn-outline-secondary">
                                     <i class="bi bi-x-circle me-1"></i> Filter zurücksetzen
                                 </a>
                             </div>
@@ -153,10 +153,12 @@
                                         @endif
                                     </td>
                                     <td class="fw-bold text-dark">
-                                        {{ $material->name }}
-                                        @if($material->is_werkzeug)
-                                            <span class="badge bg-secondary ms-1" title="Werkzeug"><i class="bi bi-wrench"></i></span>
-                                        @endif
+                                        <a href="{{ route('admin.tablar.show', ['lager_id' => $material->lager_id, 'id' => $material->id]) }}" class="text-decoration-none text-dark">
+                                            {{ $material->name }}
+                                            @if($material->is_werkzeug)
+                                                <span class="badge bg-secondary ms-1" title="Werkzeug"><i class="bi bi-wrench"></i></span>
+                                            @endif
+                                        </a>
                                     </td>
                                     <td class="text-muted small" style="max-width: 220px;">
                                         @if($material->description)
@@ -457,7 +459,8 @@
     <script>
         window.tablarAdmin = {
             token: document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            maxQuantity: {{ $maxQuantity }}
+            maxQuantity: {{ $maxQuantity }},
+            lagerId: {{ $lager->id }}
         };
 
         // Initialize Bootstrap tooltips (Mindestbestand column hint)

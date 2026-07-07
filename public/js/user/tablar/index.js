@@ -1,6 +1,9 @@
 // Full material list from PHP — flat, all shelves
 const allMaterials = window.tablarData.flatList;
 const storagePath = window.tablarData.storagePath ?? '/storage/';
+const consumeUrl    = window.tablarData.consumeUrl;
+const returnUrl     = window.tablarData.returnUrl;
+const orderBaseUrl  = window.tablarData.orderRequestBase;
 
 // Group by shelf for fast lookup: { "A1": [...], "B2": [...] }
 const byShelf = {};
@@ -186,7 +189,7 @@ async function confirmConsumption() {
     btn.innerHTML   = `<span class="spinner-border spinner-border-sm me-2"></span> Wird gebucht...`;
 
     try {
-        const res = await fetch('/tablar/consume', {
+        const res = await fetch(consumeUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
             body: JSON.stringify({ material_id: selectedMaterial.id, quantity: amountTaken })
@@ -226,7 +229,7 @@ async function confirmReturn() {
     btn.innerHTML   = `<span class="spinner-border spinner-border-sm me-2"></span> Lädt...`;
 
     try {
-        const res = await fetch('/tablar/return', {
+        const res = await fetch(returnUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
             body: JSON.stringify({ material_id: selectedMaterial.id, quantity: amountReturned })
@@ -258,7 +261,7 @@ async function confirmReturn() {
 
 async function triggerOrder(materialId) {
     try{
-        const res = await fetch(`/tablar/order-request/${materialId}`, {
+        const res = await fetch(`${orderBaseUrl}/${materialId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token }
         });

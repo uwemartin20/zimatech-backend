@@ -1,4 +1,13 @@
 const token = window.tablarAdmin.token;
+const lagerId = window.tablarAdmin.lagerId;
+
+const urls = {
+    store:         () => `/admin/lager/${lagerId}/tablar`,
+    update:        (id) => `/admin/lager/${lagerId}/tablar/${id}`,
+    destroy:       (id) => `/admin/lager/${lagerId}/tablar/${id}`,
+    suppliers:     (materialId) => `/admin/lager/${lagerId}/tablar/${materialId}/suppliers`,
+    supplierDetach:(materialId, supplierId) => `/admin/lager/${lagerId}/tablar/${materialId}/suppliers/${supplierId}`,
+};
 
 let editMode = false;
 let currentId = null;
@@ -172,7 +181,9 @@ async function saveMaterial() {
     btn.disabled  = true;
     btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Speichern...`;
 
-    const url = editMode ? `/admin/tablar/${currentId}` : '/admin/tablar';
+    const url = editMode ? urls.update(currentId) : urls.store();
+
+    console.log("Form Data:", Array.from(formData.entries()));
 
     try {
         const res = await fetch(url, {
@@ -180,6 +191,8 @@ async function saveMaterial() {
             headers: { 'X-CSRF-TOKEN': token },
             body: formData
         });
+
+        console.log("Response:", res);
 
         if (!res.ok) throw new Error();
 
@@ -198,7 +211,7 @@ async function deleteMaterial(id) {
     if (!confirm("Wirklich löschen?")) return;
 
     try {
-        const res = await fetch(`/admin/tablar/${id}`, {
+        const res = await fetch(urls.destroy(id), {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': token }
         });
@@ -388,7 +401,7 @@ async function loadAttachedSuppliers() {
     document.getElementById('supplierEmpty').classList.add('d-none');
     document.getElementById('supplierList').innerHTML = '';
 
-    const res = await fetch(`/admin/tablar/${currentMaterialId}/suppliers`, {
+    const res = await fetch(urls.suppliers(currentMaterialId), {
         headers: { 'X-CSRF-TOKEN': token }
     });
 
@@ -444,7 +457,7 @@ async function attachSupplier() {
     document.getElementById('supplierLoading').classList.remove('d-none');
 
     try {
-        const res = await fetch(`/admin/tablar/${currentMaterialId}/suppliers`, {
+        const res = await fetch(urls.suppliers(currentMaterialId), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
             body: JSON.stringify({ supplier_id: selectedSupplierId })

@@ -3,7 +3,7 @@
 @section('title', $problem->problem_uid)
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container py-4">
 
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">

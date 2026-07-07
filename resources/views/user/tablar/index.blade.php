@@ -6,8 +6,15 @@
 <div class="container py-4" style="max-width: 720px;">
 
     <div class="text-center mb-4">
-        <h1 class="fw-bold fs-2">🏭 Hochregal - Materialerfassung</h1>
+        <h1 class="fw-bold fs-2">🏭 {{ $lager->name }} - Materialerfassung</h1>
         <p class="text-muted mb-0">Tablar wählen, oder Name suchen</p>
+    </div>
+
+    {{-- Back link --}}
+    <div class="mb-3">
+        <a href="{{ route('lager.select') }}" class="btn btn-sm btn-outline-secondary">
+            ← Lager wechseln
+        </a>
     </div>
 
     <ul class="nav nav-pills nav-fill mb-4" id="searchModeTabs">
@@ -146,6 +153,10 @@
         flatList: @json($flatList),
         storagePath: "{{ asset('storage/') }}",
         statusTranslations: @json($statusTranslations),
+        lagerId:            {{ $lager->id }},
+        consumeUrl:         "{{ route('tablar.consume', $lager->id) }}",
+        returnUrl:          "{{ route('tablar.return', $lager->id) }}",
+        orderRequestBase:   "/lager/{{ $lager->id }}/tablar/order-request",
     };
 
     // Helper JavaScript function to open up the lightbox modal

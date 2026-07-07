@@ -133,29 +133,51 @@
     {{-- Tablar-übersicht --}}
     @if(config('modules.tablar'))
         @php
+            $lagers = \App\Models\Lager::orderBy('name')->get();
             $lagerActive = request()->is('admin/lager*');
             $tablarActive = request()->is('admin/tablar*');
+            $lagerMenuActive = $lagerActive || $tablarActive;
+
+            $activeLagerId = request()->route('lager_id');
         @endphp
         <a data-bs-toggle="collapse" href="#lagerSubmenu" role="button"
-        aria-expanded="{{ $lagerActive ? 'true' : 'false' }}"
+        aria-expanded="{{ $lagerMenuActive ? 'true' : 'false' }}"
         aria-controls="lagerSubmenu"
-        class="{{ $lagerActive ? 'active' : '' }}">
+        class="{{ $lagerMenuActive ? 'active' : '' }}">
             <i class="bi bi-boxes me-2"></i> Lager Management
         </a>
-        <div class="collapse submenu {{ $lagerActive ? 'show' : '' }}" id="lagerSubmenu">
-            <a href="{{ route('admin.lager.index') }}" class="{{ request()->is('admin/lager') ? 'active' : '' }}">Lager Übersicht</a>
-        </div>
+        <div class="collapse submenu {{ $lagerMenuActive ? 'show' : '' }}" id="lagerSubmenu">
 
-        
-        <a data-bs-toggle="collapse" href="#tablarSubmenu" role="button"
-        aria-expanded="{{ $tablarActive ? 'true' : 'false' }}"
-        aria-controls="tablarSubmenu"
-        class="{{ $tablarActive ? 'active' : '' }}">
-            <i class="bi bi-boxes me-2"></i> Hochregal Management
-        </a>
-        <div class="collapse submenu {{ $tablarActive ? 'show' : '' }}" id="tablarSubmenu">
-            <a href="{{ route('admin.tablar.overview') }}" class="{{ request()->is('admin/tablar/overview') ? 'active' : '' }}">Übersicht</a>
-            <a href="{{ route('admin.tablar.index') }}" class="{{ request()->is('admin/tablar') ? 'active' : '' }}">Materialverwaltung</a>
+            <a href="{{ route('admin.lager.index') }}"
+                class="{{ request()->routeIs('admin.lager.index') ? 'active' : '' }}">
+                Lager Übersicht
+            </a>
+
+            @foreach($lagers as $lager)
+                @php
+                    $isThisLagerActive = $activeLagerId == $lager->id;
+                @endphp
+
+                <a data-bs-toggle="collapse" href="#lagerSubmenu{{ $lager->id }}" role="button"
+                aria-expanded="{{ $isThisLagerActive ? 'true' : 'false' }}"
+                aria-controls="lagerSubmenu{{ $lager->id }}"
+                class="submenu-parent {{ $isThisLagerActive ? 'active' : '' }}">
+                    <i class="bi bi-archive me-1"></i> {{ $lager->name }}
+                </a>
+
+                <div class="collapse submenu-nested {{ $isThisLagerActive ? 'show' : '' }}"
+                    id="lagerSubmenu{{ $lager->id }}">
+                    <a href="{{ route('admin.tablar.overview', $lager->id) }}"
+                    class="{{ request()->routeIs('admin.tablar.overview') && $isThisLagerActive ? 'active' : '' }}">
+                        Übersicht
+                    </a>
+                    <a href="{{ route('admin.tablar.index', $lager->id) }}"
+                    class="{{ request()->routeIs('admin.tablar.index') && $isThisLagerActive ? 'active' : '' }}">
+                        Materialverwaltung
+                    </a>
+                </div>
+            @endforeach
+
         </div>
     @endif
 

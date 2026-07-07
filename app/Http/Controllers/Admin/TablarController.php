@@ -3,63 +3,72 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lager;
 use App\Models\Material;
 use App\Models\MaterialConsumption;
 use App\Models\Supplier;
-use App\Models\Lager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use function Psy\debug;
 
 class TablarController extends Controller
 {
-    public $lager_id;
+    public function index(Request $request, int $lager_id)
+    {
+        $lager = Lager::findOrFail($lager_id);
 
-    public function __construct()
-    {
-        $this->lager_id = 2;
-    }
-    public function index(Request $request)
-    {
-        $query = Material::with('suppliers')->where('lager_id', $this->lager_id)->orderBy('name');
+        $query = Material::with('suppliers')
+            ->where('lager_id', $lager_id)
+            ->orderBy('name');
 
         if ($request->filled('name')) {
             $query->where('name', 'like', '%'.$request->name.'%');
         }
-
         if ($request->filled('code')) {
             $query->where('code', 'like', '%'.$request->code.'%');
         }
-
         if ($request->filled('shelf')) {
             $query->where('tablar', 'like', '%'.$request->shelf.'%');
         }
-
         if ($request->filled('max_qty')) {
             $query->where('quantity', '<=', $request->max_qty);
         }
 
         $materials = $query->paginate(30)->withQueryString();
+        $maxQuantity = Material::where('lager_id', $lager_id)->max('quantity') ?? 0;
 
-        $maxQuantity = Material::max('quantity') ?? 0;
-
-        $lager = Lager::find($this->lager_id);
-
-        // German translation dictionary for database statuses
         $statusTranslations = [
-            'notified'  => 'Bedarf gemeldet',
-            'ordered'   => 'Bestellt',
-            'blocked'   => 'Blockiert',
+            'notified' => 'Bedarf gemeldet',
+            'ordered' => 'Bestellt',
+            'blocked' => 'Blockiert',
             'delivered' => 'Geliefert',
         ];
 
         return view('admin.tablar.index', compact('materials', 'maxQuantity', 'statusTranslations', 'lager'));
     }
 
-    public function store(Request $request)
+    public function show(int $lager_id, int $id)
     {
+        $lager = Lager::findOrFail($lager_id);
+        $material = Material::where('lager_id', $lager_id)->with('suppliers')->findOrFail($id);
+
+        return view('admin.tablar.show', compact('material', 'lager'));
+    }
+
+    public function store(Request $request, int $lager_id)
+    {
+        Lager::findOrFail($lager_id);
+
+        // Normalize empty strings to null before validation
+        $request->merge([
+            'code' => $request->input('code') ?: null,
+            'threshold' => $request->input('threshold') ?: null,
+            'type' => $request->input('type') ?: null,
+            'order_status' => $request->input('order_status') ?: null,
+            'description' => $request->input('description') ?: null,
+        ]);
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'code' => ['nullable', 'string', 'max:64', Rule::unique('materials', 'code')->whereNotNull('code')],
@@ -74,7 +83,7 @@ class TablarController extends Controller
             'image' => 'nullable|image|max:4096',
         ]);
 
-        $data['lager_id'] = $this->lager_id;
+        $data['lager_id'] = $lager_id;
         $data['is_werkzeug'] = $request->boolean('is_werkzeug');
         $data['is_active'] = $request->boolean('is_active');
 
@@ -82,14 +91,20 @@ class TablarController extends Controller
             $data['image'] = $request->file('image')->store('materials', 'public');
         }
 
-        $material = Material::create($data);
-
-        return response()->json($material);
+        return response()->json(Material::create($data));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $lager_id, int $id)
     {
-        $material = Material::findOrFail($id);
+        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
+
+        $request->merge([
+            'code' => $request->input('code') ?: null,
+            'threshold' => $request->input('threshold') ?: null,
+            'type' => $request->input('type') ?: null,
+            'order_status' => $request->input('order_status') ?: null,
+            'description' => $request->input('description') ?: null,
+        ]);
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
@@ -105,7 +120,7 @@ class TablarController extends Controller
             'image' => 'nullable|image|max:4096',
         ]);
 
-        $data['lager_id'] = $this->lager_id;
+        $data['lager_id'] = $lager_id;
         $data['is_werkzeug'] = $request->boolean('is_werkzeug');
         $data['is_active'] = $request->boolean('is_active');
 
@@ -121,20 +136,20 @@ class TablarController extends Controller
         return response()->json($material);
     }
 
-    public function destroy($id)
+    public function destroy(int $lager_id, int $id)
     {
-        $material = Material::findOrFail($id);
+        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
         $material->delete();
 
         return response()->json(['success' => true]);
     }
 
-    public function getSuppliers($id)
+    public function getSuppliers(int $lager_id, int $id)
     {
-        $material = Material::where('lager_id', $this->lager_id)->with('suppliers')->findOrFail($id);
+        $material = Material::where('lager_id', $lager_id)->with('suppliers')->findOrFail($id);
 
         $suppliers = $material->suppliers
-            ->sortByDesc(fn ($supplier) => $supplier->pivot->created_at)
+            ->sortByDesc(fn ($s) => $s->pivot->created_at)
             ->values();
 
         foreach ($suppliers as $index => $supplier) {
@@ -144,120 +159,61 @@ class TablarController extends Controller
         return response()->json($suppliers);
     }
 
-    public function attach(Request $request, Material $material)
+    public function attach(Request $request, int $lager_id, Material $material)
     {
-        // Sync Without Detaching avoids duplicate rows in the pivot table setup
+        abort_unless($material->lager_id === $lager_id, 404);
         $material->suppliers()->syncWithoutDetaching([$request->input('supplier_id')]);
 
         return response()->json(['success' => true]);
     }
 
-    public function detach(Material $material, Supplier $supplier)
+    public function detach(int $lager_id, Material $material, Supplier $supplier)
     {
+        abort_unless($material->lager_id === $lager_id, 404);
         $material->suppliers()->detach($supplier->id);
 
         return response()->json(['success' => true]);
     }
 
-    public function overview()
+    public function overview(int $lager_id)
     {
-        // =========================
-        // STOCK METRICS
-        // =========================
+        $lager = Lager::findOrFail($lager_id);
 
-        $totalMaterials = Material::where('lager_id', $this->lager_id)->count();
+        $totalMaterials = Material::where('lager_id', $lager_id)->count();
 
-        $lowStockMaterials = Material::where('lager_id', $this->lager_id)
-            ->whereNotNull('threshold')
-            ->where('threshold', '>', 0)
+        $lowStockMaterials = Material::where('lager_id', $lager_id)
+            ->whereNotNull('threshold')->where('threshold', '>', 0)
             ->whereColumn('quantity', '<=', 'threshold')
-            ->orderBy('quantity')
-            ->get();
+            ->orderBy('quantity')->get();
 
-        $highestStock = Material::where('lager_id', $this->lager_id)->orderByDesc('quantity')
-            ->take(10)
-            ->get();
+        $highestStock = Material::where('lager_id', $lager_id)
+            ->orderByDesc('quantity')->take(10)->get();
 
-        $lowestStock = Material::where('lager_id', $this->lager_id)->orderBy('quantity')
-            ->where('quantity', '>', 0)
-            ->take(10)
-            ->get();
+        $lowestStock = Material::where('lager_id', $lager_id)
+            ->orderBy('quantity')->where('quantity', '>', 0)->take(10)->get();
 
-        // =========================
-        // USAGE ANALYTICS
-        // =========================
-
-        $topUsed10Days = MaterialConsumption::select(
-            'material_id',
-            DB::raw('SUM(quantity) as total_used')
-        )
-            ->whereHas('material', function ($query) {
-                $query->where('lager_id', $this->lager_id);
-            })
+        $topUsed10Days = MaterialConsumption::select('material_id', DB::raw('SUM(quantity) as total_used'))
+            ->whereHas('material', fn ($q) => $q->where('lager_id', $lager_id))
             ->where('created_at', '>=', now()->subDays(10))
-            ->groupBy('material_id')
-            ->orderByDesc('total_used')
-            ->with('material')
-            ->take(10)
-            ->get();
+            ->groupBy('material_id')->orderByDesc('total_used')->with('material')->take(10)->get();
 
-        $topUsed30Days = MaterialConsumption::select(
-            'material_id',
-            DB::raw('SUM(quantity) as total_used')
-        )
-            ->whereHas('material', function ($query) {
-                $query->where('lager_id', $this->lager_id);
-            })
+        $topUsed30Days = MaterialConsumption::select('material_id', DB::raw('SUM(quantity) as total_used'))
+            ->whereHas('material', fn ($q) => $q->where('lager_id', $lager_id))
             ->where('created_at', '>=', now()->subDays(30))
-            ->groupBy('material_id')
-            ->orderByDesc('total_used')
-            ->with('material')
-            ->take(10)
-            ->get();
-
-        // =========================
-        // RECENT ACTIVITY (AUDIT)
-        // =========================
+            ->groupBy('material_id')->orderByDesc('total_used')->with('material')->take(10)->get();
 
         $recentLogs = MaterialConsumption::with('material')
-            ->whereHas('material', function ($query) {
-                $query->where('lager_id', $this->lager_id);
-            })
-            ->orderByDesc('created_at')
-            ->paginate(10, ['*'], 'audit_page');
+            ->whereHas('material', fn ($q) => $q->where('lager_id', $lager_id))
+            ->orderByDesc('created_at')->paginate(10, ['*'], 'audit_page');
 
-        // =========================
-        // DISTRIBUTION BY SLOTS (TABLAR USAGE)
-        // =========================
-
-        $shelfActivity = MaterialConsumption::select(
-            'materials.tablar',
-            DB::raw('SUM(material_consumption.quantity) as total_used')
-        )
+        $shelfActivity = MaterialConsumption::select('materials.tablar', DB::raw('SUM(material_consumption.quantity) as total_used'))
             ->join('materials', 'materials.id', '=', 'material_consumption.material_id')
-            ->whereHas('material', function ($query) {
-                $query->where('lager_id', $this->lager_id);
-            })
-            ->groupBy('materials.tablar')
-            ->orderByDesc('total_used')
-            ->get();
-
-        // =========================
-        // RETURN VIEW
-        // =========================
-
-        $lager = Lager::find($this->lager_id);
+            ->whereHas('material', fn ($q) => $q->where('lager_id', $lager_id))
+            ->groupBy('materials.tablar')->orderByDesc('total_used')->get();
 
         return view('admin.tablar.overview', compact(
-            'totalMaterials',
-            'lowStockMaterials',
-            'highestStock',
-            'lowestStock',
-            'topUsed10Days',
-            'topUsed30Days',
-            'recentLogs',
-            'shelfActivity',
-            'lager'
+            'lager', 'totalMaterials', 'lowStockMaterials', 'highestStock',
+            'lowestStock', 'topUsed10Days', 'topUsed30Days', 'recentLogs', 'shelfActivity'
         ));
     }
 }

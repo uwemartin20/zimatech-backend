@@ -72,6 +72,12 @@
                                     <i class="bi bi-speedometer me-1"></i> Admin
                                 </a>
                             </li>
+                        @else
+                            <li class="nav-item mx-2 my-1 my-lg-0">
+                                <a href="{{ route('profile') }}" class="nav-link">
+                                    <i class="bi bi-person-circle me-1"></i> Profil
+                                </a>
+                            </li>
                         @endif
                     @endauth
 

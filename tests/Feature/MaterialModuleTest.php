@@ -9,12 +9,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 /**
- * Create the "Hochregal" Lager record that Admin\TablarController
- * hard-codes to lager_id = 2. Done in beforeEach so the row exists
- * for every test inside the RefreshDatabase transaction.
+ * Create the "Hochregal" Lager record used by the test suite.
+ * The whole material module is now scoped per Lager (multi-warehouse),
+ * so every test needs a Lager row to satisfy the FK on materials.lager_id.
+ * id is not in Lager::$fillable, so we use a raw insert.
  */
 beforeEach(function () {
-    // id is not in Lager::$fillable, so use a raw insert.
     \DB::table('lager')->insert([
         'id' => 2,
         'name' => 'Hochregal',
@@ -35,7 +35,7 @@ test('default threshold is null and does not trigger low stock notification', fu
     $this->assertNull($material->threshold);
     $this->assertSame('ok', $material->status);
 
-    $response = $this->postJson(route('tablar.consume'), [
+    $response = $this->postJson(route('tablar.consume', ['lager_id' => 2]), [
         'material_id' => $material->id,
         'quantity' => 1,
     ]);
@@ -55,7 +55,7 @@ test('threshold of zero behaves the same as null and does not trigger notificati
 
     expect($material->status)->toBe('ok');
 
-    $this->postJson(route('tablar.consume'), [
+    $this->postJson(route('tablar.consume', ['lager_id' => 2]), [
         'material_id' => $material->id,
         'quantity' => 1,
     ])->assertOk();
@@ -73,7 +73,7 @@ test('explicit positive threshold triggers low stock notification when consumed 
 
     expect($material->fresh()->status)->toBe('low');
 
-    $this->postJson(route('tablar.consume'), [
+    $this->postJson(route('tablar.consume', ['lager_id' => 2]), [
         'material_id' => $material->id,
         'quantity' => 1,
     ])->assertOk();
@@ -85,7 +85,7 @@ test('explicit positive threshold triggers low stock notification when consumed 
         ->count())->toBe(1);
 
     // Second consume on the same day does NOT create a duplicate
-    $this->postJson(route('tablar.consume'), [
+    $this->postJson(route('tablar.consume', ['lager_id' => 2]), [
         'material_id' => $material->id,
         'quantity' => 1,
     ])->assertOk();
@@ -100,7 +100,7 @@ test('store material as admin persists code and description', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $this->actingAs($admin);
 
-    $response = $this->postJson(route('admin.tablar.store'), [
+    $response = $this->postJson(route('admin.tablar.store', ['lager_id' => 2]), [
         'name' => 'Mutter M6',
         'code' => 'ART-001',
         'description' => 'Sechskantmutter, verzinkt',
@@ -128,15 +128,18 @@ test('update material as admin persists code and description', function () {
         'lager_id' => 2,
     ]);
 
-    $response = $this->putJson(route('admin.tablar.update', $material->id), [
-        'name' => 'Mutter M8',
-        'code' => 'ART-002',
-        'description' => 'Aktualisierte Notiz',
-        'quantity' => 50,
-        'tablar' => 'A2',
-        'threshold' => 5,
-        'is_active' => true,
-    ]);
+    $response = $this->putJson(
+        route('admin.tablar.update', ['lager_id' => 2, 'id' => $material->id]),
+        [
+            'name' => 'Mutter M8',
+            'code' => 'ART-002',
+            'description' => 'Aktualisierte Notiz',
+            'quantity' => 50,
+            'tablar' => 'A2',
+            'threshold' => 5,
+            'is_active' => true,
+        ]
+    );
 
     $response->assertOk();
 
@@ -150,7 +153,7 @@ test('admin tablar overview excludes materials with null or zero threshold from 
     $this->actingAs($admin);
 
     // Material without threshold — should NOT appear
-    $noThreshold = Material::create([
+    Material::create([
         'name' => 'Ohne Schwelle',
         'quantity' => 1,
         'threshold' => null,
@@ -158,7 +161,7 @@ test('admin tablar overview excludes materials with null or zero threshold from 
     ]);
 
     // Material with threshold = 0 but quantity = 1 — should NOT appear
-    $zeroThreshold = Material::create([
+    Material::create([
         'name' => 'Schwelle null',
         'quantity' => 1,
         'threshold' => 0,
@@ -166,22 +169,31 @@ test('admin tablar overview excludes materials with null or zero threshold from 
     ]);
 
     // Material with threshold = 5 and quantity = 3 — SHOULD appear
-    $lowStock = Material::create([
+    Material::create([
         'name' => 'Bolzen',
         'quantity' => 3,
         'threshold' => 5,
         'lager_id' => 2,
     ]);
 
-    // Material with threshold = 5 and quantity = 5 — should NOT appear (boundary)
-    $boundary = Material::create([
+    // Material with threshold = 5 and quantity = 5 — boundary case, IS included
+    // (whereColumn('quantity', '<=', 'threshold') matches quantity 5 with threshold 5)
+    Material::create([
         'name' => 'Genug',
         'quantity' => 5,
         'threshold' => 5,
         'lager_id' => 2,
     ]);
 
-    $response = $this->get(route('admin.tablar.overview'));
+    // Material well above its threshold — should NOT appear
+    Material::create([
+        'name' => 'Viel',
+        'quantity' => 100,
+        'threshold' => 5,
+        'lager_id' => 2,
+    ]);
+
+    $response = $this->get(route('admin.tablar.overview', ['lager_id' => 2]));
     $response->assertOk();
 
     $lowStockMaterials = $response->viewData('lowStockMaterials');
@@ -189,7 +201,8 @@ test('admin tablar overview excludes materials with null or zero threshold from 
     $names = $lowStockMaterials->pluck('name')->all();
 
     expect($names)->toContain('Bolzen');
+    expect($names)->toContain('Genug');
     expect($names)->not->toContain('Ohne Schwelle');
     expect($names)->not->toContain('Schwelle null');
-    expect($names)->not->toContain('Genug');
+    expect($names)->not->toContain('Viel');
 });
