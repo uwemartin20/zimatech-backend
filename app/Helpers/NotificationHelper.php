@@ -46,8 +46,8 @@ function new_notification(
         $auth = [
             'VAPID' => [
                 'subject'    => config('app.url'),
-                'publicKey'  => env('VAPID_PUBLIC_KEY'),
-                'privateKey' => env('VAPID_PRIVATE_KEY'),
+                'publicKey'  => config('VAPID_PUBLIC_KEY'),
+                'privateKey' => config('VAPID_PRIVATE_KEY'),
             ],
         ];
 

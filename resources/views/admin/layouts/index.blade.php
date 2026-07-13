@@ -131,7 +131,7 @@
         window.Echo = new window.Echo.default({
             broadcaster: 'reverb',
             key:         '{{ env("REVERB_APP_KEY") }}',
-            wsHost:      window.location.hostname,
+            wsHost:      '{{ env("REVERB_HOST", "localhost") }}',
             wsPort:      {{ env("REVERB_PORT", 8080) }},
             wssPort:     {{ env("REVERB_PORT", 8080) }},
             forceTLS:    false,
