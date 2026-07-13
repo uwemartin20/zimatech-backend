@@ -127,15 +127,23 @@
         // The IIFE bundle auto-creates window.Echo — we just configure it
         window.Pusher = Pusher;
     
-        // Re-initialize with your Reverb config
+        const isLocal = window.location.hostname === 'localhost'
+                    || window.location.hostname === '127.0.0.1';
+
         window.Echo = new window.Echo.default({
-            broadcaster: 'reverb',
-            key:         '{{ env("REVERB_APP_KEY") }}',
-            wsHost:      '{{ env("REVERB_HOST", "localhost") }}',
-            wsPort:      {{ env("REVERB_PORT", 8080) }},
-            wssPort:     {{ env("REVERB_PORT", 8080) }},
-            forceTLS:    false,
+            broadcaster:       'reverb',
+            key:               '{{ config("reverb.apps.apps.0.key") }}',
+            wsHost:            window.location.hostname,
+            wsPort:            isLocal ? 8080 : 8444,
+            wssPort:           isLocal ? 8080 : 8444,
+            forceTLS:          !isLocal,
             enabledTransports: ['ws', 'wss'],
+            authEndpoint:      '/broadcasting/auth',
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+            },
         });
     
         setTimeout(() => {
