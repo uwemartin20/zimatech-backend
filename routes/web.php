@@ -313,6 +313,8 @@ Route::middleware(['auth', 'role:admin'])
                 Route::get('/{id}/suppliers', [AdminTablarController::class, 'getSuppliers'])->name('suppliers');
                 Route::post('/{material}/suppliers', [AdminTablarController::class, 'attach'])->name('suppliers.attach');
                 Route::delete('/{material}/suppliers/{supplier}', [AdminTablarController::class, 'detach'])->name('suppliers.detach');
+                Route::get('/{id}/supplier-list', [AdminTablarController::class, 'supplierList'])->name('supplier-list');
+                Route::patch('/{id}/quantity', [AdminTablarController::class, 'updateQuantity'])->name('update-quantity');
             });
         }
 
