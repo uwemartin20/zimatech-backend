@@ -36,6 +36,10 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
+Route::get('/ping', function () {
+    return response()->json(['status' => 'alive']);
+});
+
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home', [HomeController::class, 'index']);
 Route::post('/assistant/ask-recommendations', [HomeController::class, 'askRecommendations'])->name('assistant.recommendations');

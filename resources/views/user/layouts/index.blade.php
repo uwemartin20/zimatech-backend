@@ -178,6 +178,18 @@
                     .catch(err => console.error('Service Worker registration failed:', err));
             });
         }
+        setInterval(() => {
+            fetch('/ping')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Heartbeat failed');
+                    }
+                    else {
+                        console.log('Keep-alive ping successful');
+                    }
+                })
+                .catch(error => console.warn('Keep-alive ping failed:', error));
+        }, 10 * 60 * 1000);
     </script>
 </body>
 </html>
