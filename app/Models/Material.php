@@ -19,7 +19,7 @@ class Material extends Model
         'order_status',
         'lager_id',
         'is_werkzeug',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -127,11 +127,11 @@ class Material extends Model
         }
 
         return match ($this->order_status) {
-            'notified'  => __('tablar.status.notified'),
-            'ordered'   => __('tablar.status.ordered'),
-            'blocked'   => __('tablar.status.blocked'),
+            'notified' => __('tablar.status.notified'),
+            'ordered' => __('tablar.status.ordered'),
+            'blocked' => __('tablar.status.blocked'),
             'delivered' => __('tablar.status.delivered'),
-            default     => ucfirst($this->order_status),
+            default => ucfirst($this->order_status),
         };
     }
 }

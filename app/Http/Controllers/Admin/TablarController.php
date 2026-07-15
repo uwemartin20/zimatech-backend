@@ -124,6 +124,22 @@ class TablarController extends Controller
         ]);
     }
 
+    public function updateStatus(Request $request, int $lager_id, int $id)
+    {
+        $data = $request->validate([
+            'order_status' => 'nullable|in:notified,ordered,blocked,delivered',
+        ]);
+
+        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
+        $material->update(['order_status' => $data['order_status'] ?? null]);
+
+        return response()->json([
+            'success' => true,
+            'order_status' => $material->order_status,
+            'status_label' => $material->status_label,
+        ]);
+    }
+
     public function supplierList(Request $request, int $lager_id, int $id)
     {
         $data = $request->validate([

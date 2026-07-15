@@ -17,8 +17,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>Name</th>
-                            <th>description</th>
-                            <th>Active</th>
+                            <th>Beschreibung</th>
+                            <th>Aktiv</th>
                             <th>Status</th>
                             <th class="text-end">Aktionen</th>
                         </tr>

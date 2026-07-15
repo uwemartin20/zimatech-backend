@@ -98,7 +98,7 @@ function renderMaterials(materials) {
 
     container.innerHTML = materials.map(m => {
         const outOfStock = m.quantity <= 0;
-        const threshold  = m.threshold ?? 20;
+        const threshold  = m.threshold ?? 0;
         const badgeClass = outOfStock
             ? 'bg-secondary'
             : m.quantity > threshold ? 'bg-success' : 'bg-danger';
@@ -163,7 +163,7 @@ function validateManualInput(input) {
 function increase() {
     const input = document.getElementById('counterInput');
     const val   = parseInt(input.value);
-    input.value = val + 1;
+    if (val < selectedMaterial.quantity) input.value = val + 1;
 }
 
 function decrease() {
@@ -324,7 +324,7 @@ function filterByName() {
 
     container.innerHTML = filtered.map(m => {
         const outOfStock = m.quantity <= 0;
-        const threshold  = m.threshold ?? 20;
+        const threshold  = m.threshold ?? 0;
         const badgeClass = outOfStock ? 'bg-secondary'
             : m.quantity > threshold ? 'bg-success' : 'bg-danger';
         const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';

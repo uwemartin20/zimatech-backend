@@ -18,6 +18,42 @@
             </div>
 
             <div class="card-body">
+                <!-- QUICK-TOGGLE FILTERS -->
+                @php
+                    $baseQuery = request()->except(['low_stock', 'empty', 'status', 'page']);
+                    $indexUrl  = route('admin.tablar.index', ['lager_id' => $lager->id]);
+                @endphp
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                    {{-- Niedrigerbestand --}}
+                    @php $lowStockOn = request()->boolean('low_stock'); @endphp
+                    <a href="{{ $lowStockOn ? $indexUrl.'?'.http_build_query($baseQuery) : $indexUrl.'?'.http_build_query($baseQuery + ['low_stock' => 1]) }}"
+                       class="btn btn-sm {{ $lowStockOn ? 'btn-warning active' : 'btn-outline-warning' }}">
+                        <i class="bi bi-exclamation-triangle me-1"></i> {{ __('tablar.filter.low_stock') }}
+                    </a>
+
+                    {{-- Leere Materialien --}}
+                    @php $emptyOn = request()->boolean('empty'); @endphp
+                    <a href="{{ $emptyOn ? $indexUrl.'?'.http_build_query($baseQuery) : $indexUrl.'?'.http_build_query($baseQuery + ['empty' => 1]) }}"
+                       class="btn btn-sm {{ $emptyOn ? 'btn-secondary active' : 'btn-outline-secondary' }}">
+                        <i class="bi bi-box me-1"></i> {{ __('tablar.filter.empty') }}
+                    </a>
+
+                    {{-- Status (real form, GET, shareable) --}}
+                    <form method="GET" action="{{ $indexUrl }}" class="d-inline-flex align-items-center">
+                        @foreach($baseQuery as $k => $v)
+                            <input type="hidden" name="{{ $k }}" value="{{ $v }}">
+                        @endforeach
+                        @if(request('low_stock'))<input type="hidden" name="low_stock" value="1">@endif
+                        @if(request('empty'))<input type="hidden" name="empty" value="1">@endif
+                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">{{ __('tablar.filter.status') }}</option>
+                            @foreach(['notified','ordered','blocked','delivered'] as $s)
+                                <option value="{{ $s }}" @selected(request('status') === $s)>{{ __('tablar.status.'.$s) }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+
                 <!-- FILTERS -->
                 <form id="filterForm" method="GET" action="{{ route('admin.tablar.index', $lager->id) }}">
                     <div class="card mb-4 shadow-sm">
@@ -68,7 +104,7 @@
 
                                 <!-- Tablar -->
                                 <div class="col-md-2">
-                                    <label class="form-label">Tablar</label>
+                                    <label class="form-label">Regal</label>
                                     <input
                                         type="text"
                                         name="shelf"
@@ -81,7 +117,7 @@
 
                                 <!-- Submit -->
                                 <div class="col-md-1">
-                                    <button type="submit" class="btn btn-primary w-100" title="Filter anwenden">
+                                    <button type="submit" class="btn btn-filter w-100" title="Filter anwenden">
                                         <i class="bi bi-search"></i>
                                     </button>
                                 </div>
@@ -89,10 +125,10 @@
                             </div>
 
                             <!-- Active filters + reset -->
-                            @if(request()->hasAny(['name', 'code', 'shelf', 'max_qty']))
+                            @if(request()->hasAny(['name', 'code', 'shelf', 'max_qty', 'low_stock', 'empty', 'status']))
                             <div class="mt-2">
                                 <a href="{{ route('admin.tablar.index', $lager->id) }}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-x-circle me-1"></i> Filter zurücksetzen
+                                    <i class="bi bi-x-circle me-1"></i> {{ __('tablar.filter.reset') }}
                                 </a>
                             </div>
                             @endif
@@ -106,11 +142,10 @@
                         <thead class="table-light">
                             <tr class="text-secondary text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.05em;">
                                 <th></th>
-                                <th>Code</th>
-                                <th>Name</th>
+                                <th>Bezeichnung</th>
                                 <th>Beschreibung</th>
                                 <th>Menge</th>
-                                <th>Fach</th>
+                                <th>Regal</th>
                                 <th>Mindestbestand</th>
                                 <th>Status</th>
                                 <th class="text-end">Aktionen</th>
@@ -118,7 +153,9 @@
                         </thead>
                         <tbody>
                             @foreach($materials as $material)
-                                <tr class="clickable-row
+                                <tr id="material-{{ $material->id }}"
+                                    data-highlight="{{ $material->id }}"
+                                    class="clickable-row
                                 @if(!is_null($material->threshold) && (int) $material->threshold > 0 && $material->quantity <= $material->threshold) table-danger
                                 @endif
                                 @if(!$material->is_active) text-muted @endif"
@@ -145,18 +182,14 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td>
-                                        @if($material->code)
-                                            <code class="text-muted small">{{ $material->code }}</code>
-                                        @else
-                                            <span class="text-muted small">—</span>
-                                        @endif
-                                    </td>
                                     <td class="fw-bold text-dark">
                                         <a href="{{ route('admin.tablar.show', ['lager_id' => $material->lager_id, 'id' => $material->id]) }}" class="text-decoration-none text-dark">
                                             {{ $material->name }}
                                             @if($material->is_werkzeug)
                                                 <span class="badge bg-secondary ms-1" title="Werkzeug"><i class="bi bi-wrench"></i></span>
+                                            @endif
+                                            @if($material->code)
+                                                <br/><code class="text-muted small">{{ $material->code }}</code>
                                             @endif
                                         </a>
                                     </td>
@@ -178,7 +211,7 @@
                                     </td>
                                     <td>
                                         @if($material->order_status)
-                                            <span class="badge bg-info-subtle text-info-emphasis">{{ $statusTranslations[$material->order_status] ?? ucfirst($material->order_status) }}</span>
+                                            <span class="badge bg-info-subtle text-info-emphasis" data-bs-toggle="tooltip" title="{{ $material->status_label }}">{{ $material->status_label }}</span>
                                         @else
                                             -
                                         @endif
@@ -301,7 +334,7 @@
                         <!-- TABLAR -->
                         <div class="mb-3">
                             <label class="form-label">
-                                Fach / Tablar <span class="text-muted">(optional)</span>
+                                Regal / Tablar <span class="text-muted">(optional)</span>
                             </label>
                             <input type="text" id="tablar" class="form-control">
                         </div>
@@ -311,7 +344,7 @@
                             <label class="form-label">
                                 Mindestbestand <span class="text-muted">(optional)</span>
                             </label>
-                            <input type="number" id="threshold" class="form-control" min="0" placeholder="z.B. 50">
+                            <input type="number" id="threshold" class="form-control" min="0" placeholder="z.B. 5, standard 1">
                             <small class="text-muted">0 (Standard) = keine Niedrigbestands-Warnung</small>
                         </div>
 
