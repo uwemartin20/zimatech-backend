@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Material extends Model
@@ -18,7 +19,7 @@ class Material extends Model
         'order_status',
         'lager_id',
         'is_werkzeug',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
@@ -81,5 +82,56 @@ class Material extends Model
     public function orderStatus()
     {
         return $this->order_status;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeLowStock(Builder $q): Builder
+    {
+        return $q->whereNotNull('threshold')
+            ->where('threshold', '>', 0)
+            ->whereColumn('quantity', '<=', 'threshold');
+    }
+
+    public function scopeEmpty(Builder $q): Builder
+    {
+        return $q->where('quantity', 0);
+    }
+
+    public function scopeForStatus(Builder $q, string $status): Builder
+    {
+        return $q->where('order_status', $status);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function mostRecentSupplier(): ?Supplier
+    {
+        return $this->suppliers()
+            ->orderByDesc('material_suppliers.created_at')
+            ->first();
+    }
+
+    public function getStatusLabelAttribute(): ?string
+    {
+        if ($this->order_status === null) {
+            return null;
+        }
+
+        return match ($this->order_status) {
+            'notified' => __('tablar.status.notified'),
+            'ordered' => __('tablar.status.ordered'),
+            'blocked' => __('tablar.status.blocked'),
+            'delivered' => __('tablar.status.delivered'),
+            default => ucfirst($this->order_status),
+        };
     }
 }

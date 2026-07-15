@@ -1,6 +1,48 @@
 body {
     background-color: #f8f9fa;
 }
+:root {
+    --bs-primary: #002752;
+    --bs-primary-rgb: 0, 39, 82;
+}
+.btn-primary {
+    background-color: #002752;
+    border-color: #002752;
+    color: #fff;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #001a3d;
+    border-color: #001a3d;
+    color: #fff;
+}
+.btn-outline-primary {
+    color: #002752;
+    border-color: #002752;
+}
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background-color: #002752;
+    border-color: #002752;
+    color: #fff;
+}
+.text-primary {
+    color: #002752 !important;
+}
+.bg-primary {
+    background-color: #002752 !important;
+}
+.border-primary {
+    border-color: #002752 !important;
+}
+.link-primary {
+    color: #002752;
+}
+.link-primary:hover {
+    color: #001a3d;
+}
 .sidebar {
     width: 280px;
     background-color: #212529;

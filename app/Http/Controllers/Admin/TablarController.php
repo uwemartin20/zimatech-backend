@@ -35,25 +35,132 @@ class TablarController extends Controller
             $query->where('quantity', '<=', $request->max_qty);
         }
 
+        if ($request->boolean('low_stock')) {
+            $query->lowStock();
+        }
+        if ($request->boolean('empty')) {
+            $query->empty();
+        }
+        if ($request->filled('status') && in_array($request->status, ['notified', 'ordered', 'blocked', 'delivered'], true)) {
+            $query->forStatus($request->status);
+        }
+
+        // Deep-link resolver: when both `name` and `page` are set (e.g. coming back
+        // from a show page), jump to the page where the material actually lives.
+        if ($request->filled('name') && $request->filled('page')) {
+            $unpaginated = (clone $query)->get();
+            $targetId = $request->integer('id') ?: null;
+            if (! $targetId) {
+                $target = $unpaginated->firstWhere('name', $request->name)
+                    ?? $unpaginated->first(fn ($m) => str_contains($m->name, $request->name));
+                $targetId = $target?->id;
+            }
+            if ($targetId) {
+                $offset = $unpaginated->search(fn ($m) => $m->id === $targetId);
+                $targetPage = $offset === false ? 1 : (int) (intdiv((int) $offset, 30) + 1);
+                $currentPage = (int) $request->input('page', 1);
+                if ($targetPage !== $currentPage) {
+                    $params = $request->except(['page']);
+                    $params['page'] = $targetPage;
+                    $params['highlight'] = $targetId;
+                    $params['name'] = $request->name;
+                    $params['id'] = $targetId;
+
+                    return redirect()->to(
+                        route('admin.tablar.index', ['lager_id' => $lager_id])
+                        .'?'.http_build_query($params)
+                        .'#material-'.$targetId
+                    );
+                }
+            }
+        }
+
         $materials = $query->paginate(30)->withQueryString();
         $maxQuantity = Material::where('lager_id', $lager_id)->max('quantity') ?? 0;
 
-        $statusTranslations = [
-            'notified' => 'Bedarf gemeldet',
-            'ordered' => 'Bestellt',
-            'blocked' => 'Blockiert',
-            'delivered' => 'Geliefert',
-        ];
-
-        return view('admin.tablar.index', compact('materials', 'maxQuantity', 'statusTranslations', 'lager'));
+        return view('admin.tablar.index', compact('materials', 'maxQuantity', 'lager'));
     }
 
-    public function show(int $lager_id, int $id)
+    public function show(Request $request, int $lager_id, int $id)
     {
         $lager = Lager::findOrFail($lager_id);
-        $material = Material::where('lager_id', $lager_id)->with('suppliers')->findOrFail($id);
+        $material = Material::where('lager_id', $lager_id)
+            ->with(['suppliers' => fn ($q) => $q->orderByDesc('material_suppliers.created_at')])
+            ->findOrFail($id);
 
-        return view('admin.tablar.show', compact('material', 'lager'));
+        $recentSupplier = $material->suppliers->first();
+
+        $supplierListUrl = $recentSupplier
+            ? route('admin.tablar.supplier-list', [
+                'lager_id' => $lager_id,
+                'id' => $id,
+                'supplier' => $recentSupplier->id,
+            ])
+            : null;
+
+        $backToListUrl = route('admin.tablar.index', [
+            'lager_id' => $lager_id,
+            'name' => $material->name,
+            'id' => $material->id,
+            'page' => (int) $request->input('page', 1),
+        ]);
+
+        return view('admin.tablar.show', compact('material', 'lager', 'recentSupplier', 'supplierListUrl', 'backToListUrl'));
+    }
+
+    public function updateQuantity(Request $request, int $lager_id, int $id)
+    {
+        $data = $request->validate([
+            'quantity' => 'required|integer|min:0',
+        ]);
+
+        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
+        $material->update(['quantity' => $data['quantity']]);
+
+        return response()->json([
+            'success' => true,
+            'quantity' => $material->quantity,
+            'status' => $material->status,
+        ]);
+    }
+
+    public function updateStatus(Request $request, int $lager_id, int $id)
+    {
+        $data = $request->validate([
+            'order_status' => 'nullable|in:notified,ordered,blocked,delivered',
+        ]);
+
+        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
+        $material->update(['order_status' => $data['order_status'] ?? null]);
+
+        return response()->json([
+            'success' => true,
+            'order_status' => $material->order_status,
+            'status_label' => $material->status_label,
+        ]);
+    }
+
+    public function supplierList(Request $request, int $lager_id, int $id)
+    {
+        $data = $request->validate([
+            'supplier' => 'required|integer|exists:suppliers,id',
+        ]);
+
+        $lager = Lager::findOrFail($lager_id);
+        $supplier = Supplier::findOrFail($data['supplier']);
+
+        $materials = Material::where('lager_id', $lager_id)
+            ->whereHas('suppliers', fn ($q) => $q->where('suppliers.id', $data['supplier']))
+            ->with(['suppliers' => fn ($q) => $q->where('suppliers.id', $data['supplier'])])
+            ->orderBy('name')
+            ->get();
+
+        $materials->each(function ($m) use ($data) {
+            $pivot = $m->suppliers->firstWhere('id', $data['supplier'])?->pivot;
+            $m->setAttribute('pivot_attached_at', $pivot?->created_at);
+        });
+
+        return view('admin.tablar.supplier-list', compact('lager', 'supplier', 'materials'));
     }
 
     public function store(Request $request, int $lager_id)

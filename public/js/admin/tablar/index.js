@@ -323,6 +323,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ─── HIGHLIGHT + SCROLL (deep-link from show page) ────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightId = urlParams.get('highlight');
+    if (highlightId) {
+        const row = document.getElementById('material-' + highlightId);
+        if (row) {
+            row.classList.add('table-warning');
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => row.classList.remove('table-warning'), 3000);
+        }
+        // Strip the marker so the back button is clean.
+        urlParams.delete('highlight');
+        const qs = urlParams.toString();
+        const clean = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+        window.history.replaceState({}, '', clean);
+    }
+
 });
 
 // ─── SEARCH SUPPLIERS ─────────────────────────────────────────────────────────

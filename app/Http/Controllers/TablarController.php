@@ -93,12 +93,11 @@ class TablarController extends Controller
                     ->exists();
 
                 if (! $alreadyExists) {
-                    Notification::create([
-                        'user_id' => null,
-                        'type' => 'low_stock',
-                        'message' => "{$material->name} ist im Lager fast leer. Bitte nachbestellen.",
-                        'url' => route('admin.tablar.show', ['lager_id' => $lager_id, 'id' => $material->id]),
-                    ]);
+                    new_notification(
+                        type: 'low_stock',
+                        message: "{$material->name} ist im Lager fast leer. Bitte nachbestellen.",
+                        url: route('admin.tablar.show', ['lager_id' => $lager_id, 'id' => $material->id]),
+                    );
                 }
             }
 

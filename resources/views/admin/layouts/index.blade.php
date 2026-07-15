@@ -145,7 +145,7 @@
                 },
             },
         });
-    
+
         setTimeout(() => {
             console.log('Echo state:', window.Echo.connector.pusher.connection.state);
         }, 2000);
@@ -168,6 +168,11 @@
             }
 
             async function subscribeToPush() {
+                if (window.location.protocol !== 'https:') {
+                    console.log('Push skipped on local');
+                    return;
+                }
+                
                 const registration = await navigator.serviceWorker.ready;
 
                 const existing = await registration.pushManager.getSubscription();
