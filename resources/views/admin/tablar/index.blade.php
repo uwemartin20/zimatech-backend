@@ -304,7 +304,7 @@
                         <!-- CODE -->
                         <div class="mb-3">
                             <label class="form-label">
-                                Code <span class="text-muted">(optional)</span>
+                                Artikelnummer <span class="text-muted">(optional)</span>
                             </label>
                             <input type="text" id="code" class="form-control" maxlength="64" placeholder="z.B. ART-001">
                         </div>

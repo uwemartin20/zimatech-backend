@@ -3,6 +3,8 @@ const allMaterials = window.tablarData.flatList;
 const storagePath = window.tablarData.storagePath ?? '/storage/';
 const consumeUrl    = window.tablarData.consumeUrl;
 const returnUrl     = window.tablarData.returnUrl;
+const reserveUrl    = window.tablarData.reserveUrl;
+const settleReservationUrl = window.tablarData.settleReservationUrl;
 const orderBaseUrl  = window.tablarData.orderRequestBase;
 
 // Group by shelf for fast lookup: { "A1": [...], "B2": [...] }
@@ -35,7 +37,10 @@ function generateImageHtml(image, name) {
 function generateOrderHtml(m) {
     if (m.order_status) {
         const statusText = window.tablarData.statusTranslations[m.order_status] ?? ucfirst(m.order_status);
-        return `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-clock-history me-1"></i>${statusText}</span>`;
+        const qtyText = (m.order_status === 'ordered' && m.order_quantity)
+            ? ` · ${m.order_quantity} Stk.`
+            : '';
+        return `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-clock-history me-1"></i>${statusText}${qtyText}</span>`;
     }
     return `
         <button class="btn btn-sm btn-outline-primary ms-2" onclick="event.stopPropagation(); triggerOrder(${m.id})">
@@ -99,19 +104,25 @@ function renderMaterials(materials) {
     container.innerHTML = materials.map(m => {
         const outOfStock = m.quantity <= 0;
         const threshold  = m.threshold ?? 0;
+        const onHold     = m.on_hold_quantity ?? 0;
+        const isReserved = onHold > 0;
+        const modalType  = isReserved ? 'openReserveModal' : 'openMaterialModal';
         const badgeClass = outOfStock
             ? 'bg-secondary'
-            : m.quantity > threshold ? 'bg-success' : 'bg-danger';
+            : m.quantity + onHold > threshold ? 'bg-success' : 'bg-danger';
         const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';
 
         const imageTemplate = generateImageHtml(m.image, m.name);
         const orderTemplate = generateOrderHtml(m);
+        const onHoldText = isReserved
+            ? `<span class="badge bg-info text-dark ms-2"><i class="bi bi-clock-history me-1"></i>Reserviert: ${onHold} Stk.</span>`
+            : '';
 
         if (outOfStock) {
             return `
             <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border bg-light text-muted"
-                 style="cursor: not-allowed;"
-                 onclick="Swal.fire('Nicht verfügbar', 'Bitte warten Sie auf Nachschub.', 'info')">
+                style="cursor: not-allowed;"
+                onclick="Swal.fire('Nicht verfügbar', 'Bitte warten Sie auf Nachschub.', 'info')">
                 <div class="d-flex align-items-center">
                     ${imageTemplate}
                     <div>
@@ -125,11 +136,11 @@ function renderMaterials(materials) {
 
         return `
         <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border material-item"
-             onclick="openMaterialModal(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf}')">
+            onclick="${modalType}(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf}', ${onHold})">
             <div class="d-flex align-items-center">
                 ${imageTemplate}
                 <div>
-                    <span class="fw-semibold">${m.name}</span>
+                    <span class="fw-semibold">${m.name} ${onHoldText}</span>
                     <div class="mt-1">${orderTemplate}</div>
                 </div>
             </div>
@@ -153,6 +164,94 @@ function openMaterialModal(id, name, quantity, shelf) {
     input.removeAttribute('max'); 
 
     new bootstrap.Modal(document.getElementById('materialModal')).show();
+}
+
+function openReserveModal(id, name, quantity, shelf, onHoldQuantity) {
+    selectedMaterial = { id, name, quantity, shelf, onHoldQuantity };
+
+    document.getElementById('reserveModalMaterialName').innerText = name;
+    document.getElementById('reserveModalShelf').innerText        = 'Tablar: ' + shelf;
+    document.getElementById('reserveModalAvailable').innerText    = quantity;
+    document.getElementById('reserveModalOnHold').innerText       = onHoldQuantity;
+
+    const input = document.getElementById('reserveCounterInput');
+    input.value = 0;
+    input.max   = onHoldQuantity;
+
+    updateReserveHint();
+
+    new bootstrap.Modal(document.getElementById('reserveModal')).show();
+}
+
+function updateReserveHint() {
+    const val = parseInt(document.getElementById('reserveCounterInput').value) || 0;
+    const consumed = (selectedMaterial?.onHoldQuantity ?? 0) - val;
+    document.getElementById('reserveModalConsumedHint').innerText =
+        `${val} Stk. gehen zurück ins Lager, ${consumed} Stk. gelten als verbraucht.`;
+}
+
+function validateReserveInput(input) {
+    let val = parseInt(input.value);
+    const max = selectedMaterial?.onHoldQuantity ?? 0;
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > max) val = max;
+    input.value = val;
+    updateReserveHint();
+}
+
+function increaseReserve() {
+    const input = document.getElementById('reserveCounterInput');
+    const val   = parseInt(input.value);
+    if (val < selectedMaterial.onHoldQuantity) input.value = val + 1;
+    updateReserveHint();
+}
+
+function decreaseReserve() {
+    const input = document.getElementById('reserveCounterInput');
+    const val   = parseInt(input.value);
+    if (val > 0) input.value = val - 1;
+    updateReserveHint();
+}
+
+async function confirmReservationSettlement() {
+    const returnQty = parseInt(document.getElementById('reserveCounterInput').value);
+    if (!selectedMaterial || isNaN(returnQty)) return;
+
+    const btn = document.querySelector('#reserveModal .btn-primary');
+    const originalContent = btn.innerHTML;
+    btn.disabled  = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Lädt...`;
+
+    try {
+        const res = await fetch(settleReservationUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+            body: JSON.stringify({ material_id: selectedMaterial.id, return_quantity: returnQty })
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+
+        const m = allMaterials.find(x => x.id === selectedMaterial.id);
+        if (m) {
+            m.quantity = data.new_quantity;
+            m.on_hold_quantity = data.on_hold_quantity;
+        }
+
+        filterMaterials();
+        bootstrap.Modal.getInstance(document.getElementById('reserveModal')).hide();
+
+        if (!document.getElementById('nameStep').classList.contains('d-none')) {
+            filterByName();
+        }
+
+    } catch (e) {
+        alert('Fehler beim Abschließen der Reservierung: ' + e.message);
+    } finally {
+        btn.disabled  = false;
+        btn.innerHTML = originalContent;
+    }
 }
 
 function validateManualInput(input) {
@@ -257,6 +356,47 @@ async function confirmReturn() {
     }
 }
 
+async function confirmReservation() {
+    const amountReserved = parseInt(document.getElementById('counterInput').value);
+    if (!selectedMaterial || isNaN(amountReserved)) return;
+
+    const btn = document.querySelector('#materialModal .btn-secondary');
+    const originalContent = btn.innerHTML;
+    btn.disabled    = true;
+    btn.innerHTML   = `<span class="spinner-border spinner-border-sm me-2"></span> Lädt...`;
+
+    try {
+        const res = await fetch(`${reserveUrl}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+            body: JSON.stringify({ material_id: selectedMaterial.id, quantity: amountReserved })
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+
+        const m = allMaterials.find(x => x.id === selectedMaterial.id);
+        if (m) {
+            m.on_hold_quantity = data.on_hold_quantity;
+            m.quantity = data.new_quantity;
+        }
+
+        filterMaterials();
+        bootstrap.Modal.getInstance(document.getElementById('materialModal')).hide();
+
+        if (!document.getElementById('nameStep').classList.contains('d-none')) {
+            filterByName();
+        }
+        
+    } catch (e) {
+        alert('Fehler beim Reservieren: ' + e.message);
+    } finally {
+        btn.disabled  = false;
+        btn.innerHTML = originalContent;
+    }
+}
+
 // ─── ORDER TRIGGER PLUG ───────────────────────────────────────────────────────
 
 async function triggerOrder(materialId) {
@@ -325,8 +465,11 @@ function filterByName() {
     container.innerHTML = filtered.map(m => {
         const outOfStock = m.quantity <= 0;
         const threshold  = m.threshold ?? 0;
+        const on_hold = m.on_hold_quantity ?? 0;
+        const isReserved = m.on_hold_quantity > 0;
         const badgeClass = outOfStock ? 'bg-secondary'
-            : m.quantity > threshold ? 'bg-success' : 'bg-danger';
+            : m.quantity + on_hold > threshold ? 'bg-success' : 'bg-danger';
+        const modalType = isReserved ? 'openReserveModal' : 'openMaterialModal';
         const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';
 
         const shelfHint = m.shelf
@@ -335,6 +478,8 @@ function filterByName() {
 
         const imageTemplate = generateImageHtml(m.image, m.name);
         const orderTemplate = generateOrderHtml(m);
+
+        const onHoldText = isReserved ? `<span class="badge bg-info text-dark ms-2"><i class="bi bi-clock-history me-1"></i>Reserviert: ${on_hold} Stk.</span>` : '';
 
         if (outOfStock) {
             return `
@@ -355,11 +500,11 @@ function filterByName() {
 
         return `
         <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border material-item"
-                onclick="openMaterialModal(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf ?? ''}')">
+                onclick="${modalType}(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf ?? ''}', ${on_hold})">
             <div class="d-flex align-items-center">
                 ${imageTemplate}
                 <div>
-                    <span class="fw-semibold">${m.name}</span>
+                    <span class="fw-semibold">${m.name} ${onHoldText}</span>
                     ${shelfHint}
                     <div class="mt-1">${orderTemplate}</div>
                 </div>
@@ -375,6 +520,11 @@ window.selectShelf         = selectShelf;
 window.goBackToShelves     = goBackToShelves;
 window.filterMaterials     = filterMaterials;
 window.openMaterialModal   = openMaterialModal;
+window.openReserveModal              = openReserveModal;
+window.increaseReserve               = increaseReserve;
+window.decreaseReserve               = decreaseReserve;
+window.validateReserveInput          = validateReserveInput;
+window.confirmReservationSettlement  = confirmReservationSettlement;
 window.validateManualInput = validateManualInput;
 window.increase            = increase;
 window.decrease            = decrease;

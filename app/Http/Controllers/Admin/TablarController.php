@@ -105,17 +105,48 @@ class TablarController extends Controller
             'page' => (int) $request->input('page', 1),
         ]);
 
-        return view('admin.tablar.show', compact('material', 'lager', 'recentSupplier', 'supplierListUrl', 'backToListUrl'));
+        $logs = MaterialConsumption::where('material_id', $material->id)
+            ->orderByDesc('consumption_time')
+            ->paginate(10, ['*'], 'logs_page')
+            ->withQueryString();
+
+        return view('admin.tablar.show', compact('material', 'lager', 'recentSupplier', 'supplierListUrl', 'backToListUrl', 'logs'));
     }
 
     public function updateQuantity(Request $request, int $lager_id, int $id)
     {
         $data = $request->validate([
             'quantity' => 'required|integer|min:0',
+            'reason' => 'nullable|in:add,audit',
         ]);
 
-        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
-        $material->update(['quantity' => $data['quantity']]);
+        $material = DB::transaction(function () use ($data, $lager_id, $id) {
+            $material = Material::where('lager_id', $lager_id)
+                ->lockForUpdate()
+                ->findOrFail($id);
+
+            $oldQuantity = $material->quantity;
+            $newQuantity = $data['quantity'];
+            $delta = $newQuantity - $oldQuantity;
+
+            $material->quantity = $newQuantity;
+            $material->save();
+
+            if ($delta !== 0) {
+                $type = ($data['reason'] ?? null) === 'audit'
+                    ? 'adjust'
+                    : ($delta > 0 ? 'restock' : 'adjust');
+
+                MaterialConsumption::create([
+                    'material_id' => $material->id,
+                    'quantity' => abs($delta),
+                    'consumption_type' => $type,
+                    'consumption_time' => now(),
+                ]);
+            }
+
+            return $material;
+        });
 
         return response()->json([
             'success' => true,
@@ -126,17 +157,53 @@ class TablarController extends Controller
 
     public function updateStatus(Request $request, int $lager_id, int $id)
     {
+        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
+
         $data = $request->validate([
             'order_status' => 'nullable|in:notified,ordered,blocked,delivered',
+            'order_quantity' => 'nullable|integer|min:1|required_if:order_status,ordered',
         ]);
 
-        $material = Material::where('lager_id', $lager_id)->findOrFail($id);
-        $material->update(['order_status' => $data['order_status'] ?? null]);
+        $newStatus = $data['order_status'] ?? null;
+
+        DB::transaction(function () use ($material, $newStatus, $data) {
+            $locked = Material::where('id', $material->id)->lockForUpdate()->first();
+
+            if ($newStatus === 'ordered') {
+                // Store how many units were ordered; not yet in stock.
+                $locked->order_quantity = $data['order_quantity'];
+            } elseif ($newStatus === 'delivered') {
+                // Merge the previously ordered quantity into actual stock.
+                $orderedAmount = $locked->order_quantity ?? 0;
+                if ($orderedAmount > 0) {
+                    $locked->quantity += $orderedAmount;
+
+                    // NEW: log the delivery
+                    MaterialConsumption::create([
+                        'material_id' => $locked->id,
+                        'quantity' => $orderedAmount,
+                        'consumption_type' => 'delivery',
+                        'consumption_time' => now(),
+                    ]);
+                }
+                $locked->order_quantity = 0;
+            } else {
+                // notified / blocked / cleared — no pending order quantity
+                $locked->order_quantity = 0;
+            }
+
+            $locked->order_status = $newStatus;
+            $locked->save();
+        });
+
+        $material->refresh();
 
         return response()->json([
             'success' => true,
             'order_status' => $material->order_status,
             'status_label' => $material->status_label,
+            'order_quantity' => $material->order_quantity,
+            'quantity' => $material->quantity,
         ]);
     }
 
@@ -198,7 +265,19 @@ class TablarController extends Controller
             $data['image'] = $request->file('image')->store('materials', 'public');
         }
 
-        return response()->json(Material::create($data));
+        $material = Material::create($data);
+
+        // NEW: log initial stock
+        if ($material->quantity > 0) {
+            MaterialConsumption::create([
+                'material_id' => $material->id,
+                'quantity' => $material->quantity,
+                'consumption_type' => 'restock',
+                'consumption_time' => now(),
+            ]);
+        }
+
+        return response()->json($material);
     }
 
     public function update(Request $request, int $lager_id, int $id)
@@ -238,7 +317,20 @@ class TablarController extends Controller
             $data['image'] = $request->file('image')->store('materials', 'public');
         }
 
+        $oldQuantity = $material->quantity;
+
         $material->update($data);
+
+        // NEW: log the quantity change, if any
+        $delta = $material->quantity - $oldQuantity;
+        if ($delta !== 0) {
+            MaterialConsumption::create([
+                'material_id' => $material->id,
+                'quantity' => abs($delta),
+                'consumption_type' => $delta > 0 ? 'restock' : 'audit_adjust',
+                'consumption_time' => now(),
+            ]);
+        }
 
         return response()->json($material);
     }

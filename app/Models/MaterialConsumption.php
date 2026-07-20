@@ -15,6 +15,10 @@ class MaterialConsumption extends Model
         'consumption_time',
     ];
 
+    protected $casts = [
+        'consumption_time' => 'datetime',
+    ];
+
     public function material()
     {
         return $this->belongsTo(Material::class);
@@ -33,5 +37,30 @@ class MaterialConsumption extends Model
     public function scopeBetweenDates($query, $startDate, $endDate)
     {
         return $query->whereBetween('consumption_time', [$startDate, $endDate]);
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return match ($this->consumption_type) {
+            'use' => 'Entnommen',
+            'return' => 'Zurückgelegt',
+            'reserve' => 'Reserviert',
+            'restock' => 'Aufgefüllt',
+            'audit_adjust' => 'Korrektur',
+            'delivery' => 'Geliefert',
+            default => ucfirst($this->consumption_type),
+        };
+    }
+
+    public function getTypeBadgeClassAttribute(): string
+    {
+        return match ($this->consumption_type) {
+            'use' => 'bg-primary-subtle text-primary-emphasis',
+            'return', 'restock' => 'bg-success-subtle text-success-emphasis',
+            'reserve' => 'bg-info-subtle text-info-emphasis',
+            'audit_adjust' => 'bg-warning-subtle text-warning-emphasis',
+            'delivery' => 'bg-primary-subtle text-primary-emphasis',
+            default => 'bg-secondary-subtle text-secondary-emphasis',
+        };
     }
 }

@@ -33,10 +33,13 @@ class TablarController extends Controller
             'code' => $m->code,
             'name' => $m->name,
             'description' => $m->description,
+            'on_hold_quantity' => $m->on_hold_quantity,
+            'order_quantity' => $m->order_quantity,
             'quantity' => $m->quantity,
             'shelf' => $m->tablar,
             'threshold' => $m->threshold,
             'type' => $m->type,
+            'unit' => $m->unit,
             'image' => $m->image,
             'order_status' => $m->order_status,
             'status' => $m->status,
@@ -146,6 +149,110 @@ class TablarController extends Controller
         });
 
         return response()->json(['success' => true, 'new_quantity' => $material->quantity]);
+    }
+
+    public function reserve(Request $request, int $lager_id)
+    {
+        Lager::findOrFail($lager_id);
+
+        $data = $request->validate([
+            'material_id' => 'required|exists:materials,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $material = DB::transaction(function () use ($data, $lager_id) {
+            $material = Material::where('lager_id', $lager_id)
+                ->lockForUpdate()
+                ->findOrFail($data['material_id']);
+
+            if ($material->quantity < $data['quantity']) {
+                abort(400, 'Nicht genügend Bestand für die Reservierung');
+            }
+
+            $material->decrement('quantity', $data['quantity']);
+            $material->increment('on_hold_quantity', $data['quantity']);
+
+            // NEW: log the reservation for admin visibility
+            MaterialConsumption::create([
+                'material_id' => $material->id,
+                'quantity' => $data['quantity'],
+                'consumption_type' => 'reserve',
+                'consumption_time' => now(),
+            ]);
+
+            return $material->fresh();
+        });
+
+        return response()->json(['success' => true, 'new_quantity' => $material->quantity, 'on_hold_quantity' => $material->on_hold_quantity]);
+    }
+
+    /**
+     * Settle a reservation: part goes back to available stock,
+     * the rest is permanently consumed from the on-hold amount.
+     */
+    public function settleReservation(Request $request, int $lager_id)
+    {
+        Lager::findOrFail($lager_id);
+
+        $data = $request->validate([
+            'material_id' => 'required|exists:materials,id',
+            'return_quantity' => 'required|integer|min:0',
+        ]);
+
+        $material = DB::transaction(function () use ($data, $lager_id) {
+            $material = Material::where('lager_id', $lager_id)
+                ->lockForUpdate()
+                ->findOrFail($data['material_id']);
+
+            $onHold = $material->on_hold_quantity;
+
+            if ($data['return_quantity'] > $onHold) {
+                abort(400, 'Menge übersteigt die reservierte Menge');
+            }
+
+            $returned = $data['return_quantity'];
+            $consumed = $onHold - $returned;
+
+            // Whole reservation batch is closed out
+            $material->decrement('on_hold_quantity', $onHold);
+
+            if ($returned > 0) {
+                $material->increment('quantity', $returned);
+
+                MaterialConsumption::create([
+                    'material_id' => $material->id,
+                    'quantity' => $returned,
+                    'consumption_type' => 'return',
+                    'consumption_time' => now(),
+                ]);
+            }
+
+            if ($consumed > 0) {
+                MaterialConsumption::create([
+                    'material_id' => $material->id,
+                    'quantity' => $consumed,
+                    'consumption_type' => 'use',
+                    'consumption_time' => now(),
+                ]);
+            }
+
+            $threshold = (int) ($material->threshold ?? 0);
+
+            if ($returned > 0 && $threshold > 0 && $material->quantity > $threshold) {
+                Notification::where('type', 'low_stock')
+                    ->where('message', 'like', '%'.$material->name.'%')
+                    ->whereDate('created_at', now()->toDateString())
+                    ->delete();
+            }
+
+            return $material->fresh();
+        });
+
+        return response()->json([
+            'success' => true,
+            'new_quantity' => $material->quantity,
+            'on_hold_quantity' => $material->on_hold_quantity,
+        ]);
     }
 
     // ─── ORDER REQUEST ───────────────────────────────────────────────────────

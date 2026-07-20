@@ -90,6 +90,16 @@
                                     <option value="delivered" @selected($material->order_status === 'delivered')>{{ __('tablar.status.delivered') }}</option>
                                 </select>
                             </div>
+                            
+                            <div class="mb-3 {{ $material->order_status === 'ordered' ? '' : 'd-none' }}" id="orderQuantityWrapper">
+                                <label for="orderQuantityInput" class="form-label small text-muted mb-1">Bestellte Menge</label>
+                                <div class="d-flex gap-2">
+                                    <input type="number" id="orderQuantityInput" class="form-control form-control-sm" min="1"
+                                        value="{{ $material->order_quantity ?: '' }}" placeholder="z.B. 20">
+                                    <button type="button" id="confirmOrderQuantity" class="btn btn-sm btn-filter">Übernehmen</button>
+                                </div>
+                                <small class="text-muted">Wird bei „Geliefert" automatisch zum Bestand addiert.</small>
+                            </div>
 
                             <hr>
 
@@ -186,6 +196,53 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Verlauf</h6>
+                            <span class="text-muted small">{{ $logs->total() }} Einträge</span>
+                        </div>
+            
+                        <div class="card-body p-0">
+                            @if($logs->isEmpty())
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-clock-history fs-3 d-block mb-2"></i>
+                                    Noch keine Bewegungen erfasst.
+                                </div>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr class="text-secondary text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.05em;">
+                                                <th>Datum</th>
+                                                <th>Typ</th>
+                                                <th class="text-end">Menge</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($logs as $log)
+                                                <tr>
+                                                    <td class="text-muted small">{{ $log->consumption_time?->format('d.m.Y H:i') ?? '—' }}</td>
+                                                    <td><span class="badge {{ $log->type_badge_class }}">{{ $log->type_label }}</span></td>
+                                                    <td class="text-end fw-semibold">{{ $log->quantity }} Stk.</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
+            
+                        @if($logs->hasPages())
+                            <div class="card-footer bg-white d-flex justify-content-center">
+                                {{ $logs->onEachSide(1)->links() }}
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -212,7 +269,7 @@
             addBtn.disabled = true;
             addBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
             try {
-                const res = await fetch(quantityUrl, { method: 'PATCH', headers, body: JSON.stringify({ quantity: total }) });
+                const res = await fetch(quantityUrl, { method: 'PATCH', headers, body: JSON.stringify({ quantity: total, reason: 'add' }) });
                 if (!res.ok) throw new Error();
                 setTimeout(() => location.reload(), 250);
             } catch (e) {
@@ -238,7 +295,7 @@
             auditBtn.disabled = true;
             auditBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>';
             try {
-                const res = await fetch(quantityUrl, { method: 'PATCH', headers, body: JSON.stringify({ quantity: actual }) });
+                const res = await fetch(quantityUrl, { method: 'PATCH', headers, body: JSON.stringify({ quantity: actual, reason: 'audit' }) });
                 if (!res.ok) throw new Error();
                 setTimeout(() => location.reload(), 250);
             } catch (e) {
@@ -252,19 +309,62 @@
     // ─── CHANGE STATUS ────────────────────────────────────────────────────────
     const statusSel = document.getElementById('changeStatus');
     const statusBadge = document.getElementById('statusLabelBadge');
+    const orderQtyWrapper = document.getElementById('orderQuantityWrapper');
+    const orderQtyInput = document.getElementById('orderQuantityInput');
+    const confirmOrderQtyBtn = document.getElementById('confirmOrderQuantity');
+    const currentStockBadge = document.getElementById('currentStockBadge');
+
+    async function pushStatus(newStatus, orderQuantity = null) {
+        const body = { order_status: newStatus || null };
+        if (orderQuantity !== null) body.order_quantity = orderQuantity;
+
+        const res = await fetch(statusUrl, { method: 'PATCH', headers, body: JSON.stringify(body) });
+        if (!res.ok) throw new Error();
+        return res.json();
+    }
+
     if (statusSel) {
         statusSel.addEventListener('change', async () => {
             const newStatus = statusSel.value;
+
+            // "ordered" needs a quantity first — reveal the field, don't save yet
+            if (newStatus === 'ordered') {
+                orderQtyWrapper.classList.remove('d-none');
+                orderQtyInput.focus();
+                return;
+            }
+
+            orderQtyWrapper.classList.add('d-none');
             statusSel.disabled = true;
             try {
-                const res = await fetch(statusUrl, { method: 'PATCH', headers, body: JSON.stringify({ order_status: newStatus || null }) });
-                if (!res.ok) throw new Error();
-                const data = await res.json();
+                const data = await pushStatus(newStatus);
                 statusBadge.textContent = data.status_label || '—';
+                if (data.quantity !== undefined) {
+                    currentStockBadge.textContent = data.quantity + ' Stk.';
+                }
             } catch (e) {
                 alert("{{ __('tablar.show.status_error') }}");
             } finally {
                 statusSel.disabled = false;
+            }
+        });
+    }
+
+    if (confirmOrderQtyBtn) {
+        confirmOrderQtyBtn.addEventListener('click', async () => {
+            const qty = parseInt(orderQtyInput.value);
+            if (isNaN(qty) || qty < 1) {
+                alert('Bitte eine gültige Bestellmenge angeben.');
+                return;
+            }
+            confirmOrderQtyBtn.disabled = true;
+            try {
+                const data = await pushStatus('ordered', qty);
+                statusBadge.textContent = data.status_label || '—';
+            } catch (e) {
+                alert("{{ __('tablar.show.status_error') }}");
+            } finally {
+                confirmOrderQtyBtn.disabled = false;
             }
         });
     }

@@ -94,6 +94,45 @@
 
 </div>
 
+<div class="modal fade" id="reserveModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4">
+
+            <h3 id="reserveModalMaterialName" class="mb-1 fs-4"></h3>
+            <p class="text-muted mb-1" id="reserveModalShelf"></p>
+            <p class="text-muted small mb-1">
+                Verfügbar: <strong id="reserveModalAvailable"></strong> Stk.
+            </p>
+            <p class="text-muted small mb-4">
+                Reserviert: <strong id="reserveModalOnHold"></strong> Stk.
+            </p>
+
+            <p class="small text-muted mb-2">Wie viel davon wird zurückgelegt?</p>
+
+            <div class="d-flex justify-content-center align-items-center mb-2">
+                <button class="btn btn-lg btn-outline-danger px-4" onclick="decreaseReserve()">−</button>
+                <input
+                    type="number"
+                    id="reserveCounterInput"
+                    class="form-control form-control-lg mx-3 text-center fw-bold fs-2"
+                    style="width: 110px;"
+                    value="0"
+                    min="0"
+                    oninput="validateReserveInput(this)"
+                >
+                <button class="btn btn-lg btn-outline-success px-4" onclick="increaseReserve()">+</button>
+            </div>
+
+            <p class="text-muted small mb-4" id="reserveModalConsumedHint"></p>
+
+            <button class="btn btn-primary btn-lg w-100" onclick="confirmReservationSettlement()">
+                <i class="bi bi-check2-circle me-2"></i> Bestätigen
+            </button>
+
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="materialModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content text-center p-4">
@@ -131,7 +170,9 @@
                 </div>
             </div>
 
-            <button class="btn btn-link text-muted mt-2" data-bs-dismiss="modal">Abbrechen</button>
+            <button class="btn btn-secondary mt-2" onclick="confirmReservation()">
+                <i class="bi bi-calendar-check me-2"></i> Reservieren
+            </button>
 
         </div>
     </div>
@@ -156,6 +197,8 @@
         lagerId:            {{ $lager->id }},
         consumeUrl:         "{{ route('tablar.consume', $lager->id) }}",
         returnUrl:          "{{ route('tablar.return', $lager->id) }}",
+        reserveUrl:         "{{ route('tablar.reserve', $lager->id) }}",
+        settleReservationUrl: "{{ route('tablar.reserve.settle', $lager->id) }}",
         orderRequestBase:   "/lager/{{ $lager->id }}/tablar/order-request",
     };
 

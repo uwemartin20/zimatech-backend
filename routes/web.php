@@ -139,6 +139,8 @@ Route::get('/lager', [TablarController::class, 'lagerSelect'])->name('lager.sele
 Route::get('/lager/{lager_id}/tablar', [TablarController::class, 'index'])->name('tablar.index');
 Route::post('/lager/{lager_id}/tablar/consume', [TablarController::class, 'consume'])->name('tablar.consume');
 Route::post('/lager/{lager_id}/tablar/return', [TablarController::class, 'return'])->name('tablar.return');
+Route::post('/lager/{lager_id}/tablar/reserve', [TablarController::class, 'reserve'])->name('tablar.reserve');
+Route::post('/lager/{lager_id}/tablar/reserve/settle', [TablarController::class, 'settleReservation'])->name('tablar.reserve.settle');
 Route::post('/lager/{lager_id}/tablar/order-request/{materialId}', [TablarController::class, 'orderRequest'])->name('tablar.order-request');
 
 // Language routes
