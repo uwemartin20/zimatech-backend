@@ -239,6 +239,7 @@ class TablarController extends Controller
             'code' => $request->input('code') ?: null,
             'threshold' => $request->input('threshold') ?: null,
             'type' => $request->input('type') ?: null,
+            'unit' => $request->input('unit') ?: null,
             'order_status' => $request->input('order_status') ?: null,
             'description' => $request->input('description') ?: null,
         ]);
@@ -251,6 +252,7 @@ class TablarController extends Controller
             'tablar' => 'nullable|string|max:50',
             'threshold' => 'nullable|integer|min:0',
             'type' => 'nullable|string|max:100',
+            'unit' => 'nullable|string|max:50',
             'order_status' => 'nullable|in:notified,ordered,blocked,delivered',
             'is_werkzeug' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',
@@ -288,6 +290,7 @@ class TablarController extends Controller
             'code' => $request->input('code') ?: null,
             'threshold' => $request->input('threshold') ?: null,
             'type' => $request->input('type') ?: null,
+            'unit' => $request->input('unit') ?: null,
             'order_status' => $request->input('order_status') ?: null,
             'description' => $request->input('description') ?: null,
         ]);
@@ -300,6 +303,7 @@ class TablarController extends Controller
             'tablar' => 'nullable|string|max:50',
             'threshold' => 'nullable|integer|min:0',
             'type' => 'nullable|string|max:100',
+            'unit' => 'nullable|string|max:50',
             'order_status' => 'nullable|in:notified,ordered,blocked,delivered',
             'is_werkzeug' => 'nullable|boolean',
             'is_active' => 'nullable|boolean',

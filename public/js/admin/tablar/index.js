@@ -113,6 +113,7 @@ function openEditModal(button) {
     document.getElementById('tablar').value            = row.getAttribute('data-tablar') ?? '';
     document.getElementById('threshold').value         = row.getAttribute('data-threshold') ?? '';
     document.getElementById('type').value              = row.getAttribute('data-type') ?? '';
+    document.getElementById('unit').value              = row.getAttribute('data-unit') ?? '';
     document.getElementById('orderStatus').value        = row.getAttribute('data-order-status') ?? '';
     document.getElementById('isWerkzeug').checked       = row.getAttribute('data-is-werkzeug') === '1';
     document.getElementById('isActive').checked         = row.getAttribute('data-is-active') === '1';
@@ -157,6 +158,7 @@ async function saveMaterial() {
     formData.append('tablar', document.getElementById('tablar').value);
     formData.append('threshold', document.getElementById('threshold').value || '');
     formData.append('type', document.getElementById('type').value || '');
+    formData.append('unit', document.getElementById('unit').value || '');
     formData.append('order_status', document.getElementById('orderStatus').value || '');
     formData.append('is_werkzeug', document.getElementById('isWerkzeug').checked ? '1' : '0');
     formData.append('is_active', document.getElementById('isActive').checked ? '1' : '0');

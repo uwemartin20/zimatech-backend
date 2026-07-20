@@ -138,20 +138,20 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <small class="text-muted text-uppercase fw-bold">{{ __('tablar.show.current_stock') }}</small>
-                                <span class="badge bg-light text-dark border fs-6" id="currentStockBadge">{{ $material->quantity }} Stk.</span>
+                                <span class="badge bg-light text-dark border fs-6" id="currentStockBadge">{{ $material->quantity }} {{ $material->unit ?? 'Stk.' }}</span>
                             </div>
 
                             <div class="d-flex flex-wrap gap-2 mb-3">
                                 <span class="badge bg-info-subtle text-info-emphasis border" data-bs-toggle="tooltip" title="Reserviert: bereits entnommen, aber noch nicht verbraucht">
-                                    <i class="bi bi-clock-history me-1"></i> Reserviert: {{ (int) $material->on_hold_quantity }} Stk.
+                                    <i class="bi bi-clock-history me-1"></i> Reserviert: {{ (int) $material->on_hold_quantity }} {{ $material->unit ?? 'Stk.' }}
                                 </span>
                                 @if((int) $material->order_quantity > 0)
                                     <span class="badge bg-warning-subtle text-warning-emphasis border" data-bs-toggle="tooltip" title="Bestellt: Lieferung erwartet">
-                                        <i class="bi bi-truck me-1"></i> Bestellt: {{ (int) $material->order_quantity }} Stk.
+                                        <i class="bi bi-truck me-1"></i> Bestellt: {{ (int) $material->order_quantity }} {{ $material->unit ?? 'Stk.' }}
                                     </span>
                                 @endif
                                 <span class="badge bg-light text-muted border" data-bs-toggle="tooltip" title="Gesamt: Bestand + Reserviert + Bestellt">
-                                    <i class="bi bi-stack me-1"></i> Verfügbar (gesamt): {{ $material->available_total }} Stk.
+                                    <i class="bi bi-stack me-1"></i> Verfügbar (gesamt): {{ $material->available_total }} {{ $material->unit ?? 'Stk.' }}
                                 </span>
                             </div>
 
@@ -240,7 +240,7 @@
                                                 <tr>
                                                     <td class="text-muted small">{{ $log->consumption_time?->format('d.m.Y H:i') ?? '—' }}</td>
                                                     <td><span class="badge {{ $log->type_badge_class }}">{{ $log->type_label }}</span></td>
-                                                    <td class="text-end fw-semibold">{{ $log->quantity }} Stk.</td>
+                                                    <td class="text-end fw-semibold">{{ $log->quantity }} {{ $material->unit ?? 'Stk.' }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
@@ -354,7 +354,7 @@
                 const data = await pushStatus(newStatus);
                 statusBadge.textContent = data.status_label || '—';
                 if (data.quantity !== undefined) {
-                    currentStockBadge.textContent = data.quantity + ' Stk.';
+                    currentStockBadge.textContent = data.quantity + ' {{ $material->unit ?? 'Stk.' }}';
                 }
             } catch (e) {
                 alert("{{ __('tablar.show.status_error') }}");

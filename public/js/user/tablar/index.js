@@ -38,7 +38,7 @@ function generateOrderHtml(m) {
     if (m.order_status) {
         const statusText = window.tablarData.statusTranslations[m.order_status] ?? ucfirst(m.order_status);
         const qtyText = (m.order_status === 'ordered' && m.order_quantity)
-            ? ` · ${m.order_quantity} Stk.`
+            ? ` · ${m.order_quantity} ${m.unit ?? 'Stk.'}`
             : '';
         return `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-clock-history me-1"></i>${statusText}${qtyText}</span>`;
     }
@@ -112,15 +112,15 @@ function renderMaterials(materials) {
         const badgeClass = outOfStock
             ? 'bg-secondary'
             : available > threshold ? 'bg-success' : 'bg-danger';
-        const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';
+        const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' ' + (m.unit ?? 'Stk.');
 
         const imageTemplate = generateImageHtml(m.image, m.name);
         const orderTemplate = generateOrderHtml(m);
         const onHoldText = isReserved
-            ? `<span class="badge bg-info text-dark ms-2"><i class="bi bi-clock-history me-1"></i>Reserviert: ${onHold} Stk.</span>`
+            ? `<span class="badge bg-info text-dark ms-2"><i class="bi bi-clock-history me-1"></i>Reserviert: ${onHold} ${m.unit ?? 'Stk.'}</span>`
             : '';
         const orderText = orderQty > 0
-            ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-truck me-1"></i>Bestellt: ${orderQty} Stk.</span>`
+            ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-truck me-1"></i>Bestellt: ${orderQty} ${m.unit ?? 'Stk.'}</span>`
             : '';
 
         if (outOfStock) {
@@ -141,7 +141,7 @@ function renderMaterials(materials) {
 
         return `
         <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border material-item"
-            onclick="${modalType}(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf}', ${onHold})">
+            onclick="${modalType}(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf}', ${onHold}, '${m.unit ?? 'Stk.'}')">
             <div class="d-flex align-items-center">
                 ${imageTemplate}
                 <div>
@@ -156,12 +156,12 @@ function renderMaterials(materials) {
 
 // ─── MODAL ────────────────────────────────────────────────────────────────────
 
-function openMaterialModal(id, name, quantity, shelf) {
-    selectedMaterial = { id, name, quantity, shelf };
+function openMaterialModal(id, name, quantity, shelf, onHoldQuantity, unit) {
+    selectedMaterial = { id, name, quantity, shelf, onHoldQuantity, unit };
 
     document.getElementById('modalMaterialName').innerText = name;
     document.getElementById('modalShelf').innerText        = 'Tablar: ' + shelf;
-    document.getElementById('modalAvailable').innerText    = quantity;
+    document.getElementById('modalAvailable').innerText    = quantity + ' ' + (selectedMaterial.unit ?? 'Stk.');
 
     const input = document.getElementById('counterInput');
     input.value = 1;
@@ -171,12 +171,12 @@ function openMaterialModal(id, name, quantity, shelf) {
     new bootstrap.Modal(document.getElementById('materialModal')).show();
 }
 
-function openReserveModal(id, name, quantity, shelf, onHoldQuantity) {
-    selectedMaterial = { id, name, quantity, shelf, onHoldQuantity };
+function openReserveModal(id, name, quantity, shelf, onHoldQuantity, unit) {
+    selectedMaterial = { id, name, quantity, shelf, onHoldQuantity, unit };
 
     document.getElementById('reserveModalMaterialName').innerText = name;
     document.getElementById('reserveModalShelf').innerText        = 'Tablar: ' + shelf;
-    document.getElementById('reserveModalAvailable').innerText    = quantity;
+    document.getElementById('reserveModalAvailable').innerText    = quantity + ' ' + (selectedMaterial.unit ?? 'Stk.');
     document.getElementById('reserveModalOnHold').innerText       = onHoldQuantity;
 
     const input = document.getElementById('reserveCounterInput');
@@ -192,7 +192,7 @@ function updateReserveHint() {
     const val = parseInt(document.getElementById('reserveCounterInput').value) || 0;
     const consumed = (selectedMaterial?.onHoldQuantity ?? 0) - val;
     document.getElementById('reserveModalConsumedHint').innerText =
-        `${val} Stk. gehen zurück ins Lager, ${consumed} Stk. gelten als verbraucht.`;
+        `${val} ${selectedMaterial?.unit ?? 'Stk.'} gehen zurück ins Lager, ${consumed} ${selectedMaterial?.unit ?? 'Stk.'} gelten als verbraucht.`;
 }
 
 function validateReserveInput(input) {
@@ -477,7 +477,7 @@ function filterByName() {
         const badgeClass = outOfStock ? 'bg-secondary'
             : available > threshold ? 'bg-success' : 'bg-danger';
         const modalType = isReserved ? 'openReserveModal' : 'openMaterialModal';
-        const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' Stk.';
+        const badgeText  = outOfStock ? 'Kommt gleich' : m.quantity + ' ' + (m.unit ?? 'Stk.');
 
         const shelfHint = m.shelf
             ? `<span class="text-muted small ms-2"><i class="bi bi-geo-alt me-1"></i>${m.shelf}</span>`
@@ -486,9 +486,9 @@ function filterByName() {
         const imageTemplate = generateImageHtml(m.image, m.name);
         const orderTemplate = generateOrderHtml(m);
 
-        const onHoldText = isReserved ? `<span class="badge bg-info text-dark ms-2"><i class="bi bi-clock-history me-1"></i>Reserviert: ${on_hold} Stk.</span>` : '';
+        const onHoldText = isReserved ? `<span class="badge bg-info text-dark ms-2"><i class="bi bi-clock-history me-1"></i>Reserviert: ${on_hold} ${m.unit ?? 'Stk.'}</span>` : '';
         const orderText = orderQty > 0
-            ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-truck me-1"></i>Bestellt: ${orderQty} Stk.</span>`
+            ? `<span class="badge bg-warning text-dark ms-2"><i class="bi bi-truck me-1"></i>Bestellt: ${orderQty} ${m.unit ?? 'Stk.'}</span>`
             : '';
 
         if (outOfStock) {
@@ -510,7 +510,7 @@ function filterByName() {
 
         return `
         <div class="d-flex justify-content-between align-items-center p-3 mb-2 rounded border material-item"
-                onclick="${modalType}(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf ?? ''}', ${on_hold})">
+                onclick="${modalType}(${m.id}, '${m.name}', ${m.quantity}, '${m.shelf ?? ''}', ${on_hold}, '${m.unit ?? 'Stk.'}')">
             <div class="d-flex align-items-center">
                 ${imageTemplate}
                 <div>

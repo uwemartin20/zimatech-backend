@@ -170,6 +170,7 @@
                                 data-tablar="{{ $material->tablar ?? '' }}"
                                 data-threshold="{{ $material->threshold ?? '' }}"
                                 data-type="{{ $material->type ?? '' }}"
+                                data-unit="{{ $material->unit ?? '' }}"
                                 data-lager-id="{{ $material->lager_id ?? '' }}"
                                 data-order-status="{{ $material->order_status ?? '' }}"
                                 data-is-werkzeug="{{ $material->is_werkzeug ? '1' : '0' }}"
@@ -204,19 +205,19 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge rounded-pill bg-light text-dark border">{{ $material->quantity }} Stk.</span>
+                                        <span class="badge rounded-pill bg-light text-dark border">{{ $material->quantity }} {{ $material->unit ?? "stk." }}</span>
                                         @if((int) $material->on_hold_quantity > 0)
                                             <span class="badge rounded-pill bg-info-subtle text-info-emphasis border ms-1"
                                                   data-bs-toggle="tooltip"
                                                   title="Reserviert (vom Bestand abgezogen)">
-                                                <i class="bi bi-clock-history me-1"></i>{{ (int) $material->on_hold_quantity }}
+                                                <i class="bi bi-clock-history me-1"></i>{{ (int) $material->on_hold_quantity }} {{ $material->unit ?? "stk." }}
                                             </span>
                                         @endif
                                         @if((int) $material->order_quantity > 0)
                                             <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis border ms-1"
                                                   data-bs-toggle="tooltip"
                                                   title="Bestellt (Lieferung erwartet)">
-                                                <i class="bi bi-truck me-1"></i>{{ (int) $material->order_quantity }}
+                                                <i class="bi bi-truck me-1"></i>{{ (int) $material->order_quantity }} {{ $material->unit ?? "stk." }}
                                             </span>
                                         @endif
                                     </td>
@@ -348,6 +349,14 @@
                                 Hinzufügen (+ Menge) <span class="text-danger">*</span>
                             </label>
                             <input type="number" id="addQuantity" class="form-control" min="0" value="0">
+                        </div>
+
+                        <!-- UNIT -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Einheit <span class="text-muted">(optional)</span>
+                            </label>
+                            <input type="text" id="unit" class="form-control" placeholder="z.B. Stk, m, kg, Rolle">
                         </div>
 
                         <!-- TABLAR -->
