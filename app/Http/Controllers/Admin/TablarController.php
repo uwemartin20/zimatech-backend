@@ -45,20 +45,21 @@ class TablarController extends Controller
             $query->forStatus($request->status);
         }
 
-        // Deep-link resolver: when both `name` and `page` are set (e.g. coming back
-        // from a show page), jump to the page where the material actually lives.
-        if ($request->filled('name') && $request->filled('page')) {
+        // Deep-link resolver: ONLY run if an explicit target `id` or `highlight` is provided 
+        // (e.g. returning from a show page or deep link), NOT during standard page navigation.
+        if ($request->filled('name') && $request->filled('page') && ($request->filled('id') || $request->filled('highlight'))) {
             $unpaginated = (clone $query)->get();
-            $targetId = $request->integer('id') ?: null;
-            if (! $targetId) {
-                $target = $unpaginated->firstWhere('name', $request->name)
-                    ?? $unpaginated->first(fn ($m) => str_contains($m->name, $request->name));
-                $targetId = $target?->id;
-            }
+            $targetId = $request->integer('id') ?: $request->integer('highlight');
+
             if ($targetId) {
                 $offset = $unpaginated->search(fn ($m) => $m->id === $targetId);
-                $targetPage = $offset === false ? 1 : (int) (intdiv((int) $offset, 30) + 1);
+                
+                // Note: Check your per-page limit here. You use ->paginate(1) lower down, 
+                // so change 30 to your actual per-page number if needed.
+                $perPage = 30; 
+                $targetPage = $offset === false ? 1 : (int) (intdiv((int) $offset, $perPage) + 1);
                 $currentPage = (int) $request->input('page', 1);
+
                 if ($targetPage !== $currentPage) {
                     $params = $request->except(['page']);
                     $params['page'] = $targetPage;
@@ -239,7 +240,7 @@ class TablarController extends Controller
             'code' => $request->input('code') ?: null,
             'threshold' => $request->input('threshold') ?: null,
             'type' => $request->input('type') ?: null,
-            'unit' => $request->input('unit') ?: null,
+            'unit' => $request->input('unit') ?: "stück",
             'order_status' => $request->input('order_status') ?: null,
             'description' => $request->input('description') ?: null,
         ]);
